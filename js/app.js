@@ -155,6 +155,7 @@ function renderDashboard() {
 }
 
 function renderLibrary() {
+  $("#search").placeholder = `Search ${TOTAL_GAMES} active titles...`;
   const gt = $("#genre-tabs");
   gt.innerHTML = GENRES.map(g =>
     `<button class="genre-tab ${g === genreFilter ? "active" : ""}" data-genre="${esc(g)}">${esc(g)}</button>`).join("");
