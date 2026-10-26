@@ -62,11 +62,11 @@ main { flex: 1; padding: 1.4rem; max-width: 1200px; width: 100%; margin: 0 auto;
 .stat-label { font-size: .72rem; color: var(--muted); text-transform: uppercase; letter-spacing: .12em; margin-top: .3rem; }
 
 .bars { display: grid; gap: .55rem; }
-.bar-row { display: grid; grid-template-columns: 220px 1fr 64px; gap: .8rem; align-items: center; }
-.bar-row .name { font-size: .82rem; }
+.bar-row { display: grid; grid-template-columns: 220px 1fr 90px; gap: .8rem; align-items: center; }
+.bar-row .name { font-size: .82rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .bar-track { height: 12px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 999px; overflow: hidden; }
 .bar-fill { height: 100%; background: linear-gradient(90deg, var(--accent-2), var(--accent)); box-shadow: 0 0 10px rgba(84,242,184,.5); transition: width .4s ease; }
-.bar-row .pct { font-size: .78rem; color: var(--muted); text-align: right; }
+.bar-row .pct { font-size: .72rem; color: var(--muted); text-align: right; white-space: nowrap; }
 
 .recent { list-style: none; display: grid; gap: .4rem; }
 .recent li {
@@ -94,7 +94,9 @@ main { flex: 1; padding: 1.4rem; max-width: 1200px; width: 100%; margin: 0 auto;
   font: inherit; padding: .6rem .9rem; border-radius: var(--radius); max-width: 420px; width: 100%;
 }
 #search:focus { outline: none; border-color: var(--accent); }
-.library-count { font-size: .75rem; color: var(--muted); margin-bottom: .7rem; letter-spacing: .06em; }
+.iter-chip { color: var(--accent); border: 1px solid var(--accent); border-radius: 999px; padding: .1rem .5rem; }
+.scope-note { font-size: .72rem; color: var(--muted); margin-bottom: .7rem; line-height: 1.5; max-width: 70ch; }
+.library-count { font-size: .75rem; color: var(--muted); margin-bottom: .35rem; letter-spacing: .06em; }
 
 .game-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: .7rem; }
 .game-card {
@@ -167,6 +169,6 @@ dialog input {
 footer { padding: 1.2rem; text-align: center; font-size: .7rem; color: var(--muted); letter-spacing: .1em; }
 
 @media (max-width: 640px) {
-  .bar-row { grid-template-columns: 110px 1fr 52px; }
+  .bar-row { grid-template-columns: 110px 1fr 70px; }
   .topbar { flex-direction: column; gap: .6rem; align-items: flex-start; }
 }

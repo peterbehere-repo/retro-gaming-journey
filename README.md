@@ -41,6 +41,21 @@ ArkOS Options menu. No real-time connectivity, no background telemetry, no SD-ca
 | Frontend app | Static site on GitHub Pages (root of this repo) | Player dashboard, completion percentages, badge case |
 | BaaS layer | Supabase (`supabase/schema.sql`) | Auth profiles, synced structural tables, RLS |
 
+## Iteration plan
+
+The full 600-title directory ships from day one, but the **site reveals one console per
+iteration**. Visibility and all stats (completion %, bars, badges, asset counts) are
+gated by a single switch in [`js/data.js`](js/data.js):
+
+```js
+const ACTIVE_PLATFORMS = ["nes"];   // iteration 1 — add "tg16", "genesis", "snes", "gba", "nds" later
+```
+
+| Iteration | Console | Active library |
+|---|---|---|
+| 1 (live) | NES | 5 × 20 = 100 titles |
+| 2+ | TG16, Genesis, SNES, GBA, NDS | +100 each, up to the full 600 |
+
 ## The 600-title library
 
 `js/data.js` ships the full **System Directory Data Grid**: 5 genres × 6 platforms

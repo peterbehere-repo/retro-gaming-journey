@@ -227,3 +227,9 @@ function flattenLibrary() {
 }
 
 const ALL_GAMES = flattenLibrary();
+
+// Iteration gate (Peter, 2026-10-25): the site reveals one console per iteration.
+// The full 600-title grid stays intact above — this only gates visibility and stats.
+// Iteration 2: add "tg16" here; later iterations add genesis, snes, gba, nds.
+const ACTIVE_PLATFORMS = ["nes"];
+const ACTIVE_GAMES = ALL_GAMES.filter(g => ACTIVE_PLATFORMS.includes(g.platform));

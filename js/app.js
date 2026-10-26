@@ -39,11 +39,11 @@ function saveState() { localStorage.setItem(STORE_KEY, JSON.stringify(state)); }
 const $ = (sel) => document.querySelector(sel);
 const gameById = (id) => ALL_GAMES.find(g => g.id === id);
 const gameCount = (genre, platform) => GAME_LIBRARY[genre][platform].length;
-const TOTAL_GAMES = ALL_GAMES.length; // 600
+const TOTAL_GAMES = ACTIVE_GAMES.length; // active iteration scope (120 in iteration 1)
 
 function genreProgress(genre) {
   let done = 0;
-  for (const p of Object.keys(PLATFORMS))
+  for (const p of ACTIVE_PLATFORMS)
     for (const t of GAME_LIBRARY[genre][p])
       if (state.statuses[gameId(genre, p, t)] === "completed") done++;
   return { done, total: TOTAL_GAMES / GENRES.length };
@@ -53,7 +53,7 @@ function platformProgress(platform) {
   for (const g of GENRES)
     for (const t of GAME_LIBRARY[g][platform])
       if (state.statuses[gameId(g, platform, t)] === "completed") done++;
-  return { done, total: TOTAL_GAMES / Object.keys(PLATFORMS).length };
+  return { done, total: TOTAL_GAMES }; // each active platform carries the full active library
 }
 function overallProgress() {
   const done = Object.values(state.statuses).filter(s => s === "completed").length;
@@ -73,10 +73,11 @@ function computeBadges() {
   const overall = overallProgress();
   badges.push({ emoji: "🚀", name: "Journey Begins", desc: "Complete your first game",
     earned: overall.done >= 1, progress: Math.min(100, overall.done * 100) });
-  badges.push({ emoji: "🏛️", name: "Cart Collector", desc: "Complete 50 games",
-    earned: overall.done >= 50, progress: pct(overall.done, 50) });
-  badges.push({ emoji: "👑", name: "Grand Master", desc: "Complete the entire 600-title library",
-    earned: overall.done >= 600, progress: pct(overall.done, 600) });
+  const quarterMark = Math.round(TOTAL_GAMES * 0.25);
+  badges.push({ emoji: "🏛️", name: "Cart Collector", desc: `Complete ${quarterMark} games (${Math.round(quarterMark / TOTAL_GAMES * 100)}% of the active library)`,
+    earned: overall.done >= quarterMark, progress: pct(overall.done, quarterMark) });
+  badges.push({ emoji: "👑", name: "Grand Master", desc: `Complete the entire ${TOTAL_GAMES}-title active library`,
+    earned: overall.done >= TOTAL_GAMES, progress: pct(overall.done, TOTAL_GAMES) });
   for (const g of GENRES) {
     const p = genreProgress(g);
     const short = g.split("/")[0];
@@ -91,7 +92,8 @@ function computeBadges() {
       });
     });
   }
-  for (const [key, p] of Object.entries(PLATFORMS)) {
+  for (const key of ACTIVE_PLATFORMS) {
+    const p = PLATFORMS[key];
     const prog = platformProgress(key);
     badges.push({
       emoji: "🕹️", name: `${p.short} Mastery`,
@@ -137,8 +139,8 @@ function renderDashboard() {
   $("#genre-bars").innerHTML = GENRES.map(g => {
     const p = genreProgress(g); return barRow(g, p.done, p.total);
   }).join("");
-  $("#platform-bars").innerHTML = Object.entries(PLATFORMS).map(([key, p]) => {
-    const prog = platformProgress(key); return barRow(p.name, prog.done, prog.total);
+  $("#platform-bars").innerHTML = ACTIVE_PLATFORMS.map(key => {
+    const p = PLATFORMS[key]; const prog = platformProgress(key); return barRow(p.name, prog.done, prog.total);
   }).join("");
 
   const recent = Object.entries(state.unlocks)
@@ -161,8 +163,10 @@ function renderLibrary() {
 
   const pc = $("#platform-chips");
   pc.innerHTML = [`<button class="chip ${platformFilter === "all" ? "active" : ""}" data-p="all">All platforms</button>`]
-    .concat(Object.entries(PLATFORMS).map(([key, p]) =>
-      `<button class="chip ${platformFilter === key ? "active" : ""}" data-p="${key}">${esc(p.short)}</button>`))
+    .concat(ACTIVE_PLATFORMS.map(key => {
+      const p = PLATFORMS[key];
+      return `<button class="chip ${platformFilter === key ? "active" : ""}" data-p="${key}">${esc(p.short)}</button>`;
+    }))
     .join("");
   pc.querySelectorAll(".chip").forEach(c =>
     c.addEventListener("click", () => { platformFilter = c.dataset.p; renderLibrary(); }));
@@ -170,6 +174,7 @@ function renderLibrary() {
   const q = searchQuery.trim().toLowerCase();
   const games = ALL_GAMES.filter(g =>
     g.genre === genreFilter &&
+    ACTIVE_PLATFORMS.includes(g.platform) &&
     (platformFilter === "all" || g.platform === platformFilter) &&
     (!q || g.title.toLowerCase().includes(q)));
 
@@ -256,8 +261,10 @@ async function loadAssetIndex() {
     const resp = await fetch("master_library_index.json");
     if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
     assetIndex = await resp.json();
-    $("#asset-games").textContent = assetIndex.total_games.toLocaleString();
-    $("#asset-count").textContent = assetIndex.total_assets.toLocaleString();
+    const activeRoutes = assetIndex.games.filter(g => ACTIVE_PLATFORMS.includes(g.system));
+    const activeCount = activeRoutes.reduce((n, g) => n + g.assets.length, 0);
+    $("#asset-games").textContent = `${activeRoutes.length.toLocaleString()} (of ${assetIndex.total_games.toLocaleString()} mapped)`;
+    $("#asset-count").textContent = `${activeCount.toLocaleString()} active (of ${assetIndex.total_assets.toLocaleString()} total)`;
     $("#tier-rows").innerHTML = assetIndex.tiers.map(tier =>
       `<tr><td>${esc(tier)}</td><td>${esc(assetIndex.tier_rules[tier])}</td>` +
       `<td>[slug]_${tier}.png</td></tr>`).join("");
