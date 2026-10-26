@@ -135,6 +135,12 @@ main { flex: 1; padding: 1.4rem; max-width: 1200px; width: 100%; margin: 0 auto;
 .log li { border-left: 2px solid var(--border); padding-left: .6rem; }
 .log li.ok { border-color: var(--accent); color: var(--fg); }
 .log li.err { border-color: var(--danger); color: var(--danger); }
+.tier-table { width: 100%; border-collapse: collapse; font-size: .7rem; }
+.tier-table th, .tier-table td { text-align: left; padding: .35rem .4rem; border-bottom: 1px solid var(--border); }
+.tier-table th { color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+.tier-table td:first-child { color: var(--accent); font-weight: 700; }
+.tier-table td:last-child { color: var(--muted); font-size: .65rem; word-break: break-all; }
+.sync-note code { color: #9ff5d4; }
 
 .btn {
   background: var(--accent); color: var(--bg); border: none; font: inherit; font-weight: 700;

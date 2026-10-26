@@ -111,6 +111,7 @@ js/data.js                 600-title System Directory Data Grid
 js/app.js                  dashboard / library / badges / sync console
 js/supabase-config.js      backend config (empty = offline demo mode)
 supabase/schema.sql        BaaS tables + row level security
+tools/build_library.py     asset ingestion pipeline (1,800 badge routes + index)
 sync/arkos/sync_engine.py  on-demand sync engine for ArkOS
 sync/retroarch/...lua      capture layer (RAM watch → spool file)
 docs/architecture.md       spec mapping + design notes
@@ -125,6 +126,29 @@ docs/architecture.md       spec mapping + design notes
 - **Decoupled auth** — GitHub Pages is static; session state and the data layer live in
   Supabase Auth + Postgres, reachable from any browser after a sync.
 
+## Asset ingestion pipeline (tools/build_library.py)
+
+The enhancement spec offloads badge art to an external fetch at runtime instead of
+inlining payloads. `tools/build_library.py` structures **1,800 asset locations**
+(600 games × 3 difficulty tiers) into `Retro_Achievements_Asset_Library.zip` and emits
+`master_library_index.json` for serverless frontend mapping:
+
+| Tier | Validation target | Asset |
+|---|---|---|
+| Beginner | Softcore validation states; standard memory hooks | `[slug]_beginner.png` |
+| Intermediate | Frame timing envelope check parameters active | `[slug]_intermediate.png` |
+| Advanced | Strict Hardcore environment tracking required | `[slug]_advanced.png` |
+
+```bash
+python3 tools/build_library.py                    # builds from js/data.js (default source)
+python3 tools/build_library.py --url <master-matrix-json-url>   # fetch the master matrix instead
+python3 tools/build_library.py --unzip assets/    # also explode the tree locally
+```
+
+The dashboard fetches `master_library_index.json` lazily — only when the Sync console
+is opened — so the 1,800-tile payload never touches the page load. Tiles ship as
+transparent 1×1 placeholders; drop real badge PNGs in via `--art-dir`.
+
 ---
 
-Built from the Rool Agent Build Pack (on-demand emulation sync spec).
+Built from the Rool Agent Build Pack (on-demand emulation sync spec + asset ingestion enhancement).

@@ -114,6 +114,20 @@
           <h3>Sync log</h3>
           <ul id="sync-log" class="log"><li>Ready. No sync performed this session.</li></ul>
         </div>
+        <div class="sync-card">
+          <h3>Asset library</h3>
+          <p class="sync-note" style="margin-bottom:.6rem">Badge assets are offloaded to
+            <code>Retro_Achievements_Asset_Library.zip</code> (1,800 routes = 600 games × 3 difficulty tiers)
+            and mapped at runtime via <code>master_library_index.json</code> — nothing heavy ships in the page payload.</p>
+          <dl>
+            <dt>Games mapped</dt><dd id="asset-games">—</dd>
+            <dt>Asset routes</dt><dd id="asset-count">—</dd>
+          </dl>
+          <table class="tier-table">
+            <thead><tr><th>Tier</th><th>Validation target</th><th>Asset</th></tr></thead>
+            <tbody id="tier-rows"></tbody>
+          </table>
+        </div>
       </div>
     </section>
   </main>

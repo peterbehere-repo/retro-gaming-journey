@@ -21,6 +21,8 @@ let genreFilter = GENRES[0];
 let platformFilter = "all";
 let searchQuery = "";
 
+let assetIndex = null;           // master_library_index.json, lazily fetched
+
 function loadState() {
   try {
     const raw = localStorage.getItem(STORE_KEY);
@@ -243,7 +245,27 @@ document.querySelectorAll(".tab").forEach(t =>
     document.querySelectorAll(".tab").forEach(x => x.classList.toggle("active", x === t));
     document.querySelectorAll(".panel").forEach(p =>
       p.classList.toggle("active", p.id === `panel-${t.dataset.tab}`));
+    if (t.dataset.tab === "sync") loadAssetIndex();
   }));
+
+// Serverless frontend mapping: fetch the asset route index only when the sync
+// console is opened — the 1,800-asset payload itself stays in the zip.
+async function loadAssetIndex() {
+  if (assetIndex) return;
+  try {
+    const resp = await fetch("master_library_index.json");
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    assetIndex = await resp.json();
+    $("#asset-games").textContent = assetIndex.total_games.toLocaleString();
+    $("#asset-count").textContent = assetIndex.total_assets.toLocaleString();
+    $("#tier-rows").innerHTML = assetIndex.tiers.map(tier =>
+      `<tr><td>${esc(tier)}</td><td>${esc(assetIndex.tier_rules[tier])}</td>` +
+      `<td>[slug]_${tier}.png</td></tr>`).join("");
+  } catch (e) {
+    $("#asset-games").textContent = "unavailable";
+    logSync(`Asset index fetch failed: ${e.message}`, "err");
+  }
+}
 
 $("#search").addEventListener("input", (e) => { searchQuery = e.target.value; renderLibrary(); });
 

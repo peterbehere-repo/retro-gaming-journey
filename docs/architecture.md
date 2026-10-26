@@ -37,6 +37,22 @@ The dashboard pushes the same payload shape the engine posts:
 3. **Data integrity rule** — per-row HMAC-SHA256 + timestamp-derived nonce; tampered or
    replayed rows are marked `REJECTED` and excluded from batches.
 
+## Asset ingestion pipeline
+
+`tools/build_library.py` (enhancement spec): structures 1,800 badge asset routes
+(600 games × beginner/intermediate/advanced) into `Retro_Achievements_Asset_Library.zip`,
+with `master_library_index.json` as the runtime route map. Slugs are deterministic
+(`title.lower(), spaces→underscores, filesystem-unsafe chars stripped`) so device and
+dashboard resolve identical asset paths. Tier → validation mapping:
+
+| Tier | SQLite validation target rules |
+|---|---|
+| Beginner | Softcore validation states; standard memory hooks |
+| Intermediate | Frame timing envelope check parameters active |
+| Advanced | Strict Hardcore environment tracking required |
+
+The dashboard loads the index lazily on first Sync-tab open; the zip payload stays external.
+
 ## Game library
 
 600 titles: 5 genres (Action, Adventure, RPG, Puzzle, Visual Novels/Point & Click)
