@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Retro Gaming Journey</title>
+  <meta name="description" content="Offline-first retro emulation progress dashboard. Sync your handheld achievements on demand." />
+  <link rel="stylesheet" href="css/styles.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎮</text></svg>" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-logo">🎮</span>
+      <div>
+        <h1>Retro Gaming Journey</h1>
+        <p class="tagline">PowKiddy RGB10X · ArkOS · on-demand sync</p>
+      </div>
+    </div>
+    <div class="auth-box" id="auth-box">
+      <span id="auth-status" class="auth-status offline">offline mode</span>
+      <button id="btn-signin" class="btn btn-small">Sign in</button>
+    </div>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <button class="tab active" data-tab="dashboard" role="tab">Dashboard</button>
+    <button class="tab" data-tab="library" role="tab">Library</button>
+    <button class="tab" data-tab="badges" role="tab">Badges</button>
+    <button class="tab" data-tab="sync" role="tab">Sync</button>
+  </nav>
+
+  <main>
+    <!-- DASHBOARD -->
+    <section id="panel-dashboard" class="panel active">
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="stat-value" id="stat-overall">0%</div>
+          <div class="stat-label">Overall completion</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-completed">0</div>
+          <div class="stat-label">Games completed</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-playing">0</div>
+          <div class="stat-label">In progress</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-unlocks">0</div>
+          <div class="stat-label">Achievement unlocks</div>
+        </div>
+      </div>
+
+      <h2>Progress by genre</h2>
+      <div id="genre-bars" class="bars"></div>
+
+      <h2>Progress by platform</h2>
+      <div id="platform-bars" class="bars"></div>
+
+      <h2>Recent unlocks</h2>
+      <ul id="recent-unlocks" class="recent"></ul>
+    </section>
+
+    <!-- LIBRARY -->
+    <section id="panel-library" class="panel">
+      <div class="library-controls">
+        <div class="genre-tabs" id="genre-tabs"></div>
+        <div class="platform-chips" id="platform-chips"></div>
+        <input type="search" id="search" placeholder="Search 600 titles..." />
+      </div>
+      <p class="library-count" id="library-count"></p>
+      <div id="game-grid" class="game-grid"></div>
+    </section>
+
+    <!-- BADGES -->
+    <section id="panel-badges" class="panel">
+      <h2>Badge case</h2>
+      <div id="badge-grid" class="badge-grid"></div>
+    </section>
+
+    <!-- SYNC -->
+    <section id="panel-sync" class="panel">
+      <h2>Sync console</h2>
+      <p class="sync-note">
+        The RGB10X runs fully offline. Unlock events queue in a local SQLite database on the
+        ArkOS partition. Attach a USB-C OTG Wi-Fi dongle and run the sync engine from the
+        ArkOS Options menu to push queued rows to this dashboard.
+      </p>
+      <div class="sync-grid">
+        <div class="sync-card">
+          <h3>Device</h3>
+          <dl>
+            <dt>Device ID</dt><dd id="sync-device">rgb10x_hw01</dd>
+            <dt>Last sync</dt><dd id="sync-last">never</dd>
+            <dt>Queued rows</dt><dd id="sync-queued">0</dd>
+          </dl>
+          <button id="btn-sync" class="btn">Sync now</button>
+          <button id="btn-pull" class="btn btn-ghost">Pull remote progress</button>
+        </div>
+        <div class="sync-card">
+          <h3>Local queue schema</h3>
+          <pre class="code">CREATE TABLE achievement_queue (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    game_hash TEXT NOT NULL,
+    achievement_id TEXT NOT NULL,
+    unlocked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    sync_status TEXT DEFAULT 'PENDING',
+    hardcore_mode INTEGER DEFAULT 1,
+    security_nonce TEXT NOT NULL
+);</pre>
+        </div>
+        <div class="sync-card">
+          <h3>Sync log</h3>
+          <ul id="sync-log" class="log"><li>Ready. No sync performed this session.</li></ul>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Sign-in modal -->
+  <dialog id="auth-dialog">
+    <form id="auth-form" method="dialog">
+      <h2>Sign in</h2>
+      <p class="modal-note">Supabase auth. If no backend is configured the app runs in offline
+      demo mode with progress stored locally in this browser.</p>
+      <label>Email <input type="email" name="email" required /></label>
+      <label>Password <input type="password" name="password" required minlength="6" /></label>
+      <div class="modal-actions">
+        <button type="submit" name="mode" value="signin" class="btn">Sign in</button>
+        <button type="submit" name="mode" value="signup" class="btn btn-ghost">Create account</button>
+        <button type="button" id="auth-cancel" class="btn btn-ghost">Cancel</button>
+      </div>
+      <p id="auth-error" class="error"></p>
+    </form>
+  </dialog>
+
+  <footer>
+    <p>Retro Gaming Journey · offline-first · GitHub Pages + Supabase · 600-title library</p>
+  </footer>
+
+  <script src="js/data.js"></script>
+  <script src="js/supabase-config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
