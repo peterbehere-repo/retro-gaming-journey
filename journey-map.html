@@ -170,13 +170,13 @@ function centerOn(x, y, s) {
 function fit() { scale = Math.min(vp.clientWidth / MAPW, vp.clientHeight / MAPH);
   tx = (vp.clientWidth - MAPW * scale) / 2; ty = (vp.clientHeight - MAPH * scale) / 2; apply(); }
 let touched = false;
-vp.addEventListener("wheel", e => { touched = true;
+vp.addEventListener("wheel", e => { touched = true; detachPt();
   e.preventDefault();
   const r = vp.getBoundingClientRect();
   zoomAt(e.clientX - r.left, e.clientY - r.top, scale * (e.deltaY < 0 ? 1.25 : 0.8));
 }, { passive: false });
 let drag = null, moved = 0;
-vp.addEventListener("mousedown", e => { drag = { x: e.clientX, y: e.clientY, tx, ty }; moved = 0; vp.classList.add("dragging"); });
+vp.addEventListener("mousedown", e => { drag = { x: e.clientX, y: e.clientY, tx, ty }; moved = 0; vp.classList.add("dragging"); detachPt(); });
 window.addEventListener("mousemove", e => {
   if (!drag) return;
   const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
@@ -184,18 +184,27 @@ window.addEventListener("mousemove", e => {
   tx = drag.tx + dx; ty = drag.ty + dy; apply();
 });
 window.addEventListener("mouseup", () => { drag = null; vp.classList.remove("dragging"); });
-document.getElementById("zin").onclick = () => { touched = true; zoomAt(vp.clientWidth / 2, vp.clientHeight / 2, scale * 1.4); };
-document.getElementById("zout").onclick = () => { touched = true; zoomAt(vp.clientWidth / 2, vp.clientHeight / 2, scale / 1.4); };
-document.getElementById("zfit").onclick = fit;
+document.getElementById("zin").onclick = () => { touched = true; detachPt(); zoomAt(vp.clientWidth / 2, vp.clientHeight / 2, scale * 1.4); };
+document.getElementById("zout").onclick = () => { touched = true; detachPt(); zoomAt(vp.clientWidth / 2, vp.clientHeight / 2, scale / 1.4); };
+document.getElementById("zfit").onclick = fitAll;
 const PT_ZOOM = 5 / 1.4;   // template zoom used for every path point
 const ptsel = document.getElementById("ptsel");
+// A real "fit" state: if pt 1 were pre-selected here, choosing pt 1 would fire
+// no change event and the map would never zoom to it.
+{
+  const o = document.createElement("option"); o.value = ""; o.textContent = "whole map (fit)";
+  ptsel.appendChild(o);
+}
 DATA.games.forEach((g, i) => {
   const o = document.createElement("option"); o.value = i; o.textContent = "pt " + (i + 1);
   ptsel.appendChild(o);
 });
-ptsel.value = 0;
+ptsel.value = "";          // start fitted, with no path point selected
 function goPt(i) { touched = true; const g = DATA.games[i]; centerOn(g.x, g.y, PT_ZOOM); ptsel.value = i; }
-ptsel.onchange = () => goPt(+ptsel.value);
+// manual pan/zoom leaves the chosen point, so the dropdown must stop claiming it
+function detachPt() { if (ptsel.value !== "") ptsel.value = ""; }
+function fitAll() { touched = true; ptsel.value = ""; fit(); }
+ptsel.onchange = () => { if (ptsel.value === "") { touched = true; fit(); } else goPt(+ptsel.value); };
 // suppress click-through after a drag
 document.querySelectorAll(".pnode").forEach(el => {
   el.addEventListener("click", e => { if (moved > 5) { e.stopImmediatePropagation(); e.preventDefault(); } }, true);
