@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Retro Gaming Journey</title>
   <meta name="description" content="Offline-first retro emulation progress dashboard. Sync your handheld achievements on demand." />
-  <link rel="stylesheet" href="css/styles.css?v=iter1" />
+  <link rel="stylesheet" href="css/styles.css?v=iter2" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎮</text></svg>" />
 </head>
 <body>
@@ -25,6 +25,7 @@
 
   <nav class="tabs" role="tablist">
     <button class="tab active" data-tab="dashboard" role="tab">Dashboard</button>
+    <button class="tab" data-tab="journey" role="tab">Journey</button>
     <button class="tab" data-tab="library" role="tab">Library</button>
     <button class="tab" data-tab="badges" role="tab">Badges</button>
     <button class="tab" data-tab="sync" role="tab">Sync</button>
@@ -60,6 +61,17 @@
 
       <h2>Recent unlocks</h2>
       <ul id="recent-unlocks" class="recent"></ul>
+    </section>
+
+    <!-- JOURNEY -->
+    <section id="panel-journey" class="panel">
+      <h2>Journey map</h2>
+      <p class="scope-note">The NES route as one continuous trail &mdash; twenty path points from the Contra jungle
+      to the final fortress, each with its own artwork and three achievement tiers. Click any number
+      to open that game&rsquo;s card.</p>
+      <div class="journey-frame-wrap">
+        <iframe id="journey-frame" title="Journey map" data-src="journey-map.html?v=iter4"></iframe>
+      </div>
     </section>
 
     <!-- LIBRARY -->
@@ -154,9 +166,9 @@
     <p>Retro Gaming Journey · offline-first · GitHub Pages + Supabase · iteration 1: NES (100 titles)</p>
   </footer>
 
-  <script src="js/data.js?v=iter1"></script>
+  <script src="js/data.js?v=iter2"></script>
   <script src="js/supabase-config.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/app.js?v=iter1"></script>
+  <script src="js/app.js?v=iter2"></script>
 </body>
 </html>

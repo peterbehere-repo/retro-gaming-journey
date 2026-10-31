@@ -252,7 +252,19 @@ document.querySelectorAll(".tab").forEach(t =>
     document.querySelectorAll(".panel").forEach(p =>
       p.classList.toggle("active", p.id === `panel-${t.dataset.tab}`));
     if (t.dataset.tab === "sync") loadAssetIndex();
+    if (t.dataset.tab === "journey") loadJourney();
   }));
+
+// The journey map is a self-contained 13 MB document (worldmap + per-game artwork
+// inlined as data URIs), so it stays out of the page payload until the tab is used.
+let journeyLoaded = false;
+function loadJourney() {
+  if (journeyLoaded) return;
+  const f = document.getElementById("journey-frame");
+  if (!f || !f.dataset.src) return;
+  f.src = f.dataset.src;
+  journeyLoaded = true;
+}
 
 // Serverless frontend mapping: fetch the asset route index only when the sync
 // console is opened — the 1,800-asset payload itself stays in the zip.
