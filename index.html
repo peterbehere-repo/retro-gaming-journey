@@ -123,6 +123,29 @@
           </div>
           <p class="usb-hint" id="usb-hint"></p>
         </div>
+
+        <div class="sync-card usb-card" id="fsa-card">
+          <h3>SD card / handheld volume <span id="fsa-pill" class="usb-pill">not linked</span></h3>
+          <p class="sync-note">
+            ArkOS, Spruce and Onion handhelds mount as an ordinary USB drive. Browsers can't list
+            drives for security, but grant the card root once and this page reads the queue straight
+            off it — and writes an ack back so the device can prune what was taken.
+          </p>
+          <dl>
+            <dt>Device</dt><dd id="fsa-device">—</dd>
+            <dt>OS / schema</dt><dd id="fsa-os">—</dd>
+            <dt>Volume</dt><dd id="fsa-volume">—</dd>
+            <dt>Queue</dt><dd id="fsa-queue">—</dd>
+            <dt>Last ack</dt><dd id="fsa-last-ack">—</dd>
+          </dl>
+          <div class="usb-actions">
+            <button id="btn-fsa-link" class="btn btn-small">Link handheld folder</button>
+            <button id="btn-fsa-pull" class="btn btn-ghost btn-small" disabled>Pull from card</button>
+            <button id="btn-fsa-prepare" class="btn btn-ghost btn-small">Prepare card</button>
+            <button id="btn-fsa-forget" class="btn btn-ghost btn-small">Forget</button>
+          </div>
+          <p class="usb-hint" id="fsa-hint"></p>
+        </div>
         <div class="sync-card">
           <h3>Device</h3>
           <dl>
@@ -193,5 +216,6 @@
   <script src="js/supabase-config.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/app.js?v=iter5"></script>
+  <script src="js/sdcard.js?v=1"></script>
 </body>
 </html>

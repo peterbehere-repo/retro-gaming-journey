@@ -604,6 +604,14 @@ function initUsb() {
         usbPill("authorise", "warn");
         usbEvent(`plugged in — ${usbId(d.vendorId)}:${usbId(d.productId)}`);
         logSync(`USB device plugged in: ${usbId(d.vendorId)}:${usbId(d.productId)}. Press “Find USB device” to authorise it.`, "ok");
+        // Mass-storage handhelds (ArkOS/Spruce/Onion, card readers) can't be opened by the
+        // browser — point the user at the folder adapter instead of a dead end.
+        const fsaHintEl = document.querySelector("#fsa-hint");
+        if (window.showDirectoryPicker) {
+          if (fsaHintEl) fsaHintEl.innerHTML =
+            "<strong>Device just plugged in.</strong> If it mounted as a removable drive, press " +
+            "<em>Link handheld folder</em> and pick the card root — detection came from WebUSB, the read happens over the folder handle.";
+        }
       }
     });
     navigator.usb.addEventListener("disconnect", (e) => {
