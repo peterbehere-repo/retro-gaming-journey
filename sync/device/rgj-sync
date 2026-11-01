@@ -230,6 +230,10 @@ do_prune() {
   [ -f "$QUEUE" ] || { release_lock; say "queue is empty — nothing to prune"; return 0; }
   ack_keys
   mktmp
+  # awk only creates a redirect target when it writes to it, so a run where every row is
+  # acked would leave queue.new absent and the mv below would fail. Create both up front.
+  : > "$TMPD/pruned"
+  : > "$TMPD/queue.new"
   awk -v ackf="$TMPD/ack.sorted" -v pruned="$TMPD/pruned" -v kept="$TMPD/queue.new" "$AWKLIB"'
     BEGIN { while ((getline l < ackf) > 0) acked[l] = 1 }
     {
@@ -243,8 +247,14 @@ do_prune() {
 
   read npr nkeep < "$TMPD/counts" 2>/dev/null || { npr=0; nkeep=0; }
   if [ "${npr:-0}" -gt 0 ]; then
-    cat "$TMPD/pruned" >> "$PRUNED"
-    mv "$TMPD/queue.new" "$QUEUE"
+    # Move first, then record: if the rewrite fails the queue must stay exactly as it was,
+    # and a half-written audit trail would be worse than none.
+    [ -f "$TMPD/queue.new" ] || : > "$TMPD/queue.new"
+    if mv "$TMPD/queue.new" "$QUEUE"; then
+      cat "$TMPD/pruned" >> "$PRUNED"
+    else
+      die "could not rewrite $QUEUE — queue left unchanged"
+    fi
   fi
   release_lock
   say "pruned $npr acked row(s); $nkeep still queued"
