@@ -81,3 +81,33 @@ never need to open them.
 - Does the Miyoo A30 (Spruce) expose mass storage by default, or behind a menu toggle?
 - Which Wi-Fi file app ships in current Onion OS, and does it support HTTP or only FTP?
 - GammaOS build: is USB debugging on by default, and does the ADB interface survive while MTP is active?
+
+## Two SD cards on the MTP devices (answered 2026-11-01)
+
+The first cut linked **one** folder, so a save on the secondary card was invisible. Corrected:
+the page keeps a **list of volumes**, each one a remembered directory handle. Sync walks all of
+them; ack files are written back per volume so the device-side script can prune each queue
+independently.
+
+Why it had to work this way: the browser cannot enumerate drives. `showDirectoryPicker()` returns
+exactly the folder the user clicks. There is no API for "list mounted volumes", and no way to move
+from one volume to its sibling. So detection is by *identity*, not by scanning the port:
+
+1. User links each card once ("Link another volume"). Handles persist in IndexedDB, so a card
+   already granted shows up straight away on the next session — no re-click.
+2. Each volume is probed for `rgj-device.json`. If present we know model, OS and the queue path;
+   if absent the volume is a **save-only card** and is accepted as such (a second card usually
+   holds just `saves/` and `roms/`).
+3. If the marker's queue path is missing, the adapter also probes `rgj-queue.jsonl`,
+   `saves/rgj/`, `roms/rgj/` — a second card formatted by a different ArkOS build still works.
+4. Pull reads every linked volume, dedupes rows across volumes (same `hash|aid|timestamp` seen
+   twice collapses), and writes `rgj/rgj-ack.json` + `rgj/rgj-ack.keys` to each volume it took
+   rows from.
+
+Keep the card labels distinct. Both cards of one device may mount with the same filesystem
+label; rename one (`RGB30-slot2`) or the handle list will look ambiguous. Volume identity in the
+UI is `<label> · <device_id|no marker>`.
+
+Windows caveat: the SD reader often mounts both cards and the device's own internal partition
+at the same time. Linking a *device that is itself an MTP device* is not needed for saves —
+pull the cards, or use the ADB path for the RG405M's internal storage.
