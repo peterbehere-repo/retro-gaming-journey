@@ -1,0 +1,306 @@
+#!/bin/sh
+# rgj-sync 0.2 — Retro Gaming Journey, on-device queue keeper.
+#
+# One POSIX shell script for the whole Linux fleet:
+#   ArkOS    : PowKiddy RGB30, PowKiddy RGB10X, Batlexp G350
+#   Spruce   : Miyoo A30
+#   Onion    : Miyoo Mini Plus
+#
+# No Python, no jq, no network. Uses only busybox/coreutils tools that ship with
+# all three firmwares (sh, awk, sort, mv, mkdir, date, wc).
+#
+# The contract with the web dashboard (see docs/Device Sync Matrix.md):
+#   <root>/rgj-device.json     device identity marker (written by `init` or the page)
+#   <root>/rgj/rgj-queue.jsonl rows waiting to be pulled   (NDJSON, one hit per line)
+#   <root>/rgj/rgj-ack.json    ack written by the dashboard after a pull
+#   <root>/rgj/rgj-ack.keys    same ack as flat keys, written for this script
+#   <root>/rgj/rgj-pruned.jsonl rows this script has handed back (never deleted)
+#
+# Usage:
+#   rgj-sync status                what is queued, what has been acked
+#   rgj-sync add [FILE]            append capture spool rows to the queue (deduped)
+#   rgj-sync prune                 move acked rows out of the queue into rgj-pruned.jsonl
+#   rgj-sync tick                  add + prune, for a boot hook or menu launcher
+#   rgj-sync init --id ID --model MODEL [--os OS]
+#   rgj-sync doctor                check paths and tools
+#
+# Environment:
+#   RGJ_ROOT   card volume root (auto-detected from /roms, /storage/roms, ...)
+
+set -u
+VERSION="0.2"
+
+say()  { printf '%s\n' "$*"; }
+warn() { printf 'rgj-sync: %s\n' "$*" >&2; }
+die()  { warn "$*"; exit 1; }
+
+# ---------------------------------------------------------------- root lookup
+find_root() {
+  if [ -n "${RGJ_ROOT:-}" ]; then
+    [ -d "$RGJ_ROOT" ] || die "RGJ_ROOT=$RGJ_ROOT is not a directory"
+    printf '%s\n' "$RGJ_ROOT"; return 0
+  fi
+  for c in /roms /storage/roms /media/roms /mnt/roms "$HOME/roms" \
+           /media/sdcard /mnt/sdcard /storage "$PWD"; do
+    [ -d "$c" ] || continue
+    if [ -f "$c/rgj-device.json" ] || [ -d "$c/rgj" ]; then
+      printf '%s\n' "$c"; return 0
+    fi
+  done
+  return 1
+}
+
+ROOT=$(find_root) || die "no card root found — set RGJ_ROOT to the volume holding rgj-device.json"
+RGJ="$ROOT/rgj"
+QUEUE="$RGJ/rgj-queue.jsonl"
+ACK="$RGJ/rgj-ack.json"
+KEYS="$RGJ/rgj-ack.keys"
+PRUNED="$RGJ/rgj-pruned.jsonl"
+SPOOL="$RGJ/capture.spool.jsonl"
+MARKER="$ROOT/rgj-device.json"
+
+ensure_dirs() { mkdir -p "$RGJ" || die "cannot create $RGJ"; }
+
+# ---------------------------------------------------------------- locking
+LOCK="$RGJ/.rgj-sync.lock"
+locked=0
+take_lock() {
+  ensure_dirs
+  i=0
+  while [ $i -lt 40 ]; do
+    if mkdir "$LOCK" 2>/dev/null; then
+      locked=1; trap 'release_lock' EXIT INT TERM HUP
+      printf '%s\n' $$ > "$LOCK/pid" 2>/dev/null || :
+      return 0
+    fi
+    # stale lock: no live pid inside
+    if [ -f "$LOCK/pid" ] && ! kill -0 "$(cat "$LOCK/pid" 2>/dev/null)" 2>/dev/null; then
+      rm -rf "$LOCK" 2>/dev/null || :
+      continue
+    fi
+    sleep 0.25
+    i=$((i + 1))
+  done
+  return 1
+}
+release_lock() { [ "$locked" = 1 ] && rm -rf "$LOCK" 2>/dev/null; locked=0; }
+
+# ---------------------------------------------------------------- awk helpers
+# field(): pull a string or number field out of one JSON object on one line.
+AWKLIB='
+function field(line, name,   pat, s) {
+  pat = "\"" name "\":[ \t]*\"[^\"]*\""
+  if (match(line, pat)) { s = substr(line, RSTART, RLENGTH); sub(/^"[^"]*":[ \t]*"/, "", s); sub(/"$/, "", s); return s }
+  pat = "\"" name "\":[ \t]*[0-9.]+"
+  if (match(line, pat)) { s = substr(line, RSTART, RLENGTH); sub(/^"[^"]*":[ \t]*/, "", s); return s }
+  pat = "\"" name "\":[ \t]*(true|false|yes|no)"
+  if (match(line, pat)) { s = substr(line, RSTART, RLENGTH); sub(/^"[^"]*":[ \t]*/, "", s); return s }
+  return ""
+}
+function keyof(line) { return field(line,"game_hash") "|" field(line,"achievement_id") "|" field(line,"timestamp") }
+'
+
+TMPD=""
+mktmp() {
+  [ -n "$TMPD" ] && return 0
+  TMPD=$(mktemp -d 2>/dev/null) || TMPD="$RGJ/.tmp.$$"
+  mkdir -p "$TMPD" || die "cannot create temp dir"
+}
+
+# keys present in the ack: one "hash|aid|ts" per line
+ack_keys() {
+  mktmp
+  : > "$TMPD/ack.keys"
+  [ -f "$KEYS" ] && sed 's/\r$//' "$KEYS" | awk 'NF' >> "$TMPD/ack.keys"
+  if [ -f "$ACK" ]; then
+    # fall back to the JSON ack when the flat key file is absent
+    awk "$AWKLIB"'
+      /\"game_hash\"/ {
+        gh = field($0,"game_hash"); aid = field($0,"achievement_id"); ts = field($0,"timestamp")
+        if (gh != "" && ts != "") print gh "|" aid "|" ts
+      }' "$ACK" >> "$TMPD/ack.keys"
+  fi
+  sort -u "$TMPD/ack.keys" > "$TMPD/ack.sorted"
+}
+
+# ---------------------------------------------------------------- commands
+do_status() {
+  count() { awk 'NF { n++ } END { print n + 0 }' "$1" 2>/dev/null || echo 0; }
+  q=0; [ -f "$QUEUE" ] && q=$(count "$QUEUE")
+  p=0; [ -f "$PRUNED" ] && p=$(count "$PRUNED")
+  spool_all=0; [ -f "$SPOOL" ] && spool_all=$(count "$SPOOL")
+  ack_keys; a=$(count "$TMPD/ack.sorted")
+  # spool rows that are genuinely unknown = not yet queued, not yet acked
+  s=$spool_all
+  if [ "$spool_all" -gt 0 ]; then
+    { awk "$AWKLIB"'
+        NF { k = keyof($0); if (k ~ /\|[0-9]/) print k }' "$QUEUE" 2>/dev/null
+      cat "$TMPD/ack.sorted" 2>/dev/null
+    } | sort -u > "$TMPD/known2"
+    s=$(awk -v kf="$TMPD/known2" "$AWKLIB"'
+      BEGIN { while ((getline l < kf) > 0) seen[l] = 1 }
+      NF { k = keyof($0); if (!(k in seen)) n++ }
+      END { print n + 0 }' "$SPOOL")
+  fi
+
+  say "root      : $ROOT"
+  if [ -f "$MARKER" ]; then
+    m=$(tr -d '\n\r' < "$MARKER" | head -c 600)
+    id=$(printf '%s' "$m" | awk "$AWKLIB"' { print field($0,"device_id") }')
+    mo=$(printf '%s' "$m" | awk "$AWKLIB"' { print field($0,"model") }')
+    os=$(printf '%s' "$m" | awk "$AWKLIB"' { print field($0,"os") }')
+    say "device    : ${mo:-unnamed} · ${id:-no id}"
+    say "os        : ${os:-unknown}"
+  else
+    say "device    : no rgj-device.json (run: rgj-sync init --id ... --model ...)"
+  fi
+  say "queue     : $q row(s)  $QUEUE"
+  say "acked     : $a key(s) known to the dashboard"
+  say "spool     : $s row(s) not yet queued  $SPOOL"
+  say "pruned    : $p row(s) handed back  $PRUNED"
+
+  if [ -f "$QUEUE" ] && [ "$q" -gt 0 ]; then
+    awk "$AWKLIB"'
+      { k = keyof($0); ts = field($0,"timestamp") + 0;
+        games[k] = field($0,"game_hash");
+        if (min == "" || ts < min) min = ts
+        if (ts > max) max = ts
+        n++ }
+      END {
+        g = 0; for (x in games) g++;
+        printf "oldest    : %s\n", (min == "" ? "-" : strftime("%Y-%m-%d %H:%M", min))
+        printf "newest    : %s\n", (max == "" ? "-" : strftime("%Y-%m-%d %H:%M", max))
+        printf "games     : %d distinct\n", g
+      }' "$QUEUE" 2>/dev/null || :
+  fi
+  [ "$s" -gt 0 ] && say "next      : rgj-sync add"
+  [ "$q" -gt 0 ] && say "next      : plug into the PC and press \"Pull from card\" on the Sync tab"
+}
+
+do_add() {
+  src="${1:-$SPOOL}"
+  [ -f "$src" ] || { say "nothing to add — $src does not exist"; return 0; }
+  take_lock || die "another rgj-sync is running (remove $LOCK if stale)"
+  ensure_dirs
+  [ -f "$QUEUE" ] || : > "$QUEUE"
+  mktmp
+  ack_keys
+  before=$(awk 'NF { n++ } END { print n + 0 }' "$QUEUE" 2>/dev/null || echo 0)
+  # known = everything already queued plus everything already acked
+  { awk "$AWKLIB"'
+      NF { k = keyof($0); if (k ~ /\|[0-9]/) print k }' "$QUEUE" 2>/dev/null
+    cat "$TMPD/ack.sorted" 2>/dev/null
+  } | sort -u > "$TMPD/known"
+
+  awk -v known="$TMPD/known" "$AWKLIB"'
+    BEGIN { while ((getline l < known) > 0) seen[l] = 1 }
+    {
+      sub(/\r$/, "")
+      if ($0 !~ /game_hash/) next
+      gh = field($0,"game_hash"); aid = field($0,"achievement_id"); ts = field($0,"timestamp")
+      if (gh == "" || aid == "" || ts == "") { skipped++; next }
+      k = gh "|" aid "|" ts
+      if (k in seen) { dupes++; next }
+      seen[k] = 1
+      if ($0 !~ /hardcore/) {
+        sub(/\}[ \t]*$/, ",\"hardcore\":false}", $0)
+      }
+      print
+      taken++
+    }
+    END { printf "%d %d %d\n", taken + 0, dupes + 0, skipped + 0 > "/dev/stderr" }
+  ' "$src" > "$TMPD/new.rows" 2> "$TMPD/counts"
+
+  read taken dupes skipped < "$TMPD/counts" 2>/dev/null || { taken=0; dupes=0; skipped=0; }
+  if [ "${taken:-0}" -gt 0 ]; then
+    cat "$TMPD/new.rows" >> "$QUEUE"
+  fi
+  after=$(awk 'NF { n++ } END { print n + 0 }' "$QUEUE" 2>/dev/null || echo 0)
+  release_lock
+  say "added $taken row(s) to the queue ($dupes already seen, $skipped malformed)"
+  say "queue: $before -> $after row(s)"
+  [ "${taken:-0}" -eq 0 ] && say "spool left untouched: $src"
+}
+
+do_prune() {
+  take_lock || die "another rgj-sync is running (remove $LOCK if stale)"
+  [ -f "$QUEUE" ] || { release_lock; say "queue is empty — nothing to prune"; return 0; }
+  ack_keys
+  mktmp
+  awk -v ackf="$TMPD/ack.sorted" -v pruned="$TMPD/pruned" -v kept="$TMPD/queue.new" "$AWKLIB"'
+    BEGIN { while ((getline l < ackf) > 0) acked[l] = 1 }
+    {
+      sub(/\r$/, "")
+      if ($0 !~ /game_hash/) { print $0 > kept; nk++; next }
+      k = keyof($0)
+      if (k in acked) { print $0 > pruned; npr++; next }
+      print $0 > kept; nk++
+    }
+    END { printf "%d %d\n", npr + 0, nk + 0 > "/dev/stderr" }' "$QUEUE" 2> "$TMPD/counts"
+
+  read npr nkeep < "$TMPD/counts" 2>/dev/null || { npr=0; nkeep=0; }
+  if [ "${npr:-0}" -gt 0 ]; then
+    cat "$TMPD/pruned" >> "$PRUNED"
+    mv "$TMPD/queue.new" "$QUEUE"
+  fi
+  release_lock
+  say "pruned $npr acked row(s); $nkeep still queued"
+  [ "$npr" -gt 0 ] && say "rows appended to $PRUNED (never deleted)"
+}
+
+do_tick() { do_add "${1:-$SPOOL}"; do_prune; }
+
+do_init() {
+  id=""; model=""; os="ArkOS"; schema=1; queue="rgj/rgj-queue.jsonl"; ack="rgj/rgj-ack.json"
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --id) id="$2"; shift 2 ;;
+      --model) model="$2"; shift 2 ;;
+      --os) os="$2"; shift 2 ;;
+      *) die "unknown init option: $1" ;;
+    esac
+  done
+  [ -n "$id" ] || die "init needs --id (e.g. --id rgb30_hw01)"
+  [ -n "$model" ] || model="$id"
+  ensure_dirs
+  if [ -f "$MARKER" ]; then
+    say "$MARKER already exists — left untouched"
+  else
+    cat > "$MARKER" <<JSON
+{
+  "device_id": "$id",
+  "model": "$model",
+  "os": "$os",
+  "schema": $schema,
+  "queue": "$queue",
+  "ack": "$ack"
+}
+JSON
+    say "wrote $MARKER ($id)"
+  fi
+  [ -f "$QUEUE" ] || : > "$QUEUE"
+  say "queue file ready: $QUEUE"
+}
+
+do_doctor() {
+  say "rgj-sync $VERSION"
+  say "root      : $ROOT"
+  say "writable  : $( ( : > "$RGJ/.wtest" ) 2>/dev/null && printf yes || printf 'NO — check the mount is not read-only' )"
+  rm -f "$RGJ/.wtest" 2>/dev/null || :
+  for t in awk sort sed grep mktemp date tr wc; do
+    if command -v $t >/dev/null 2>&1; then say "tool $t : ok"; else say "tool $t : MISSING"; fi
+  done
+  [ -f "$MARKER" ] && say "marker    : ok" || say "marker    : missing (run init)"
+  say "ack keys  : $(awk 'NF { n++ } END { print n + 0 }' "$KEYS" 2>/dev/null || echo 0)"
+}
+
+case "${1:-status}" in
+  status)  do_status ;;
+  add)     shift; do_add "$@" ;;
+  prune)   do_prune ;;
+  tick)    shift; do_tick "$@" ;;
+  init)    shift; do_init "$@" ;;
+  doctor)  do_doctor ;;
+  -h|--help|help) sed -n '2,40p' "$0" | sed 's/^# \{0,1\}//' ;;
+  *) die "unknown command: $1 (try: status, add, prune, tick, init, doctor)" ;;
+esac

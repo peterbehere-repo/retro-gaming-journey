@@ -10,6 +10,7 @@ const FSA = {
   device: null,     // parsed rgj-device.json
   queuePath: "rgj/rgj-queue.jsonl",
   ackPath: "rgj/rgj-ack.json",
+  ackKeysPath: "rgj/rgj-ack.keys",
   markerPath: "rgj-device.json"
 };
 
@@ -233,6 +234,12 @@ async function fsaPull() {
     };
     try {
       await fsaWrite(FSA.ackPath, JSON.stringify(ack, null, 2) + "\n");
+      // flat key file: one "hash|aid|timestamp" per line, readable by the
+      // device-side rgj-sync script without a JSON parser.
+      const priorKeys = (await fsaExists(FSA.ackKeysPath)) ? await fsaRead(FSA.ackKeysPath) : "";
+      const fresh = new Set(priorKeys.split("\n").map(l => l.trim()).filter(Boolean));
+      for (const r of ack.rows) fresh.add(`${r.game_hash}|${r.achievement_id}|${r.timestamp}`);
+      await fsaWrite(FSA.ackKeysPath, [...fresh].join("\n") + "\n");
       logSync(`Ack written to ${FSA.ackPath} (${added} row(s)) — the device may now prune them.`, "ok");
     } catch (e) {
       logSync(`Ack write failed: ${e.message}. Rows are still queued here, so nothing is lost.`, "err");
