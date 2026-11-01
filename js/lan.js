@@ -56,11 +56,7 @@ window.LAN = (function () {
       if (o.allowBridge !== false && window.RGJ_BRIDGE && typeof window.RGJ_BRIDGE.fetch === "function") {
         return window.RGJ_BRIDGE.fetch(url, o);
       }
-      throw new Error(
-        "could not reach " + new URL(url).host + " — either the device is off the network, or the " +
-        "browser blocked the cross-origin read (FileBrowser sends no CORS headers). " +
-        "See the note under this card."
-      );
+      throw new Error(diagnose(url, o.hostInput));
     }
     const text = await res.text();
     return { status: res.status, ok: res.ok, text: text };
@@ -69,10 +65,34 @@ window.LAN = (function () {
   function baseOf(host) {
     let h = String(host || "").trim().replace(/\s+/g, "");
     if (!h) throw new Error("device host is empty");
+    // A same-origin path (e.g. "/ark") means a local proxy is forwarding to the device.
+    // That is the only arrangement the browser permits: FileBrowser sends no CORS headers,
+    // so a direct cross-origin fetch is blocked no matter what. Going through a proxy on the
+    // page's own origin sidesteps CORS, mixed content and Private Network Access at once.
+    if (h.startsWith("/")) {
+      return h.replace(/\/+$/, "").replace(/\/api$/i, "");
+    }
     if (!/^https?:\/\//i.test(h)) h = "http://" + h;
     h = h.replace(/\/+$/, "");
     h = h.replace(/\/api$/i, "");
     return h;
+  }
+
+  // Explain a failed fetch in terms the user can act on.
+  function diagnose(url, hostInput) {
+    const direct = !String(hostInput || "").trim().startsWith("/");
+    const pageHttps = location.protocol === "https:";
+    const targetHttp = /^http:\/\//i.test(url);
+    if (direct && pageHttps && targetHttp) {
+      return "Blocked: this page is https and the handheld is http, so Chrome drops the request " +
+        "as mixed content (and refuses the private address outright). Use the local proxy below.";
+    }
+    if (direct) {
+      return "Blocked by CORS: FileBrowser sends no Access-Control-Allow-Origin header, so a page " +
+        "on a different origin cannot read its responses. Use the local proxy below.";
+    }
+    return "The proxy could not reach " + url + " — check that Remote Services is enabled " +
+      "(ArkOS turns it off at every reboot) and that the IP is current.";
   }
 
   function encodePath(p) {
@@ -84,7 +104,8 @@ window.LAN = (function () {
     const r = await http(base + "/api/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username: user, password: pass })
+      body: JSON.stringify({ username: user, password: pass }),
+      hostInput: host
     });
     if (r.status === 403) throw new Error("username or password refused (403)");
     if (!r.ok) throw new Error("login failed: HTTP " + r.status);
