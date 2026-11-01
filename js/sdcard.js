@@ -111,6 +111,7 @@ function fsaRenderVolumes() {
 
 /* ---------- per-volume file helpers ---------- */
 async function fsaReadAt(vol, path) {
+  if (vol.kind === "lan") return LAN.read(vol, path);
   const parts = path.split("/");
   const name = parts.pop();
   let dir = vol.handle;
@@ -119,6 +120,7 @@ async function fsaReadAt(vol, path) {
   return (await fh.getFile()).text();
 }
 async function fsaWriteAt(vol, path, text) {
+  if (vol.kind === "lan") return LAN.write(vol, path, text);
   const parts = path.split("/");
   const name = parts.pop();
   let dir = vol.handle;
@@ -132,6 +134,7 @@ async function fsaWriteAt(vol, path, text) {
   await w.close();
 }
 async function fsaExistsAt(vol, path) {
+  if (vol.kind === "lan") return LAN.exists(vol, path);
   try {
     const parts = path.split("/");
     const name = parts.pop();
@@ -263,6 +266,17 @@ async function fsaPrepare() {
 
 /* ---------- permission + pull + ack ---------- */
 async function fsaEnsurePermission(vol) {
+  // LAN volumes authenticate with a token, not a browser grant: re-check the token instead.
+  if (vol.kind === "lan") {
+    try {
+      vol.permitted = await fsaExistsAt(vol, FSA.markerPath);
+    } catch (e) {
+      vol.permitted = false;
+      logSync(`${vol.handle.name}: token refused (${e.message}) — reconnect over Wi-Fi.`, "err");
+      return false;
+    }
+    return vol.permitted;
+  }
   const opts = { mode: "readwrite" };
   try {
     if ((await vol.handle.queryPermission(opts)) === "granted") { vol.permitted = true; return true; }

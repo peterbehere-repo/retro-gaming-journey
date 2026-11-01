@@ -208,3 +208,12 @@ footer { padding: 1.2rem; text-align: center; font-size: .7rem; color: var(--mut
 }
 .usb-volumes .vol-meta { color: var(--muted, #9aa4b2); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .72rem; }
 .usb-pill.err { color: #ff8080; border-color: #ff8080; background: rgba(255,128,128,.1); }
+
+/* Wi-Fi / FileBrowser form */
+.lan-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: .6rem; margin: .6rem 0; }
+.lan-form label { display: grid; gap: .25rem; font-size: .72rem; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+.lan-form input {
+  font: inherit; font-size: .8rem; padding: .45rem .55rem; border-radius: 6px;
+  border: 1px solid var(--border); background: #0a0c16; color: var(--fg, #e6ecf5);
+}
+.lan-form input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }

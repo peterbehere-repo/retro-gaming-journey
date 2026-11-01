@@ -124,6 +124,27 @@
           <p class="usb-hint" id="usb-hint"></p>
         </div>
 
+        <div class="sync-card usb-card" id="lan-card">
+          <h3>Handheld over Wi-Fi (FileBrowser) <span id="lan-pill" class="usb-pill">not connected</span></h3>
+          <p class="sync-note">
+            ArkOS ships <em>ArkOS Browser</em> (FileBrowser), which serves the EASYROMS tree over HTTP.
+            Options → <em>Enable Remote Services</em> on the device, then sign in here with
+            <code>ark</code> / <code>ark</code>. This is the only channel that reaches a <em>running</em>
+            ArkOS handheld without pulling the card — and it reads both card slots in one connection.
+          </p>
+          <div class="lan-form">
+            <label>Host <input id="lan-host" type="text" placeholder="http://rgb30" autocomplete="off" spellcheck="false"></label>
+            <label>User <input id="lan-user" type="text" value="ark" autocomplete="username" spellcheck="false"></label>
+            <label>Password <input id="lan-pass" type="password" autocomplete="current-password"></label>
+          </div>
+          <ul class="usb-volumes" id="lan-volumes"></ul>
+          <div class="usb-actions">
+            <button id="btn-lan-connect" class="btn btn-small">Connect over Wi-Fi</button>
+            <button id="btn-lan-forget" class="btn btn-ghost btn-small">Disconnect</button>
+          </div>
+          <p class="usb-hint" id="lan-hint"></p>
+        </div>
+
         <div class="sync-card usb-card" id="mtp-card">
           <h3>MTP device (USB cable) <span id="mtp-pill" class="usb-pill">checking</span></h3>
           <p class="sync-note">
@@ -237,7 +258,8 @@
   <script src="js/supabase-config.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/app.js?v=iter5"></script>
-  <script src="js/sdcard.js?v=2"></script>
+  <script src="js/lan.js?v=1"></script>
+  <script src="js/sdcard.js?v=3"></script>
   <script type="module" src="js/mtp.js?v=1"></script>
   <script>
     // The MTP adapter is an ES module: file:// blocks module loading, and WebUSB needs a
