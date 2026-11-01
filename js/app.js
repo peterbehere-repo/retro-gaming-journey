@@ -456,9 +456,87 @@ function linkedDeviceId() {
   return ids.join(", ");
 }
 
+
+/* ------------------------------------------------------------------ */
+/* RetroAchievements progress                                          */
+/* ------------------------------------------------------------------ */
+
+function raHint(msg, cls) {
+  const el = $("#ra-hint");
+  if (!el) return;
+  el.textContent = msg || "";
+  el.className = "usb-hint" + (cls ? " " + cls : "");
+}
+
+function renderRA() {
+  if (typeof RA === "undefined" || !$("#ra-card")) return;
+  const s = RA.summary();
+  if (s.configured) {
+    $("#ra-user").value = s.user;
+    $("#ra-key").value = "";
+    $("#ra-key").placeholder = "saved — leave blank to keep";
+    const when = s.lastPull ? new Date(s.lastPull).toLocaleString() : "never";
+    raHint(`${s.user} · ${s.tracked} game${s.tracked === 1 ? "" : "s"} tracked · pulled ${when}`);
+    const box = $("#ra-unmatched");
+    const list = (RA._state().unmatched || []);
+    box.innerHTML = list.length
+      ? `<li class="warn">${list.length} library title${list.length === 1 ? "" : "s"} not found on RetroAchievements:</li>` +
+        list.slice(0, 12).map(t => `<li>${esc(t)}</li>`).join("") +
+        (list.length > 12 ? `<li>…and ${list.length - 12} more</li>` : "")
+      : "";
+  } else {
+    $("#ra-key").placeholder = "32-character key";
+    raHint("Not connected. Saves locally; nothing is sent anywhere until you pull.");
+    $("#ra-unmatched").innerHTML = "";
+  }
+}
+
+$("#btn-ra-save").addEventListener("click", () => {
+  const u = $("#ra-user").value.trim();
+  const saved = RA.summary().configured ? RA._state().key : "";
+  const k = $("#ra-key").value.trim() || saved;
+  if (!u) return raHint("Enter your RA username.", "err");
+  if (!k) return raHint("Enter your web API key.", "err");
+  RA.configure(u, k);
+  renderRA();
+  logSync(`RetroAchievements account saved for ${u}.`, "ok");
+});
+
+$("#btn-ra-forget").addEventListener("click", () => {
+  RA.forget();
+  $("#ra-user").value = "";
+  $("#ra-key").value = "";
+  renderRA();
+  logSync("RetroAchievements account removed from this browser.", "ok");
+});
+
+$("#btn-ra-pull").addEventListener("click", async () => {
+  if (typeof RA === "undefined") return;
+  if (!RA.configured()) return raHint("Save your RA account first.", "err");
+  const btn = $("#btn-ra-pull");
+  btn.disabled = true;
+  raHint("Contacting RetroAchievements…");
+  try {
+    const res = await RA.pullIntoState(ACTIVE_GAMES, state);
+    saveState();
+    render();
+    renderRA();
+    logSync(`RA pull: ${res.applied} game${res.applied === 1 ? "" : "s"} updated ` +
+            `(${res.matched} matched of ${ACTIVE_GAMES.length} in scope, ${res.scanned} rows scanned).`, "ok");
+    if (res.applied === 0 && res.matched === 0)
+      raHint("Nothing matched. Check the username — that account may have no progress.", "warn");
+  } catch (err) {
+    raHint(`Pull failed: ${err.message}`, "err");
+    logSync(`RA pull failed: ${err.message}`, "err");
+  } finally {
+    btn.disabled = false;
+  }
+});
+
 /* ------------------------------------------------------------------ */
 /* Boot                                                                */
 /* ------------------------------------------------------------------ */
 
 initBackend();
 render();
+renderRA();

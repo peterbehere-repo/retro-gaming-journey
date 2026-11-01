@@ -146,6 +146,28 @@
           </div>
           <p class="usb-hint" id="fsa-hint"></p>
         </div>
+        <div class="sync-card" id="ra-card">
+          <h3>RetroAchievements progress</h3>
+          <p class="sync-note" style="margin-bottom:.6rem">Reads your public RA progress directly —
+            no handset, card or proxy involved. The API key is your own web key from
+            <a href="https://retroachievements.org/controlpanel.php" target="_blank" rel="noopener">your RA control panel</a>,
+            kept in this browser only.</p>
+          <div class="ra-form">
+            <label>RA username
+              <input id="ra-user" type="text" autocomplete="username" spellcheck="false">
+            </label>
+            <label>Web API key
+              <input id="ra-key" type="password" autocomplete="off" spellcheck="false">
+            </label>
+          </div>
+          <div class="usb-actions">
+            <button id="btn-ra-save" class="btn btn-small">Save account</button>
+            <button id="btn-ra-pull" class="btn btn-ghost btn-small">Pull progress</button>
+            <button id="btn-ra-forget" class="btn btn-ghost btn-small">Forget account</button>
+          </div>
+          <p class="usb-hint" id="ra-hint"></p>
+          <ul id="ra-unmatched" class="log"></ul>
+        </div>
         <div class="sync-card">
           <h3>Device</h3>
           <dl>
@@ -215,6 +237,7 @@
   <script src="js/data.js?v=iter2"></script>
   <script src="js/supabase-config.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/retroachievements.js?v=1"></script>
   <script src="js/app.js?v=iter7"></script>
   <script src="js/sdcard.js?v=4"></script>
   <script type="module" src="js/mtp.js?v=1"></script>

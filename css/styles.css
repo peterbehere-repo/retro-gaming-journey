@@ -197,6 +197,9 @@ footer { padding: 1.2rem; text-align: center; font-size: .7rem; color: var(--mut
 .usb-actions { display: flex; gap: .45rem; flex-wrap: wrap; margin-bottom: .7rem; }
 .usb-hint { font-size: .72rem; color: var(--muted); line-height: 1.55; }
 .usb-hint strong { color: #ffcc66; font-weight: 600; }
+.usb-hint.warn { color: #ffcc66; }
+.usb-hint.err { color: var(--danger); }
+.log li.warn { border-color: #ffcc66; color: #ffcc66; }
 .usb-file-input { display: none; }
 
 /* volume lists (SD card volumes + MTP storages) */
