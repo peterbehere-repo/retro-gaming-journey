@@ -1,6 +1,7 @@
-// SD-card / handheld-volume adapter (File System Access API).
-// Covers the mass-storage fleet: PowKiddy RGB30, RGB10X, Batlexp G350 (ArkOS),
-// Miyoo A30 (Spruce), Miyoo Mini Plus (Onion, when used wired), and any card reader.
+// Card / storage-volume adapter (File System Access API).
+// One adapter for every volume the page can hold a handle to: an SD card in a reader, and
+// each storage an MTP device exposes (js/mtp.js pushes those in with kind "mtp"). No other
+// transport reaches this file — Wi-Fi was dropped (see docs/Device Sync Matrix.md).
 //
 // MULTI-VOLUME: a handheld can keep saves on a second SD card, and a volume can be a
 // card *reader* rather than a device. One browser handle = one volume, and the browser
@@ -111,7 +112,6 @@ function fsaRenderVolumes() {
 
 /* ---------- per-volume file helpers ---------- */
 async function fsaReadAt(vol, path) {
-  if (vol.kind === "lan") return LAN.read(vol, path);
   const parts = path.split("/");
   const name = parts.pop();
   let dir = vol.handle;
@@ -120,7 +120,6 @@ async function fsaReadAt(vol, path) {
   return (await fh.getFile()).text();
 }
 async function fsaWriteAt(vol, path, text) {
-  if (vol.kind === "lan") return LAN.write(vol, path, text);
   const parts = path.split("/");
   const name = parts.pop();
   let dir = vol.handle;
@@ -134,7 +133,6 @@ async function fsaWriteAt(vol, path, text) {
   await w.close();
 }
 async function fsaExistsAt(vol, path) {
-  if (vol.kind === "lan") return LAN.exists(vol, path);
   try {
     const parts = path.split("/");
     const name = parts.pop();
@@ -184,6 +182,11 @@ async function fsaLoadAll() {
   const reconfirm = FSA.volumes.filter(v => !v.permitted);
   if (reconfirm.length) bits.push(`${reconfirm.length} volume(s) need a one-time permission click — press <em>Pull from card</em> and allow when the browser asks.`);
   fsaHint(bits.join(" "));
+
+  // The dashboard's Device ID should be whatever the linked volume says, not a stale default.
+  const ids = [...new Set(FSA.volumes.map(v => v.device && v.device.device_id).filter(Boolean))];
+  fsaSet("#sync-device", ids.length ? ids.join(", ") : "—");
+
   window.dispatchEvent(new CustomEvent("rgj:volumes"));
 }
 
@@ -266,17 +269,6 @@ async function fsaPrepare() {
 
 /* ---------- permission + pull + ack ---------- */
 async function fsaEnsurePermission(vol) {
-  // LAN volumes authenticate with a token, not a browser grant: re-check the token instead.
-  if (vol.kind === "lan") {
-    try {
-      vol.permitted = await fsaExistsAt(vol, FSA.markerPath);
-    } catch (e) {
-      vol.permitted = false;
-      logSync(`${vol.handle.name}: token refused (${e.message}) — reconnect over Wi-Fi.`, "err");
-      return false;
-    }
-    return vol.permitted;
-  }
   const opts = { mode: "readwrite" };
   try {
     if ((await vol.handle.queryPermission(opts)) === "granted") { vol.permitted = true; return true; }

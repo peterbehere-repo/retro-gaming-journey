@@ -164,8 +164,8 @@ do_status() {
 
   if [ -f "$QUEUE" ] && [ "$q" -gt 0 ]; then
     awk "$AWKLIB"'
-      { k = keyof($0); ts = field($0,"timestamp") + 0;
-        games[k] = field($0,"game_hash");
+      { ts = field($0,"timestamp") + 0;
+        games[field($0,"game_hash")] = 1;
         if (min == "" || ts < min) min = ts
         if (ts > max) max = ts
         n++ }
@@ -178,6 +178,7 @@ do_status() {
   fi
   [ "$s" -gt 0 ] && say "next      : rgj-sync add"
   [ "$q" -gt 0 ] && say "next      : plug into the PC and press \"Pull from card\" on the Sync tab"
+  return 0
 }
 
 do_add() {
@@ -223,6 +224,7 @@ do_add() {
   say "added $taken row(s) to the queue ($dupes already seen, $skipped malformed)"
   say "queue: $before -> $after row(s)"
   [ "${taken:-0}" -eq 0 ] && say "spool left untouched: $src"
+  return 0
 }
 
 do_prune() {
@@ -259,6 +261,7 @@ do_prune() {
   release_lock
   say "pruned $npr acked row(s); $nkeep still queued"
   [ "$npr" -gt 0 ] && say "rows appended to $PRUNED (never deleted)"
+  return 0
 }
 
 do_tick() { do_add "${1:-$SPOOL}"; do_prune; }
@@ -287,6 +290,7 @@ do_init() {
   "schema": $schema,
   "queue": "$queue",
   "ack": "$ack"
+  return 0
 }
 JSON
     say "wrote $MARKER ($id)"
@@ -305,6 +309,7 @@ do_doctor() {
   done
   [ -f "$MARKER" ] && say "marker    : ok" || say "marker    : missing (run init)"
   say "ack keys  : $(awk 'NF { n++ } END { print n + 0 }' "$KEYS" 2>/dev/null || echo 0)"
+  return 0
 }
 
 case "${1:-status}" in

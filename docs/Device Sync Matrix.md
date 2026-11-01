@@ -173,3 +173,55 @@ and it covers RGB30, RGB10X and G350 with one adapter — three of the six devic
 Caveats to handle in that adapter: authentication (login + X-Auth token), no CORS headers on
 FileBrowser by default (fetch from the page is blocked; the Rool Web Bridge extension with host
 permissions bypasses it), and mixed content if the page is served over https.
+
+---
+
+## Decision (2026-11-01) — two channels, and only two
+
+Scope was cut back to **MTP** and **card pull**. Everything below was removed from the site and
+archived in `archive/`, not deleted.
+
+**Why Wi-Fi went.** FileBrowser sends no `Access-Control-*` headers at all — confirmed against a
+real instance (`v2.63.23`): `POST /api/login` returns `200` with no CORS headers, so a page from
+any other origin cannot read the reply. The same-origin escape hatch fails too: serving the page
+from the card returns `Content-Type: application/octet-stream` with
+`Content-Disposition: attachment`, so it downloads rather than renders. The remaining options were
+a proxy process or a browser extension. Peter's call, correctly: a server per machine is not a
+feature. Retired.
+
+**What each surviving channel actually reaches**
+
+| Device | MTP | Card pull |
+|---|---|---|
+| Anbernic RG405M (GammaOS) | ✅ Android 12 | ✅ |
+| Miyoo A30 (Spruce) | ❌ | ✅ |
+| PowKiddy RGB30 (ArkOS) | ❌ no USB device mode | ✅ |
+| PowKiddy RGB10X | ❌ | ✅ |
+| Miyoo Mini Plus (Onion) | ❌ | ✅ |
+| Batlexp G350 (ArkOS) | ❌ | ✅ |
+
+So the card is the load-bearing channel and MTP is the one device that skips it. Worth knowing
+before either gets more engineering.
+
+**Removed**
+
+- `js/lan.js`, the "Handheld over Wi-Fi" card, its CSS, and the four `kind === "lan"` branches in
+  `js/sdcard.js`
+- The generic "USB device link" card and its WebUSB/Web Serial code in `js/app.js`. It detected
+  devices it could never read, and its own hint text admitted as much. `Import queue file…`
+  survived — it moved into the card card as the fallback for browsers with no folder API.
+- `tools/rgj-proxy.py`, and the `Retro Journey Sync Server.zip` release
+- `sync/arkos/sync_engine.py` — the OTG-dongle Python engine, superseded by `sync/device/rgj-sync`
+
+**Kept, deliberately**
+
+- `js/mtp.js` + `js/vendor/libmtp-web/` — the only cable-based route, and it picks up both
+  storages (Internal / SD Card) in one connection
+- `js/sdcard.js` multi-volume — one handle per card, remembered in IndexedDB
+- `sync/device/rgj-sync` and its ArkOS launcher
+- `sync/retroarch/capture_achievements.lua` — nothing fills the queue without it
+
+**Open question.** `capture_achievements.lua` writes `capture.spool.jsonl`; `rgj-sync add` is what
+moves spool rows into the queue. Nobody has confirmed the Lua script is installed on a device or
+that the spool format it emits matches what `add` parses. Until that is run once on hardware, every
+queue in this system is legitimately empty.

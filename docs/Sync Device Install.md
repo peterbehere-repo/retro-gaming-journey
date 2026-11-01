@@ -80,6 +80,16 @@ missing `mktemp` are the two failure modes worth catching early.
 
 1. Play. The capture layer appends to `capture.spool.jsonl`; nothing else happens, and the
    device stays offline.
+
+   **The spool must be on the card**, because card-pull is the only channel that reaches an
+   ArkOS unit. `capture_achievements.lua` defaults to `/roms/rgj/capture.spool.jsonl` and
+   takes an `RGJ_SPOOL` override. Point it at the card root for your firmware:
+
+   | Firmware | Card root |
+   |---|---|
+   | ArkOS (RGB30, RGB10X, G350) | `/roms` |
+   | Spruce (Miyoo A30) | `/media/sdcard0`, second card `/media/sdcard1` |
+   | Onion (Miyoo Mini Plus) | `/mnt/SDCARD` |
 2. Quit the emulator, tap `rgj-sync tick`. Hits move into the queue, and any rows acked on a
    previous visit are handed back to `rgj-pruned.jsonl`.
 3. Plug the card into the PC, open the Sync tab, press **Pull from card**. Rows are imported,

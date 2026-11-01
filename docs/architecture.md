@@ -7,9 +7,9 @@ Original architecture map: [`architecture-map.svg`](architecture-map.svg).
 
 | Spec component | Repo implementation |
 |---|---|
-| Local Cache — SQLite/JSON in ArkOS | `sync/arkos/sync_engine.py` (`achievement_queue` table, spec 3.1 verbatim) |
+| Local Cache — JSON queue on the card | `sync/device/rgj-sync` — `rgj/rgj-queue.jsonl`, deduped by `hash\|achievement\|timestamp`; pruned rows go to `rgj-pruned.jsonl`, never deleted |
 | Capture Layer — RetroArch event integration | `sync/retroarch/capture_achievements.lua` — RAM watch loop, `emu.wait` pacing, JSONL spool, no network |
-| Sync Engine — Python 3 via ArkOS Options menu | `sync/arkos/sync_engine.py --push` — OTG dongle wait, HMAC verification, single batched POST |
+| Transport — MTP / card reader | `js/mtp.js` (WebUSB + libmtp-wasm) and `js/sdcard.js` (File System Access), one volume adapter behind both |
 | Frontend App — static GitHub Pages | repo root: `index.html` + `js/` + `css/` (vanilla JS, zero build step) |
 | BaaS Layer — Supabase/Firebase | Supabase chosen: `supabase/schema.sql` (profiles, achievement_queue, game_progress, RLS) |
 
@@ -31,11 +31,14 @@ The dashboard pushes the same payload shape the engine posts:
 ## Functional constraints honoured
 
 1. **No real-time requirement** — device telemetry is fully isolated during gameplay; the
-   only network I/O is the manual `--push` batch over the OTG dongle.
-2. **Hardware constraint** — no internal Wi-Fi on the RGB10X: the engine waits for the
-   dongle interface (`/sys/class/net`) before any transmission.
-3. **Data integrity rule** — per-row HMAC-SHA256 + timestamp-derived nonce; tampered or
-   replayed rows are marked `REJECTED` and excluded from batches.
+   device itself never touches a network. The dashboard pushes to Supabase, not the device.
+2. **Hardware constraint** — sync needs a cable (MTP) or the card in a reader. Wi-Fi was
+   evaluated and dropped: FileBrowser sends no CORS headers, so a page cannot read it, and
+   serving the page from the card breaks on `Content-Disposition: attachment`.
+   ArkOS has no USB device mode, so an ArkOS unit has no cable-based option either.
+3. **Data integrity rule** — rows dedupe on `game_hash|achievement_id|timestamp` end to end,
+   both in `rgj-sync add` and in `importRows()`. The signed-row scheme (HMAC + timestamp
+   nonce) lived in the retired Python engine; see `archive/` if it is ever wanted back.
 
 ## Asset ingestion pipeline
 

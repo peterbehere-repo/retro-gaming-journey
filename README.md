@@ -1,45 +1,59 @@
 # 🎮 Retro Gaming Journey
 
-An **offline-first, on-demand progress sync system** for the **PowKiddy RGB10X** handheld
-(ArkOS) with a browser dashboard hosted on **GitHub Pages** and a free **Supabase** backend.
+An **offline-first, on-demand progress sync system** for Linux handhelds — Anbernic,
+PowKiddy, Miyoo, Batlexp — with a browser dashboard hosted on **GitHub Pages** and a free
+**Supabase** backend.
 
 The handheld plays fully offline. Achievement triggers are captured by a RetroArch Lua
-script, queued in a tamper-evident local SQLite database, and pushed in one manual batch
-whenever the player attaches a USB-C **OTG Wi-Fi dongle** and runs the sync engine from the
-ArkOS Options menu. No real-time connectivity, no background telemetry, no SD-card removal.
+script and queued as rows on the card. Nothing touches a network during play. When the
+player wants to sync, they either **plug the device in as MTP** or **put the card in a
+reader**; the dashboard reads the queue, and writes an ack back so the device prunes what
+was taken. No dongle, no background service, no daemon.
 
 ## Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│ RGB10X / ArkOS (offline)                                            │
+│ Handheld (offline)                                                  │
 │   capture_achievements.lua  ──▶  capture.spool.jsonl                │
 │            (RetroArch RAM watch, zero network)                      │
-│                                   │  sync_engine.py --ingest        │
+│                                   │  rgj-sync add                  │
 │                                   ▼                                 │
-│   SQLite achievement_queue  (HMAC-signed rows, PENDING/SYNCED)      │
-│                                   │  sync_engine.py --push          │
-└───────────────────────────────────┼─────────────────────────────────┘
-                                    │  OTG Wi-Fi dongle, manual batch
+│   rgj/rgj-queue.jsonl  (NDJSON rows, deduped, never deleted)        │
+└───────────────────────────────────┬─────────────────────────────────┘
+                                    │  MTP cable  ·or·  card in a reader
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│ Dashboard (static page, File System Access / WebUSB)                │
+│   reads rgj-queue.jsonl  → writes rgj-ack.json + rgj-ack.keys       │
+└───────────────────────────────────┬─────────────────────────────────┘
+                                    │  manual push, signed in
                                     ▼
 ┌─────────────────────────────────────────────────────────────────────┐
 │ Supabase (BaaS)                                                     │
 │   auth.users ▸ profiles ▸ achievement_queue ▸ game_progress (RLS)   │
-└───────────────────────────────────┬─────────────────────────────────┘
-                                    ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│ GitHub Pages dashboard (this repo: static HTML5 + vanilla JS)       │
-│   dashboard · 600-title library · badges · sync console             │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
 | Component | Technical target | Responsibility |
 |---|---|---|
-| Local cache | SQLite DB in ArkOS filesystem | Stores achievement hashes + unlock records securely offline |
-| Capture layer | RetroArch event integration script (`sync/retroarch/`) | Watches emulated core RAM, queues triggers without frame stutter |
-| Sync engine | Python 3 script, ArkOS Options menu (`sync/arkos/`) | Brings up the OTG dongle network, pushes batched JSON rows |
-| Frontend app | Static site on GitHub Pages (root of this repo) | Player dashboard, completion percentages, badge case |
+| Capture layer | RetroArch event script (`sync/retroarch/`) | Watches emulated core RAM, appends triggers to a spool file without frame stutter |
+| Device tool | `sync/device/rgj-sync`, POSIX `sh` | Owns the queue on the card: `init`, `add`, `prune`, `status`, `doctor`. No Python, no `jq`, no network |
+| Transport | MTP over WebUSB (`js/mtp.js`), card via File System Access (`js/sdcard.js`) | The only two channels that read a device from a browser. Each storage a device exposes becomes its own volume |
+| Frontend app | Static site on GitHub Pages | Player dashboard, library, badges, sync console |
 | BaaS layer | Supabase (`supabase/schema.sql`) | Auth profiles, synced structural tables, RLS |
+
+### Transports, and what each costs
+
+| Channel | Devices | Setup |
+|---|---|---|
+| **MTP over USB** | Any Android-based unit (RG405M on GammaOS), Linux builds with a PTP gadget | Cable, one permission prompt |
+| **Card in a reader** | Every device in the fleet | Card out, folder granted once |
+| ~~Wi-Fi (FileBrowser)~~ | ArkOS ships it, but it is not usable from a page | Dropped — see `docs/Device Sync Matrix.md` |
+
+ArkOS has **no USB device mode at all** — no MTP, no PTP, no mass-storage gadget, no ADB.
+Its only USB features are *host* side (USB drive mount, USB DAC). So an ArkOS unit syncs by
+pulling the card, and that is not a limitation of this dashboard.
 
 ## Iteration plan
 
@@ -87,14 +101,14 @@ badges (genre milestones at 25/50/75/100%, platform mastery, library-wide honour
 ## Quick start — handheld side
 
 ```bash
-# on the RGB10X (ArkOS), after copying the sync/ folder to the SD card:
-python3 sync/arkos/sync_engine.py --ingest /storage/.config/rgj/capture.spool.jsonl
-python3 sync/arkos/sync_engine.py --status
-python3 sync/arkos/sync_engine.py --dry-run      # validate integrity, print the batch
-RGJ_API_URL=https://your-project.supabase.co \
-RGJ_API_KEY=<anon-key> \
-python3 sync/arkos/sync_engine.py --push         # waits for the OTG dongle, pushes one batch
+# copy sync/device/rgj-sync to the card root, then:
+cd /media/$USER/EASYROMS            # Windows: /g, or wherever the card mounts
+sh rgj-sync init --id rgb30_hw01 --model "PowKiddy RGB30" --os "ArkOS"
+sh rgj-sync doctor                  # tools, marker, writability
+sh rgj-sync status                  # queue, acked keys, spool depth
 ```
+
+Full walkthrough: [`docs/Sync Device Install.md`](docs/Sync%20Device%20Install.md).
 
 ### Data integrity (spec 2.2)
 
@@ -127,7 +141,7 @@ js/app.js                  dashboard / library / badges / sync console
 js/supabase-config.js      backend config (empty = offline demo mode)
 supabase/schema.sql        BaaS tables + row level security
 tools/build_library.py     asset ingestion pipeline (1,800 badge routes + index)
-sync/arkos/sync_engine.py  on-demand sync engine for ArkOS
+sync/device/rgj-sync      on-card queue tool (POSIX sh, five firmwares)
 sync/retroarch/...lua      capture layer (RAM watch → spool file)
 docs/architecture.md       spec mapping + design notes
 .github/workflows/...yml   Pages deployment
@@ -136,8 +150,7 @@ docs/architecture.md       spec mapping + design notes
 ## Design notes
 
 - **No real-time requirement** — nothing on the device touches the network during play.
-- **Hardware constraint** — all transactions go through the physical USB-C OTG Wi-Fi
-  receiver during manual sync cycles only.
+- **Hardware constraint** — sync needs a cable (MTP) or a card reader. Never Wi-Fi alone.
 - **Decoupled auth** — GitHub Pages is static; session state and the data layer live in
   Supabase Auth + Postgres, reachable from any browser after a sync.
 

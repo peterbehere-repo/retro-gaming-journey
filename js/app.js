@@ -208,7 +208,9 @@ function renderBadges() {
 function renderSync() {
   $("#sync-last").textContent = state.lastSync ? new Date(state.lastSync).toLocaleString() : "never";
   $("#sync-queued").textContent = state.queued.length;
-  $("#sync-device").textContent = SUPABASE_CONFIG.deviceId;
+  // The linked volume owns the identity; the config value is only a fallback for the
+  // cloud-push label when no card is linked (sdcard.js overwrites this once a marker loads).
+  $("#sync-device").textContent = linkedDeviceId() || "no card linked";
   $("#auth-status").textContent = user ? `online · ${user.email}` : "offline mode";
   $("#auth-status").className = `auth-status ${user ? "online" : "offline"}`;
   $("#btn-signin").textContent = user ? "Sign out" : "Sign in";
@@ -341,7 +343,7 @@ async function pushQueue() {
   }
   const rows = state.queued.map(r => ({
     user_id: user.id,
-    device_id: SUPABASE_CONFIG.deviceId,
+    device_id: linkedDeviceId() || SUPABASE_CONFIG.deviceId,
     game_hash: r.game_hash,
     achievement_id: r.achievement_id,
     timestamp: r.timestamp,
@@ -375,77 +377,9 @@ async function pullRemote() {
 $("#btn-sync").addEventListener("click", pushQueue);
 $("#btn-pull").addEventListener("click", pullRemote);
 
-
 /* ------------------------------------------------------------------ */
-/* USB device link (WebUSB detection + Web Serial bridge)              */
+/* Import                                                              */
 /* ------------------------------------------------------------------ */
-
-const USB = { device: null, port: null, reader: null, reading: false, buffer: "" };
-const USB_AUTHORISED = new Set();
-
-function usbPill(text, cls = "") {
-  const el = $("#usb-pill");
-  if (!el) return;
-  el.textContent = text;
-  el.className = `usb-pill ${cls}`.trim();
-}
-
-function usbId(v) { return v == null ? "—" : "0x" + v.toString(16).padStart(4, "0").toUpperCase(); }
-
-function usbShow(device, transport = "WebUSB") {
-  $("#usb-transport").textContent = transport;
-  $("#usb-name").textContent =
-    [device.manufacturerName, device.productName || device.name].filter(Boolean).join(" ") || "unnamed device";
-  $("#usb-vidpid").textContent = `${usbId(device.vendorId)} : ${usbId(device.productId)}`;
-  $("#usb-serial").textContent = device.serialNumber || "—";
-}
-
-function usbEvent(msg) { $("#usb-event").textContent = msg; }
-
-function usbClearUI() {
-  USB.device = null;
-  $("#usb-transport").textContent = "—";
-  $("#usb-name").textContent = "—";
-  $("#usb-vidpid").textContent = "—";
-  $("#usb-serial").textContent = "—";
-  usbEvent("waiting for a device");
-  usbPill("no device");
-}
-
-async function usbRefreshAuthorised(silent) {
-  if (!("usb" in navigator)) return [];
-  const devices = await navigator.usb.getDevices();
-  USB_AUTHORISED.clear();
-  devices.forEach(d => USB_AUTHORISED.add(`${d.vendorId}:${d.productId}`));
-  if (devices.length) {
-    USB.device = devices[0];
-    usbShow(USB.device);
-    usbPill("device linked", "live");
-    usbEvent(`authorised · ${devices.length} remembered device${devices.length > 1 ? "s" : ""}`);
-    if (!silent) logSync(`USB link live: ${USB.device.productName || "device"} (${usbId(USB.device.vendorId)}:${usbId(USB.device.productId)}).`, "ok");
-  }
-  return devices;
-}
-
-async function usbFind() {
-  if (!("usb" in navigator)) {
-    logSync("This browser has no WebUSB. Use Chrome or Edge on desktop over HTTPS.", "err");
-    usbPill("unsupported", "warn");
-    return;
-  }
-  try {
-    const device = await navigator.usb.requestDevice({ filters: [] });
-    USB.device = device;
-    usbShow(device);
-    usbPill("device linked", "live");
-    usbEvent("authorised just now");
-    logSync(`USB device authorised: ${device.productName || "unnamed"} (${usbId(device.vendorId)}:${usbId(device.productId)}).`, "ok");
-    await usbRefreshAuthorised(true);
-  } catch (e) {
-    if (e.name === "NotFoundError") { usbEvent("picker closed — nothing selected"); return; }
-    logSync(`USB authorisation failed: ${e.message}`, "err");
-  }
-}
 
 /* Parse queue rows from any device payload: JSONL, JSON array, or one typed envelope. */
 function importRows(raw, source) {
@@ -494,73 +428,15 @@ function importRows(raw, source) {
   if (added) {
     saveState(); render();
     logSync(`${added} queued row${added === 1 ? "" : "s"} imported from ${source}.`, "ok");
-    usbEvent(`${added} row${added === 1 ? "" : "s"} read from ${source}`);
   } else {
     logSync(`No new rows in ${source} (already queued or unreadable).`);
   }
   return added;
 }
 
-/* --- Web Serial: CDC-ACM gadget streaming the queue as NDJSON ---------- */
-async function serialAttach() {
-  if (!("serial" in navigator)) {
-    logSync("Web Serial is unavailable — use Chrome or Edge on desktop, over HTTPS.", "err");
-    usbPill("no serial API", "warn");
-    return;
-  }
-  if (USB.port) { await serialDetach(); return; }
-  try {
-    const port = await navigator.serial.requestPort({});
-    await port.open({ baudRate: 115200 });
-    USB.port = port;
-    USB.reading = true;
-    USB.buffer = "";
-    $("#usb-transport").textContent = "Web Serial @115200";
-    usbPill("serial attached", "live");
-    usbEvent("reading NDJSON from serial port");
-    logSync("Serial port attached — waiting for queue rows from the handheld.", "ok");
-    serialLoop(port);
-  } catch (e) {
-    if (e.name === "NotFoundError") { usbEvent("port picker closed"); return; }
-    logSync(`Serial attach failed: ${e.message}`, "err");
-  }
-}
-
-async function serialLoop(port) {
-  const decoder = new TextDecoder();
-  try {
-    while (USB.reading && port.readable) {
-      const reader = port.readable.getReader();
-      USB.reader = reader;
-      try {
-        while (true) {
-          const { value, done } = await reader.read();
-          if (done) break;
-          USB.buffer += decoder.decode(value, { stream: true });
-          const lines = USB.buffer.split(/\r?\n/);
-          USB.buffer = lines.pop();
-          const payload = lines.filter(l => l.trim());
-          if (payload.length) importRows(payload.join("\n"), "serial");
-        }
-      } finally { reader.releaseLock(); }
-    }
-  } catch (e) {
-    if (e.name !== "NetworkError") logSync(`Serial read stopped: ${e.message}`, "err");
-  }
-}
-
-async function serialDetach() {
-  USB.reading = false;
-  try { if (USB.reader) await USB.reader.cancel(); } catch (e) {}
-  try { if (USB.port) await USB.port.close(); } catch (e) {}
-  USB.port = null; USB.reader = null; USB.buffer = "";
-  $("#usb-transport").textContent = "—";
-  usbPill("no device");
-  usbEvent("serial detached");
-  logSync("Serial port detached.");
-}
-
-/* --- File import: the handheld mounted as a USB drive --------------- */
+/* --- Fallback: import a queue file by hand -----------------------------------
+   The folder adapter is the normal route. This covers browsers without the File
+   System Access API, and any card the user would rather not grant folder access to. */
 $("#btn-import-queue").addEventListener("click", () => $("#usb-file-input").click());
 $("#usb-file-input").addEventListener("change", async (e) => {
   const file = e.target.files?.[0];
@@ -573,80 +449,16 @@ $("#usb-file-input").addEventListener("change", async (e) => {
   e.target.value = "";
 });
 
-function initUsb() {
-  const hint = $("#usb-hint");
-  const secure = window.isSecureContext;
-  if (!("usb" in navigator) && !("serial" in navigator)) {
-    usbPill("unsupported", "warn");
-    hint.innerHTML = "<strong>This browser exposes no USB API.</strong> Open the page in Chrome or Edge on desktop over HTTPS.";
-    return;
-  }
-  if (!secure) {
-    usbPill("needs HTTPS", "warn");
-    hint.innerHTML = "<strong>USB access needs a secure page.</strong> Serve this over HTTPS (or localhost) and the detector will arm.";
-    return;
-  }
-  hint.innerHTML = "The page is listening for USB connect/disconnect events. " +
-    "If the handheld mounts as a removable <em>drive</em> rather than a serial device, browsers are locked out of it by design — " +
-    "use <em>Import queue file…</em> and pick <code>rgj-queue.jsonl</code> from the mounted ArkOS partition.";
 
-  if ("usb" in navigator) {
-    navigator.usb.addEventListener("connect", async (e) => {
-      const d = e.device;
-      const key = `${d.vendorId}:${d.productId}`;
-      USB.device = d;
-      usbShow(d, "WebUSB (unverified)");
-      if (USB_AUTHORISED.has(key)) {
-        usbPill("device linked", "live");
-        usbEvent("reconnected — already authorised");
-        logSync(`Device reconnected: ${d.productName || key}.`, "ok");
-      } else {
-        usbPill("authorise", "warn");
-        usbEvent(`plugged in — ${usbId(d.vendorId)}:${usbId(d.productId)}`);
-        logSync(`USB device plugged in: ${usbId(d.vendorId)}:${usbId(d.productId)}. Press “Find USB device” to authorise it.`, "ok");
-        // Mass-storage handhelds (ArkOS/Spruce/Onion, card readers) can't be opened by the
-        // browser — point the user at the folder adapter instead of a dead end.
-        const fsaHintEl = document.querySelector("#fsa-hint");
-        if (window.showDirectoryPicker) {
-          if (fsaHintEl) fsaHintEl.innerHTML =
-            "<strong>Device just plugged in.</strong> If it mounted as a removable drive, press " +
-            "<em>Link handheld folder</em> and pick the card root — detection came from WebUSB, the read happens over the folder handle.";
-        }
-      }
-    });
-    navigator.usb.addEventListener("disconnect", (e) => {
-      const key = `${e.device.vendorId}:${e.device.productId}`;
-      logSync(`USB device unplugged: ${e.device.productName || key}.`);
-      usbPill("no device");
-      usbEvent("device unplugged");
-      usbClearUI();
-    });
-    navigator.usb.getDevices().then(devices => {
-      if (devices.length) {
-        USB.device = devices[0];
-        usbShow(devices[0]);
-        usbPill("device linked", "live");
-        usbEvent("already authorised in this browser");
-        USB_AUTHORISED.add(`${devices[0].vendorId}:${devices[0].productId}`);
-      }
-    }).catch(() => {});
-  } else {
-    $("#btn-usb-find").disabled = true;
-  }
+function linkedDeviceId() {
+  const vols = (typeof FSA !== "undefined" && FSA.volumes) ? FSA.volumes : [];
+  const ids = [...new Set(vols.map(v => v.device && v.device.device_id).filter(Boolean))];
+  return ids.join(", ");
 }
-
-$("#btn-usb-find").addEventListener("click", usbFind);
-$("#btn-serial-connect").addEventListener("click", serialAttach);
-$("#btn-usb-forget").addEventListener("click", async () => {
-  if (USB.port) await serialDetach();
-  usbClearUI();
-  logSync("Detached in this page. Chrome's stored USB permission is cleared from the icon in the address bar.");
-});
 
 /* ------------------------------------------------------------------ */
 /* Boot                                                                */
 /* ------------------------------------------------------------------ */
 
 initBackend();
-initUsb();
 render();

@@ -96,62 +96,12 @@
     <section id="panel-sync" class="panel">
       <h2>Sync console</h2>
       <p class="sync-note">
-        The RGB10X runs fully offline. Unlock events queue in a local SQLite database on the
-        ArkOS partition. Attach a USB-C OTG Wi-Fi dongle and run the sync engine from the
-        ArkOS Options menu to push queued rows to this dashboard.
+        Handhelds run offline and write unlock rows to a queue on their card. Two channels read
+        that queue, and only two: <strong>MTP over a USB cable</strong> for Android-class hardware,
+        and <strong>the card itself</strong> in a reader. Both write an ack back so the device can
+        prune what was taken.
       </p>
       <div class="sync-grid">
-        <div class="sync-card usb-card" id="usb-card">
-          <h3>USB device link <span id="usb-pill" class="usb-pill">no device</span></h3>
-          <p class="sync-note">
-            Plug the handheld into this computer with a USB-C <em>data</em> cable. The page watches
-            for the device directly — no driver, no background service. Authorise it once and this
-            browser remembers it.
-          </p>
-          <dl>
-            <dt>Transport</dt><dd id="usb-transport">—</dd>
-            <dt>Device</dt><dd id="usb-name">—</dd>
-            <dt>VID:PID</dt><dd id="usb-vidpid">—</dd>
-            <dt>Serial</dt><dd id="usb-serial">—</dd>
-            <dt>Last event</dt><dd id="usb-event">waiting for a device</dd>
-          </dl>
-          <div class="usb-actions">
-            <button id="btn-usb-find" class="btn btn-small">Find USB device</button>
-            <button id="btn-serial-connect" class="btn btn-ghost btn-small">Attach serial port</button>
-            <button id="btn-import-queue" class="btn btn-ghost btn-small">Import queue file…</button>
-            <button id="btn-usb-forget" class="btn btn-ghost btn-small">Detach</button>
-          </div>
-          <p class="usb-hint" id="usb-hint"></p>
-        </div>
-
-        <div class="sync-card usb-card" id="lan-card">
-          <h3>Handheld over Wi-Fi (FileBrowser) <span id="lan-pill" class="usb-pill">not connected</span></h3>
-          <p class="sync-note">
-            ArkOS ships <em>ArkOS Browser</em> (FileBrowser), which serves the EASYROMS tree over HTTP.
-            Options → <em>Enable Remote Services</em> on the device, then sign in here with
-            <code>ark</code> / <code>ark</code>. This is the only channel that reaches a <em>running</em>
-            ArkOS handheld without pulling the card — and it reads both card slots in one connection.
-          </p>
-          <div class="lan-form">
-            <label>Host <input id="lan-host" type="text" placeholder="http://rgb30" autocomplete="off" spellcheck="false"></label>
-            <label>User <input id="lan-user" type="text" value="ark" autocomplete="username" spellcheck="false"></label>
-            <label>Password <input id="lan-pass" type="password" autocomplete="current-password"></label>
-          </div>
-          <ul class="usb-volumes" id="lan-volumes"></ul>
-          <div class="usb-actions">
-            <button id="btn-lan-connect" class="btn btn-small">Connect over Wi-Fi</button>
-            <button id="btn-lan-forget" class="btn btn-ghost btn-small">Disconnect</button>
-          </div>
-          <p class="usb-hint" id="lan-hint"></p>
-          <p class="sync-note" style="margin-top:.5rem">
-            <strong>Host:</strong> a bare IP only works if this page is served from the device
-            itself, which it never is — FileBrowser sends no CORS headers, so Chrome blocks the
-            read. Run <code>python3 tools/rgj-proxy.py &lt;device-ip&gt;</code> from the repo, open
-            the page it prints, and put <code>/ark</code> in the Host box. One origin for page and
-            API, so no CORS, no mixed content, nothing to install.
-          </p>
-        </div>
-
         <div class="sync-card usb-card" id="mtp-card">
           <h3>MTP device (USB cable) <span id="mtp-pill" class="usb-pill">checking</span></h3>
           <p class="sync-note">
@@ -192,13 +142,14 @@
             <button id="btn-fsa-pull" class="btn btn-ghost btn-small" disabled>Pull from card</button>
             <button id="btn-fsa-prepare" class="btn btn-ghost btn-small">Prepare card</button>
             <button id="btn-fsa-forget" class="btn btn-ghost btn-small">Forget all</button>
+            <button id="btn-import-queue" class="btn btn-ghost btn-small">Import queue file…</button>
           </div>
           <p class="usb-hint" id="fsa-hint"></p>
         </div>
         <div class="sync-card">
           <h3>Device</h3>
           <dl>
-            <dt>Device ID</dt><dd id="sync-device">rgb10x_hw01</dd>
+            <dt>Device ID</dt><dd id="sync-device">—</dd>
             <dt>Last sync</dt><dd id="sync-last">never</dd>
             <dt>Queued rows</dt><dd id="sync-queued">0</dd>
           </dl>
@@ -264,9 +215,8 @@
   <script src="js/data.js?v=iter2"></script>
   <script src="js/supabase-config.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/app.js?v=iter5"></script>
-  <script src="js/lan.js?v=1"></script>
-  <script src="js/sdcard.js?v=3"></script>
+  <script src="js/app.js?v=iter7"></script>
+  <script src="js/sdcard.js?v=4"></script>
   <script type="module" src="js/mtp.js?v=1"></script>
   <script>
     // The MTP adapter is an ES module: file:// blocks module loading, and WebUSB needs a

@@ -1,16 +1,29 @@
 -- Retro Gaming Journey — RetroArch capture layer (spec 2.1)
 --
 -- Monitors emulated core RAM for achievement trigger states and appends each
--- hit to a JSONL spool file WITHOUT blocking the frame loop. The ArkOS sync
--- engine (sync/arkos/sync_engine.py) later ingests the spool into the offline
--- SQLite queue. No networking happens here — the handheld stays fully offline
--- during gameplay.
+-- hit to a JSONL spool file WITHOUT blocking the frame loop. `rgj-sync add` on the
+-- card later folds the spool into rgj/rgj-queue.jsonl. No networking happens
+-- here — the handheld stays fully offline during gameplay.
 --
 -- Install: copy into RetroArch's /auto/ retroarch dir or load via
 --   RetroArch -> Load Content -> (run game) -> Quick Menu -> Tools -> Lua Browser
 -- Configure ACHIEVEMENTS below per game (RAM address + expected value).
+--
+-- THE SPOOL MUST LIVE ON THE CARD. Card-pull is the only channel that reaches an
+-- ArkOS unit, and rgj-sync reads <card root>/rgj/capture.spool.jsonl. Pointing this
+-- at /storage/.config (internal userdata) would put rows where no adapter can see
+-- them. Per-firmware card roots:
+--   ArkOS (RGB30, RGB10X, G350)  /roms
+--   Spruce (Miyoo A30)           /media/sdcard0  (second card: /media/sdcard1)
+--   Onion (Miyoo Mini Plus)      /mnt/SDCARD
 
-local SPOOL = "/storage/.config/rgj/capture.spool.jsonl"
+local SPOOL = os.getenv("RGJ_SPOOL") or "/roms/rgj/capture.spool.jsonl"
+
+-- Create the directory once so the first append cannot fail silently.
+local function ensure_dir()
+  os.execute("mkdir -p $(dirname \"" .. SPOOL .. "\") 2>/dev/null")
+end
+ensure_dir()
 
 -- Per-game trigger table. Example entries show the pattern:
 --   hash  = ROM identifier (first 16 hex chars is fine; keep in sync with sync engine)
