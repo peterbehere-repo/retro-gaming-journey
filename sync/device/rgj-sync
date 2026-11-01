@@ -41,13 +41,16 @@ find_root() {
     printf '%s\n' "$RGJ_ROOT"; return 0
   fi
   for c in /roms /storage/roms /media/roms /mnt/roms "$HOME/roms" \
-           /media/sdcard /mnt/sdcard /storage "$PWD"; do
+           /media/sdcard /mnt/sdcard /storage; do
     [ -d "$c" ] || continue
     if [ -f "$c/rgj-device.json" ] || [ -d "$c/rgj" ]; then
       printf '%s\n' "$c"; return 0
     fi
   done
-  return 1
+  # fall back to the current directory — this is an SD card root when the user
+  # has cd'd into it from a PC, which is how `init` is normally first run
+  printf '%s\n' "$PWD"
+  return 0
 }
 
 ROOT=$(find_root) || die "no card root found — set RGJ_ROOT to the volume holding rgj-device.json"
