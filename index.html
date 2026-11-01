@@ -101,6 +101,28 @@
         ArkOS Options menu to push queued rows to this dashboard.
       </p>
       <div class="sync-grid">
+        <div class="sync-card usb-card" id="usb-card">
+          <h3>USB device link <span id="usb-pill" class="usb-pill">no device</span></h3>
+          <p class="sync-note">
+            Plug the handheld into this computer with a USB-C <em>data</em> cable. The page watches
+            for the device directly — no driver, no background service. Authorise it once and this
+            browser remembers it.
+          </p>
+          <dl>
+            <dt>Transport</dt><dd id="usb-transport">—</dd>
+            <dt>Device</dt><dd id="usb-name">—</dd>
+            <dt>VID:PID</dt><dd id="usb-vidpid">—</dd>
+            <dt>Serial</dt><dd id="usb-serial">—</dd>
+            <dt>Last event</dt><dd id="usb-event">waiting for a device</dd>
+          </dl>
+          <div class="usb-actions">
+            <button id="btn-usb-find" class="btn btn-small">Find USB device</button>
+            <button id="btn-serial-connect" class="btn btn-ghost btn-small">Attach serial port</button>
+            <button id="btn-import-queue" class="btn btn-ghost btn-small">Import queue file…</button>
+            <button id="btn-usb-forget" class="btn btn-ghost btn-small">Detach</button>
+          </div>
+          <p class="usb-hint" id="usb-hint"></p>
+        </div>
         <div class="sync-card">
           <h3>Device</h3>
           <dl>
@@ -166,9 +188,10 @@
     <p>Retro Gaming Journey · offline-first · GitHub Pages + Supabase · iteration 1: NES (100 titles)</p>
   </footer>
 
+  <input type="file" id="usb-file-input" class="usb-file-input" accept=".json,.jsonl,.ndjson,.txt" />
   <script src="js/data.js?v=iter2"></script>
   <script src="js/supabase-config.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/app.js?v=iter2"></script>
+  <script src="js/app.js?v=iter5"></script>
 </body>
 </html>

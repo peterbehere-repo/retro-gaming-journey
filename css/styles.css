@@ -181,3 +181,20 @@ footer { padding: 1.2rem; text-align: center; font-size: .7rem; color: var(--mut
 }
 #journey-frame { display: block; width: 100%; height: 100%; border: 0; }
 @media (max-width: 720px) { .journey-frame-wrap { aspect-ratio: 4 / 3; } }
+
+/* USB device link */
+.usb-card { grid-column: 1 / -1; }
+.usb-card h3 { display: flex; align-items: center; gap: .6rem; flex-wrap: wrap; }
+.usb-pill {
+  font-size: .62rem; letter-spacing: .1em; text-transform: uppercase; font-weight: 700;
+  padding: .2rem .55rem; border-radius: 999px; border: 1px solid var(--border);
+  color: var(--muted); background: var(--surface-2);
+}
+.usb-pill.live { color: var(--bg); background: var(--accent); border-color: var(--accent); }
+.usb-pill.warn { color: #ffcc66; border-color: #ffcc66; background: rgba(255,204,102,.1); }
+.usb-card dl { grid-template-columns: 120px 1fr; }
+.usb-card dd { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .76rem; word-break: break-all; }
+.usb-actions { display: flex; gap: .45rem; flex-wrap: wrap; margin-bottom: .7rem; }
+.usb-hint { font-size: .72rem; color: var(--muted); line-height: 1.55; }
+.usb-hint strong { color: #ffcc66; font-weight: 600; }
+.usb-file-input { display: none; }
