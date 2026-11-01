@@ -124,6 +124,26 @@
           <p class="usb-hint" id="usb-hint"></p>
         </div>
 
+        <div class="sync-card usb-card" id="mtp-card">
+          <h3>MTP device (USB cable) <span id="mtp-pill" class="usb-pill">checking</span></h3>
+          <p class="sync-note">
+            A handheld that presents itself as MTP — any Android-based unit, or a Linux build set to
+            MTP mode — is readable straight from the page over WebUSB. Each storage the device
+            exposes (<em>Internal Storage</em>, <em>SD Card</em>) becomes its own volume, so saves on
+            either card are picked up in one connection.
+          </p>
+          <dl>
+            <dt>Device</dt><dd id="mtp-device">—</dd>
+            <dt>Storage(s)</dt><dd id="mtp-storage">—</dd>
+          </dl>
+          <ul class="usb-volumes" id="mtp-storages"></ul>
+          <div class="usb-actions">
+            <button id="btn-mtp-connect" class="btn btn-small">Connect MTP device</button>
+            <button id="btn-mtp-detach" class="btn btn-ghost btn-small">Release</button>
+          </div>
+          <p class="usb-hint" id="mtp-hint"></p>
+        </div>
+
         <div class="sync-card usb-card" id="fsa-card">
           <h3>SD card / handheld volume <span id="fsa-pill" class="usb-pill">not linked</span></h3>
           <p class="sync-note">
@@ -217,6 +237,7 @@
   <script src="js/supabase-config.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/app.js?v=iter5"></script>
-  <script src="js/sdcard.js?v=1"></script>
+  <script src="js/sdcard.js?v=2"></script>
+  <script type="module" src="js/mtp.js?v=1"></script>
 </body>
 </html>

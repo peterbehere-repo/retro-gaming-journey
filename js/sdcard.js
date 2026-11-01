@@ -124,8 +124,11 @@ async function fsaWriteAt(vol, path, text) {
   let dir = vol.handle;
   for (const p of parts) dir = await dir.getDirectoryHandle(p, { create: true });
   const fh = await dir.getFileHandle(name, { create: true });
-  const w = await fh.createWritable();
-  await w.write(text);
+  // MTP sizes an object before the first byte flows, so declare the length.
+  // File System Access ignores the extra option.
+  const bytes = new TextEncoder().encode(text);
+  const w = await fh.createWritable({ size: bytes.length });
+  await w.write(bytes);
   await w.close();
 }
 async function fsaExistsAt(vol, path) {
@@ -178,6 +181,7 @@ async function fsaLoadAll() {
   const reconfirm = FSA.volumes.filter(v => !v.permitted);
   if (reconfirm.length) bits.push(`${reconfirm.length} volume(s) need a one-time permission click — press <em>Pull from card</em> and allow when the browser asks.`);
   fsaHint(bits.join(" "));
+  window.dispatchEvent(new CustomEvent("rgj:volumes"));
 }
 
 /* ---------- link / forget ---------- */
@@ -215,13 +219,15 @@ async function fsaForget() {
   fsaSet("#fsa-queue", "—"); fsaSet("#fsa-last-ack", "—");
   fsaRenderVolumes();
   fsaPullEnabled(false);
+  window.dispatchEvent(new CustomEvent("rgj:volumes"));
   fsaHint("Volumes forgotten by this browser. Nothing on any card was touched.");
   logSync("All volumes unlinked from this browser (no files changed).");
 }
 
 async function fsaPersist() {
-  // handle objects are structured-cloneable and survive in IndexedDB
-  await fsaIdbSet(FSA_KEY, FSA.volumes.map(v => v.handle));
+  // handle objects are structured-cloneable and survive in IndexedDB — but MTP handles
+  // are backed by a live USB session and are not, so those are skipped and rebuilt on load.
+  await fsaIdbSet(FSA_KEY, FSA.volumes.filter(v => !v.mtp).map(v => v.handle));
 }
 
 /* ---------- prepare a volume: marker + queue scaffold ---------- */

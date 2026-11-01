@@ -198,3 +198,13 @@ footer { padding: 1.2rem; text-align: center; font-size: .7rem; color: var(--mut
 .usb-hint { font-size: .72rem; color: var(--muted); line-height: 1.55; }
 .usb-hint strong { color: #ffcc66; font-weight: 600; }
 .usb-file-input { display: none; }
+
+/* volume lists (SD card volumes + MTP storages) */
+.usb-volumes { list-style: none; margin: .5rem 0; padding: 0; display: grid; gap: .35rem; }
+.usb-volumes li {
+  display: flex; flex-wrap: wrap; gap: .5rem; align-items: baseline;
+  padding: .4rem .55rem; border: 1px solid rgba(255,255,255,.12); border-radius: 6px;
+  background: rgba(255,255,255,.03); font-size: .78rem;
+}
+.usb-volumes .vol-meta { color: var(--muted, #9aa4b2); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .72rem; }
+.usb-pill.err { color: #ff8080; border-color: #ff8080; background: rgba(255,128,128,.1); }
