@@ -172,4 +172,5 @@ function mtpInit() {
   mtpRestore();
 }
 
+window.__rgjMtpLoaded = true;
 mtpInit();

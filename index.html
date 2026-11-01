@@ -239,5 +239,18 @@
   <script src="js/app.js?v=iter5"></script>
   <script src="js/sdcard.js?v=2"></script>
   <script type="module" src="js/mtp.js?v=1"></script>
+  <script>
+    // The MTP adapter is an ES module: file:// blocks module loading, and WebUSB needs a
+    // secure context anyway. Say so instead of leaving the card stuck on "checking".
+    setTimeout(function () {
+      if (window.__rgjMtpLoaded) return;
+      var pill = document.querySelector("#mtp-pill");
+      var hint = document.querySelector("#mtp-hint");
+      if (pill) { pill.textContent = "needs http://"; pill.className = "usb-pill warn"; }
+      if (hint) hint.innerHTML = "<strong>The MTP module did not load.</strong> Open this page over " +
+        "<code>http://localhost</code> (or an https address) rather than by double-clicking the file — " +
+        "browsers refuse to load ES modules from <code>file://</code>.";
+    }, 3000);
+  </script>
 </body>
 </html>

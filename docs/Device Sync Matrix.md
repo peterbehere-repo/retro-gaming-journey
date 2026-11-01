@@ -140,3 +140,36 @@ Known limits:
   the open fail; close those first.
 - Reading works today for any storage; writing the ack back needs the device to accept SendObject,
   which most Android builds do.
+
+## ArkOS has no USB device mode — checked, 2026-11-01
+
+Went through the ArkOS wiki and the RGB30 changelog rather than guessing. ArkOS offers two
+USB features, and neither presents the handheld to a host PC:
+
+- **USB Drive Mount / Unmount** (Options menu) — the handheld is the *host*; it mounts a USB stick
+  into `/mnt/usbdrive`.
+- **USB DAC support** — audio out.
+
+There is no MTP, no PTP, no `g_mass_storage` gadget, no ADB. The wiki's only USB troubleshooting
+entries are the mount above and DAC. So plugging an ArkOS unit into a PC does nothing at all, and
+no amount of pressing buttons on the device will make it appear in Chrome's WebUSB picker.
+
+Which leaves the MTP adapter useful on exactly one device in this fleet: **RG405M on GammaOS**, which
+is Android 12 underneath and speaks MTP natively. Onion (Mini Plus), Spruce (A30) and the three ArkOS
+units have no MTP stack.
+
+Correction to an assumption in the matrix: the RGB30 does not present as mass storage to a PC either,
+so "plug it in and link the drive letter" is not an option for it.
+
+### What ArkOS does offer: FileBrowser on the LAN
+
+ArkOS ships **ArkOS Browser**, which is FileBrowser (Go) serving the EASYROMS tree.
+Options → *Enable Remote Services*, then `http://rgb30` (or the device IP), `ark` / `ark`.
+
+That is a real machine-readable channel: FileBrowser exposes `/api/resources/<path>` and
+`/api/raw/<path>`. It is the only route that reaches a running ArkOS unit without pulling the card,
+and it covers RGB30, RGB10X and G350 with one adapter — three of the six devices.
+
+Caveats to handle in that adapter: authentication (login + X-Auth token), no CORS headers on
+FileBrowser by default (fetch from the page is blocked; the Rool Web Bridge extension with host
+permissions bypasses it), and mixed content if the page is served over https.
