@@ -111,3 +111,32 @@ UI is `<label> · <device_id|no marker>`.
 Windows caveat: the SD reader often mounts both cards and the device's own internal partition
 at the same time. Linking a *device that is itself an MTP device* is not needed for saves —
 pull the cards, or use the ADB path for the RG405M's internal storage.
+
+## MTP over WebUSB — the route that actually reaches the device (2026-11-01)
+
+Correction to the earlier "USB cannot work" note. WebUSB blocks the **mass-storage** class, which
+is why a card mounted as a USB drive is unreachable. MTP is not that class: it speaks PTP over a
+still-image (class 6) or vendor-specific interface, and WebUSB may claim it. So an MTP device is
+reachable from the page with no install, no driver swap, no card reader.
+
+Implementation: `libmtp-web` (libmtp compiled to WebAssembly, LGPL-2.1, Chrome ≥137 for WASM JSPI),
+vendored at `js/vendor/libmtp-web/`. It exposes an MTP device as **File System Access handles**, so
+`js/mtp.js` adopts each storage root as a volume and the existing sdcard.js pull/ack code runs
+unchanged. Marker and queue discovery are the same code path as a card.
+
+Why this also answers the two-SD-card question: MTP lists storages, not partitions. A device with
+both cards inserted enumerates as `Internal Storage` and `SD Card`, and both become volumes in one
+connection — no second link click, no label ambiguity.
+
+Known limits:
+
+- Handles are backed by a live USB session and cannot be structured-cloned into IndexedDB. Card
+  volumes persist; MTP volumes are rebuilt on each load from `navigator.usb.getDevices()`.
+- Windows: the MTP interface is usually owned by Microsoft's WPD driver, which is exactly why the
+  WinUSB-based tools (and stephenkingston/WebMTP) tell you to replace the driver with Zadig. Whether
+  Chrome can open it without that swap is device- and driver-dependent — untested on this fleet.
+  If it refuses, the fallbacks are the card reader, or a localhost WPD agent.
+- Only one MTP session per device works at a time. An open Explorer window on the device will make
+  the open fail; close those first.
+- Reading works today for any storage; writing the ack back needs the device to accept SendObject,
+  which most Android builds do.
