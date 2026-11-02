@@ -1,4 +1,4 @@
-// Retro Gaming Journey — dashboard, library, badges, on-demand sync.
+// Retro Gaming Journey — dashboard, library, achievements, on-demand sync.
 "use strict";
 
 /* ------------------------------------------------------------------ */
@@ -21,7 +21,6 @@ let genreFilter = GENRES[0];
 let platformFilter = "all";
 let searchQuery = "";
 
-let assetIndex = null;           // master_library_index.json, lazily fetched
 
 function loadState() {
   try {
@@ -63,47 +62,6 @@ function totalUnlocks() {
   return Object.values(state.unlocks).reduce((n, u) => n + (u.count || 0), 0);
 }
 
-/* ------------------------------------------------------------------ */
-/* Badges                                                              */
-/* ------------------------------------------------------------------ */
-
-function computeBadges() {
-  const pct = (done, total) => total ? Math.round(done / total * 100) : 0;
-  const badges = [];
-  const overall = overallProgress();
-  badges.push({ emoji: "🚀", name: "Journey Begins", desc: "Complete your first game",
-    earned: overall.done >= 1, progress: Math.min(100, overall.done * 100) });
-  const quarterMark = Math.round(TOTAL_GAMES * 0.25);
-  badges.push({ emoji: "🏛️", name: "Cart Collector", desc: `Complete ${quarterMark} games (${Math.round(quarterMark / TOTAL_GAMES * 100)}% of the active library)`,
-    earned: overall.done >= quarterMark, progress: pct(overall.done, quarterMark) });
-  badges.push({ emoji: "👑", name: "Grand Master", desc: `Complete the entire ${TOTAL_GAMES}-title active library`,
-    earned: overall.done >= TOTAL_GAMES, progress: pct(overall.done, TOTAL_GAMES) });
-  for (const g of GENRES) {
-    const p = genreProgress(g);
-    const short = g.split("/")[0];
-    [25, 50, 75, 100].forEach((mark, i) => {
-      const icons = ["🥉", "🥈", "🥇", "💎"];
-      badges.push({
-        emoji: icons[i],
-        name: `${short} ${mark}%`,
-        desc: `Complete ${Math.ceil(p.total * mark / 100)} ${short} games`,
-        earned: pct(p.done, p.total) >= mark,
-        progress: Math.min(100, Math.round(p.done / (p.total * mark / 100) * 100))
-      });
-    });
-  }
-  for (const key of ACTIVE_PLATFORMS) {
-    const p = PLATFORMS[key];
-    const prog = platformProgress(key);
-    badges.push({
-      emoji: "🕹️", name: `${p.short} Mastery`,
-      desc: `Complete all ${prog.total} ${p.short} titles`,
-      earned: prog.done >= prog.total, progress: pct(prog.done, prog.total)
-    });
-  }
-  if (totalUnlocks() >= 100) badges.push({ emoji: "🏆", name: "Century of Unlocks", desc: "Bank 100 achievement unlocks", earned: true, progress: 100 });
-  return badges;
-}
 
 /* ------------------------------------------------------------------ */
 /* Rendering                                                           */
@@ -112,7 +70,7 @@ function computeBadges() {
 function render() {
   renderDashboard();
   renderLibrary();
-  renderBadges();
+  renderAchievements();
   renderSync();
 }
 
@@ -195,14 +153,74 @@ function renderLibrary() {
     card.addEventListener("click", () => cycleStatus(card.dataset.id)));
 }
 
-function renderBadges() {
-  $("#badge-grid").innerHTML = computeBadges().map(b => `
-    <div class="badge-card ${b.earned ? "earned" : ""}">
-      <span class="emoji">${b.emoji}</span>
-      <span class="bname">${esc(b.name)}</span>
-      <span class="bdesc">${esc(b.desc)}</span>
-      <div class="bar-track" style="width:100%"><div class="bar-fill" style="width:${b.earned ? 100 : b.progress}%"></div></div>
-    </div>`).join("");
+/* ------------------------------------------------------------------ */
+/* Achievements                                                        */
+/* ------------------------------------------------------------------ */
+
+// NES titles grouped by genre — the same 20-per-genre library the Journey map draws.
+function achGroups() {
+  const out = [];
+  for (const genre of GENRES) {
+    const titles = (GAME_LIBRARY[genre] && GAME_LIBRARY[genre].nes) || [];
+    if (titles.length) out.push([genre, titles]);
+  }
+  return out;
+}
+
+function renderAchievements() {
+  const host = $("#ach-groups");
+  if (!host) return;
+  const status = $("#ach-status");
+  const all = achGroups().flatMap(([, t]) => t);
+  const s = ACH.summary("nes", all);
+
+  host.innerHTML = achGroups().map(([genre, titles]) => `
+    <section class="ach-genre">
+      <h3>${esc(genre)} · ${titles.length} NES titles</h3>
+      <div class="ach-grid">
+        ${titles.map(title => {
+          const g = ACH.get("nes", title);
+          if (!g) return `
+            <div class="ach-game">
+              <div class="gname">${esc(title)}</div>
+              <div class="ach-missing">Not loaded. Press “Load from RetroAchievements”.</div>
+            </div>`;
+          if (!g.raId) return `
+            <div class="ach-game">
+              <div class="gname">${esc(title)}</div>
+              <div class="ach-missing">No match on RetroAchievements for this title.</div>
+            </div>`;
+          const have = g.picks.length ? ACH.earnedOf("nes", title) : {};
+          return `
+            <div class="ach-game">
+              <div class="gname">${esc(title)}</div>
+              <div class="gra">RA #${g.raId}${g.raTitle && RA.normTitle(g.raTitle) !== RA.normTitle(title) ? ` · ${esc(g.raTitle)}` : ""}</div>
+              <div class="ach-tiers">
+                ${g.picks.length ? g.picks.map(p => `
+                  <div class="ach-tier ${p.tier} ${have[p.id] ? "earned" : ""}">
+                    <span class="tag">${p.tier === "intermediate" ? "mid" : p.tier}</span>
+                    <div>
+                      <div class="atitle">${have[p.id] ? "★ " : ""}${esc(p.title)}</div>
+                      <div class="adesc">${esc(p.desc)}</div>
+                      <div class="apoints">${p.points} pts · ratio ${p.ratio}${p.type ? ` · ${esc(p.type)}` : ""}</div>
+                    </div>
+                  </div>`).join("") : '<div class="ach-missing">RA lists no achievements for this game.</div>'}
+              </div>
+            </div>`;
+        }).join("")}
+      </div>
+    </section>`).join("") || '<p class="ach-missing">No NES titles in scope.</p>';
+
+  if (status) {
+    const parts = [`${s.filled} of ${s.total} games carry three picks`];
+    if (s.unmatched) parts.push(`${s.unmatched} unmatched on RA`);
+    if (!s.filled) parts.push("add your RA account in Sync, then load");
+    status.textContent = parts.join(" · ");
+    status.className = "ach-status" + (s.filled === s.total ? " ok" : "");
+  }
+  // Tell the Journey map its stars may have changed.
+  const f = document.getElementById("journey-frame");
+  if (f && f.contentWindow) f.contentWindow.postMessage({ type: "rgj-ach" }, "*");
 }
 
 function renderSync() {
@@ -253,7 +271,6 @@ document.querySelectorAll(".tab").forEach(t =>
     document.querySelectorAll(".tab").forEach(x => x.classList.toggle("active", x === t));
     document.querySelectorAll(".panel").forEach(p =>
       p.classList.toggle("active", p.id === `panel-${t.dataset.tab}`));
-    if (t.dataset.tab === "sync") loadAssetIndex();
     if (t.dataset.tab === "journey") loadJourney();
   }));
 
@@ -266,27 +283,6 @@ function loadJourney() {
   if (!f || !f.dataset.src) return;
   f.src = f.dataset.src;
   journeyLoaded = true;
-}
-
-// Serverless frontend mapping: fetch the asset route index only when the sync
-// console is opened — the 1,800-asset payload itself stays in the zip.
-async function loadAssetIndex() {
-  if (assetIndex) return;
-  try {
-    const resp = await fetch("master_library_index.json");
-    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-    assetIndex = await resp.json();
-    const activeRoutes = assetIndex.games.filter(g => ACTIVE_PLATFORMS.includes(g.system));
-    const activeCount = activeRoutes.reduce((n, g) => n + g.assets.length, 0);
-    $("#asset-games").textContent = `${activeRoutes.length.toLocaleString()} (of ${assetIndex.total_games.toLocaleString()} mapped)`;
-    $("#asset-count").textContent = `${activeCount.toLocaleString()} active (of ${assetIndex.total_assets.toLocaleString()} total)`;
-    $("#tier-rows").innerHTML = assetIndex.tiers.map(tier =>
-      `<tr><td>${esc(tier)}</td><td>${esc(assetIndex.tier_rules[tier])}</td>` +
-      `<td>[slug]_${tier}.png</td></tr>`).join("");
-  } catch (e) {
-    $("#asset-games").textContent = "unavailable";
-    logSync(`Asset index fetch failed: ${e.message}`, "err");
-  }
 }
 
 $("#search").addEventListener("input", (e) => { searchQuery = e.target.value; renderLibrary(); });
@@ -532,6 +528,69 @@ $("#btn-ra-pull").addEventListener("click", async () => {
     btn.disabled = false;
   }
 });
+
+
+/* ------------------------------------------------------------------ */
+/* Achievements tab                                                    */
+/* ------------------------------------------------------------------ */
+
+function achHint(msg, cls) {
+  const el = $("#ach-status");
+  if (!el) return;
+  el.textContent = msg;
+  el.className = `ach-status ${cls || ""}`.trim();
+}
+
+$("#ach-load").addEventListener("click", async () => {
+  if (!RA.configured()) return achHint("Add your RetroAchievements username and web API key in the Sync tab first.", "err");
+  const btn = $("#ach-load");
+  btn.disabled = true;
+  const groups = achGroups();
+  try {
+    for (const [genre, titles] of groups) {
+      achHint(`Fetching ${genre}…`);
+      await ACH.ensure("nes", titles, {
+        onProgress: (done, total) => total && achHint(`${genre}: ${done}/${total}…`)
+      });
+      renderAchievements();
+    }
+    // Only games the player has actually touched can have earned picks; skip the rest.
+    const played = [];
+    for (const [genre, titles] of groups)
+      for (const t of titles) {
+        const id = gameId(genre, "nes", t);
+        if (state.unlocks[id] && state.unlocks[id].count > 0) played.push(t);
+      }
+    if (played.length) {
+      achHint(`Reading your earned achievements (${played.length} played title${played.length === 1 ? "" : "s"})…`);
+      for (const t of played) { try { await ACH.ensureEarned("nes", t); } catch (e) { /* leave unmarked */ } }
+    }
+    renderAchievements();
+    logSync(`Achievements loaded: ${ACH.summary("nes", groups.flatMap(([, t]) => t)).filled} NES titles now carry three picks.`, "ok");
+  } catch (err) {
+    achHint(`Load failed: ${err.message}`, "err");
+  } finally {
+    btn.disabled = false; renderAchievements();
+  }
+});
+
+$("#ach-export").addEventListener("click", () => {
+  const blob = new Blob([JSON.stringify(ACH.dump(), null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "ra-achievements.json";
+  a.click();
+  URL.revokeObjectURL(a.href);
+});
+
+// A fully-fetched cache can be committed as data/ra-achievements.json, so a first-time
+// visitor sees all three picks with no API key and no requests.
+(async function hydrateBundled() {
+  try {
+    const r = await fetch("data/ra-achievements.json", { cache: "no-cache" });
+    if (r.ok) { const added = await ACH.hydrate(await r.json()); if (added) renderAchievements(); }
+  } catch (e) { /* file:// or not committed yet — nothing to do */ }
+})();
 
 /* ------------------------------------------------------------------ */
 /* Boot                                                                */

@@ -14,7 +14,7 @@
       <span class="brand-logo">🎮</span>
       <div>
         <h1>Retro Gaming Journey</h1>
-        <p class="tagline">PowKiddy RGB10X · ArkOS · on-demand sync · <span class="iter-chip">Iteration 1: NES</span></p>
+        <p class="tagline">Handheld library · on-demand sync · <span class="iter-chip">Iteration 1: NES</span></p>
       </div>
     </div>
     <div class="auth-box" id="auth-box">
@@ -27,7 +27,7 @@
     <button class="tab active" data-tab="dashboard" role="tab">Dashboard</button>
     <button class="tab" data-tab="journey" role="tab">Journey</button>
     <button class="tab" data-tab="library" role="tab">Library</button>
-    <button class="tab" data-tab="badges" role="tab">Badges</button>
+    <button class="tab" data-tab="achievements" role="tab">Achievements</button>
     <button class="tab" data-tab="sync" role="tab">Sync</button>
   </nav>
 
@@ -86,10 +86,22 @@
       <div id="game-grid" class="game-grid"></div>
     </section>
 
-    <!-- BADGES -->
-    <section id="panel-badges" class="panel">
-      <h2>Badge case</h2>
-      <div id="badge-grid" class="badge-grid"></div>
+    <!-- ACHIEVEMENTS -->
+    <section id="panel-achievements" class="panel">
+      <h2>Three achievements per game</h2>
+      <p class="sync-note">
+        Every NES title in the library carries three RetroAchievements picks — <strong>easy</strong>,
+        <strong>intermediate</strong> and <strong>advanced</strong> — chosen by RA's own retro ratio
+        (<em>TrueRatio</em>: points weighted by how rare the achievement is). They are also the three
+        stars on each Journey map path point, so lighting a star here lights it there.
+      </p>
+      <div class="ach-bar">
+        <button id="ach-load" class="btn btn-small">Load from RetroAchievements</button>
+        <button id="ach-export" class="btn btn-small btn-ghost">Export cache</button>
+        <span id="ach-status" class="ach-status">No achievements loaded yet.</span>
+      </div>
+      <div class="ach-summary" id="ach-summary"></div>
+      <div id="ach-groups"></div>
     </section>
 
     <!-- SYNC -->
@@ -194,20 +206,6 @@
           <h3>Sync log</h3>
           <ul id="sync-log" class="log"><li>Ready. No sync performed this session.</li></ul>
         </div>
-        <div class="sync-card">
-          <h3>Asset library</h3>
-          <p class="sync-note" style="margin-bottom:.6rem">Badge assets are offloaded to
-            <code>Retro_Achievements_Asset_Library.zip</code> (1,800 routes = 600 games × 3 difficulty tiers)
-            and mapped at runtime via <code>master_library_index.json</code> — nothing heavy ships in the page payload.</p>
-          <dl>
-            <dt>Games mapped</dt><dd id="asset-games">—</dd>
-            <dt>Asset routes</dt><dd id="asset-count">—</dd>
-          </dl>
-          <table class="tier-table">
-            <thead><tr><th>Tier</th><th>Validation target</th><th>Asset</th></tr></thead>
-            <tbody id="tier-rows"></tbody>
-          </table>
-        </div>
       </div>
     </section>
   </main>
@@ -237,7 +235,8 @@
   <script src="js/data.js?v=iter2"></script>
   <script src="js/supabase-config.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/retroachievements.js?v=1"></script>
+  <script src="js/retroachievements.js?v=2"></script>
+  <script src="js/achievements.js?v=1"></script>
   <script src="js/app.js?v=iter7"></script>
   <script src="js/sdcard.js?v=4"></script>
   <script type="module" src="js/mtp.js?v=1"></script>

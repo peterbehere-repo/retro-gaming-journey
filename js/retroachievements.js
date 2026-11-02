@@ -225,6 +225,7 @@ const RA = (() => {
 
   return {
     CONSOLE, normTitle, lookup, configured, configure, forget,
+    call, key: () => cfg.key, user: () => cfg.user,
     ensureTitleIndex, buildMapping, resolve,
     fetchCompletionProgress, pullIntoState, gameDetail, summary,
     _state: () => cfg

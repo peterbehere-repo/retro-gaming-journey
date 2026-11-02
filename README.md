@@ -40,7 +40,7 @@ was taken. No dongle, no background service, no daemon.
 | Capture layer | RetroArch event script (`sync/retroarch/`) | Watches emulated core RAM, appends triggers to a spool file without frame stutter |
 | Device tool | `sync/device/rgj-sync`, POSIX `sh` | Owns the queue on the card: `init`, `add`, `prune`, `status`, `doctor`. No Python, no `jq`, no network |
 | Transport | MTP over WebUSB (`js/mtp.js`), card via File System Access (`js/sdcard.js`) | The only two channels that read a device from a browser. Each storage a device exposes becomes its own volume |
-| Frontend app | Static site on GitHub Pages | Player dashboard, library, badges, sync console |
+| Frontend app | Static site on GitHub Pages | Player dashboard, library, three-achievement cards, sync console |
 | BaaS layer | Supabase (`supabase/schema.sql`) | Auth profiles, synced structural tables, RLS |
 
 ### Transports, and what each costs
@@ -58,7 +58,7 @@ pulling the card, and that is not a limitation of this dashboard.
 ## Iteration plan
 
 The full 600-title directory ships from day one, but the **site reveals one console per
-iteration**. Visibility and all stats (completion %, bars, badges, asset counts) are
+iteration**. Visibility and all stats (completion %, bars, achievements, asset counts) are
 gated by a single switch in [`js/data.js`](js/data.js):
 
 ```js
@@ -84,8 +84,10 @@ const ACTIVE_PLATFORMS = ["nes"];   // iteration 1 — add "tg16", "genesis", "s
 | Visual Novels / Point & Click | 20 | 20 | 20 | 20 | 20 | 20 |
 
 The dashboard uses the grid as the progression canvas: cycle any card between
-*not started → playing → completed*, watch genre/platform completion fill in, and earn
-badges (genre milestones at 25/50/75/100%, platform mastery, library-wide honours).
+*not started → playing → completed* and watch genre/platform completion fill in. Progress
+itself comes from RetroAchievements: every NES title carries three picks — easy,
+intermediate, advanced — ordered by RA's own TrueRatio, and those same three are the stars
+on each Journey map path point (see [`js/achievements.js`](js/achievements.js)).
 
 ## Quick start — dashboard
 
@@ -137,7 +139,9 @@ CREATE TABLE achievement_queue (
 index.html                 dashboard app (GitHub Pages root)
 css/styles.css             CRT-flavoured retro theme
 js/data.js                 600-title System Directory Data Grid
-js/app.js                  dashboard / library / badges / sync console
+js/retroachievements.js    RA API client (CORS-open, credentials in localStorage)
+js/achievements.js         three picks per game (easy/mid/advanced) + earned-state merge
+js/app.js                  dashboard / library / achievements / sync console
 js/supabase-config.js      backend config (empty = offline demo mode)
 supabase/schema.sql        BaaS tables + row level security
 tools/build_library.py     asset ingestion pipeline (1,800 badge routes + index)
