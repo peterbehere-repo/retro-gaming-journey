@@ -118,15 +118,16 @@ const ACH = (() => {
     const g = get(platform, title);
     if (!g || !g.raId || !RA.configured()) return {};
     const e = earned();
-    if (e[g.raId]) return e[g.raId];
     const det = await RA.gameDetail(g.raId);
     const out = {};
     for (const a of Object.values((det && det.Achievements) || {})) {
       if (a && a.DateEarned) out[a.ID] = a.DateEarned;
     }
-    e[g.raId] = out;
+    // Merge, never replace: an unlock imported from a device is written here before RA
+    // has ever been asked, and a later RA pull must not wipe it (local wins on collision).
+    e[g.raId] = { ...out, ...(e[g.raId] || {}) };
     save(EARNED, e);
-    return out;
+    return e[g.raId];
   }
 
   // Synchronous read of what is already cached, for rendering without a request.

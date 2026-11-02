@@ -112,6 +112,24 @@ sh rgj-sync status                  # queue, acked keys, spool depth
 
 Full walkthrough: [`docs/Sync Device Install.md`](docs/Sync%20Device%20Install.md).
 
+### Three ways in, one queue
+
+The page reads `rgj/rgj-queue.jsonl` and writes `rgj/rgj-ack.json` over any of three transports:
+
+| Transport | Card | Code |
+|---|---|---|
+| MTP over USB (WebUSB) | Android-based units | `js/mtp.js` |
+| Card in a reader (File System Access) | every unit | `js/sdcard.js` |
+| **LAN HTTP** — the device's own file server | Miyoo A30 on SpruceOS (SFTPGo 2.6.2, verified) | `js/httpsync.js` |
+
+The LAN route needs the `Rool Web Bridge` extension (v1.5.2) in the browser: the page is served
+over https and the handheld over plain http, so the request is relayed through the extension's
+service worker, which is neither mixed-content nor CORS bound. Nothing gets installed on the
+device. Rows pulled this way fill Journey stars directly — `achievement_id` is matched against the
+game's three RetroAchievements picks — and are acked back so `rgj-sync prune` can retire them.
+
+Bring-up test with a real title: [`docs/Contra LAN Test.md`](docs/Contra%20LAN%20Test.md).
+
 ### Data integrity (spec 2.2)
 
 Rows are signed at capture time with `HMAC-SHA256(game_hash | achievement_id | unlocked_at |

@@ -225,3 +225,78 @@ before either gets more engineering.
 moves spool rows into the queue. Nobody has confirmed the Lua script is installed on a device or
 that the spool format it emits matches what `add` parses. Until that is run once on hardware, every
 queue in this system is legitimately empty.
+
+---
+
+## Reversal (2026-11-02) — the Wi-Fi question, answered on hardware
+
+The 2026-11-01 cut reasoned from **FileBrowser**, and FileBrowser is not what Spruce ships. The
+Miyoo A30 on SpruceOS answers SFTPGo:
+
+```text
+http://192.168.1.68:8080/                 302 -> /web/client/login    branding "SpruceOS"
+http://192.168.1.68:8080/web/client/files 200  file browser, user "spruce"
+GET  /api/v2/version                       200  {"version":"2.6.2",...}
+GET  /api/v2/user/token                    Basic -> access_token, expires_at (+20 min)
+GET  /api/v2/user/dirs?path=/roms/FC       200  JSON listing, 551 entries
+GET  /api/v2/user/files?path=<f>           200  raw bytes
+POST /api/v2/user/files/upload?path=<f>&mkdir_parents=true   201  raw body -> file
+```
+
+All six verified live against Peter's A30 (2026-11-02 04:35Z), including a write: `rgj-device.json`,
+`rgj/rgj-queue.jsonl` and `rgj-sync` were uploaded to the card and read back byte-identical. The
+queue file survives `mkdir_parents=true` on a path that did not exist.
+
+**This reaches the card with no cable and no card reader, and it reads *and writes* the ack.** That
+is everything the card channel does, minus the walk to the PC. The old objection still holds in
+form — SFTPGo sends no CORS headers either, so a page on another origin cannot read its replies —
+but the escape hatch named in the previous section now exists and is installed.
+
+### The relay
+
+`js/httpsync.js` calls the device through the Rool Web Bridge extension (v1.5.2). The page posts
+`{__rgjLan:1,id,req}` to itself, `relay.js` (content script) hands it to the service worker, and the
+service worker's `lanFetch` does the actual request: an extension fetch is not mixed-content blocked
+and, with `<all_urls>` host access, not CORS bound either. The reply comes back as a second
+`postMessage`. Nothing is installed on the handheld, and the phone/PC/laptop doing the browsing is
+the only thing that has to be on the LAN.
+
+Content-script scope is deliberately narrow (`*.github.io`, `localhost`, `127.0.0.1`, `file://`) and
+`relay.js` refuses any URL that is not plain `http` to a private address. The page falls back to a
+direct `fetch` when no relay answers — that path only works if the page is itself served over
+`http` *and* CORS is enabled in `sftpgo.json` (`httpd.cors.enabled`), so treat it as a bonus.
+
+### Channel table, revised
+
+| Device | MTP | Card pull | LAN HTTP |
+|---|---|---|---|
+| Miyoo A30 (Spruce) | ❌ | ✅ | ✅ **verified, SFTPGo 2.6.2** |
+| Anbernic RG405M (GammaOS) | ✅ | ✅ | untested (Android has its own servers) |
+| PowKiddy RGB30 (ArkOS) | ❌ | ✅ | untested — needs an SFTPGo/FileBrowser package |
+| PowKiddy RGB10X | ❌ | ✅ | untested |
+| Miyoo Mini Plus (Onion) | ❌ | ✅ | untested (Onion ships a web server on some builds) |
+| Batlexp G350 (ArkOS) | ❌ | ✅ | untested |
+
+The queue contract is unchanged: `rgj/rgj-queue.jsonl` in, `rgj/rgj-ack.json` + `rgj/rgj-ack.keys`
+out, same rows, same dedupe. Only the transport differs, so a card pulled by cable today is pulled
+by Wi-Fi tomorrow with no migration.
+
+### What the page does with a pulled row
+
+1. `importRows()` — unchanged — dedupes into `state.queued` and logs the import.
+2. `RGJLan.markEarned()` — new — maps `game_hash` back to a library game (same djb2 the page uses),
+   finds the game's answer card, and if `achievement_id` is one of that game's three RA picks, writes
+   the unlock into `rgj-ach-earned-v1`. That is what fills the star on the Journey map, and it fills
+   it **from the device**, before RetroAchievements has been asked anything.
+3. `RGJLan.ack()` writes the ack pair back so `rgj-sync prune` can retire the rows.
+
+A later RA pull can no longer erase device-earned stars: `ensureEarned()` in `js/achievements.js`
+now merges instead of replacing.
+
+### The gap that remains
+
+`markEarned` needs the game's RA id and its three picks in the local cache (`rgj-ach-v1`), which
+only an **RA pull** populates — so the first run against a fresh browser needs the RA username and
+Web API key. After that, rows stand alone. And `capture_achievements.lua` is still a stub with an
+empty `ACHIEVEMENTS` table: nothing on the device emits a row yet, so for the Contra test the row is
+written with `rgj-sync add` or uploaded directly. See `docs/Contra LAN Test.md`.
