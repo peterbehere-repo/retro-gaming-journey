@@ -52,7 +52,8 @@
       const done = res => { window.removeEventListener("message", onMsg); clearTimeout(timer); resolve(res); };
       const onMsg = ev => {
         const d = ev.data;
-        if (!d || d.__rgjLan !== 1 || d.id !== id) return;
+        // Must carry a reply: our own outgoing message has the same id and no `res`.
+        if (!d || d.__rgjLan !== 1 || d.id !== id || !d.res) return;
         relaySeen = true;
         done(d.res);
       };
@@ -62,15 +63,24 @@
     });
   }
 
+  const DIRECT_TIMEOUT_MS = 8000;
+
   async function viaDirectFetch(req) {
     const init = { method: req.method || "GET", credentials: "omit", cache: "no-store", redirect: "follow" };
     if (req.headers) init.headers = req.headers;
     if (init.method !== "GET" && init.method !== "HEAD" && req.body != null) init.body = req.body;
+    // Chrome does not reject a blocked mixed-content request to a LAN address, it leaves the
+    // promise hanging — so this path needs its own abort, or the button spins forever.
+    const ctrl = new AbortController();
+    init.signal = ctrl.signal;
+    const timer = setTimeout(() => ctrl.abort(), DIRECT_TIMEOUT_MS);
     try {
       const res = await fetch(req.url, init);
       return { ok: res.ok, status: res.status, text: await res.text() };
     } catch (e) {
       return { ok: false, status: 0, text: String(e && e.message || e) };
+    } finally {
+      clearTimeout(timer);
     }
   }
 
