@@ -87,6 +87,11 @@
   async function send(req) {
     const relayed = await viaRelay(req);
     if (relayed) return relayed;
+    // A page served over https can never reach a plain-http LAN host by itself: the browser
+    // blocks it as mixed content and (Chrome) never settles the promise. Fail here instead.
+    if (location.protocol === "https:") {
+      return { ok: false, status: 0, noRelay: true, text: "no relay — this page is https, a direct LAN request would be blocked" };
+    }
     return viaDirectFetch(req);
   }
 
@@ -99,7 +104,10 @@
     if (hit && hit.exp > Date.now() + 30000) return hit.token;
     const basic = "Basic " + btoa(`${dev.user}:${dev.pass}`);
     const res = await send({ method: "GET", url: `${dev.base}/api/v2/user/token`, headers: { Authorization: basic } });
-    if (!res.ok) throw new Error(res.status === 401 ? "wrong username or password" : `token request failed (HTTP ${res.status || "no route"})`);
+    if (!res.ok) throw new Error(
+      res.status === 401 ? "wrong username or password"
+        : res.status ? `token request failed (HTTP ${res.status})`
+          : `no route to the device${res.noRelay ? " and no extension relay" : ""}`);
     const body = JSON.parse(res.text);
     const exp = Date.parse(body.expires_at || "") || Date.now() + 600000;
     tokens.set(dev.id, { token: body.access_token, exp });
