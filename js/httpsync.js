@@ -293,7 +293,7 @@
              (relaySeen ? " Relay: extension." : " Relay: none — direct fetch."), "ok");
       } catch (e) {
         pill("unreachable", "err");
-        hint(`${e.message}. ${relaySeen ? "" : "No extension relay answered — is the Rool Web Bridge loaded, and is this page https?"}`, "err");
+        hint(`${e.message}.${relaySeen ? "" : " Load the Rool Web Bridge 1.5.2 extension in this browser — without it an https page cannot reach a plain-http device."}`, "err");
       }
     });
 
