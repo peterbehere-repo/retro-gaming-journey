@@ -6,8 +6,16 @@
 //
 // Difficulty is RA's own retro ratio (TrueRatio: points weighted by how rare the
 // achievement is). Lowest ratio in the set = easy, highest = advanced, the one
-// nearest the middle of the range = intermediate. That gives a real spread rather
-// than three arbitrary picks, and it moves when the community moves.
+// nearest the middle of the range in log terms = intermediate. That gives a real spread
+// rather than three arbitrary picks, and it moves when the community moves.
+//
+// Two rules learned the hard way (2026-11-02, Contra):
+//   • Achievements worth 0 points are meta entries — Konami codes, "thanks for playing",
+//     unpromoted stubs. They sit at ratio 0 and would win "easy" every time, so they are
+//     excluded from the three.
+//   • The ratio range is long-tailed (Contra runs 1 → 385), so an arithmetic midpoint
+//     lands deep in the tail. The geometric midpoint keeps easy/intermediate/advanced an
+//     even distance apart in real difficulty.
 "use strict";
 
 const ACH = (() => {
@@ -41,7 +49,8 @@ const ACH = (() => {
         ratio: Number(a.TrueRatio) || Number(a.Points) || 0,
         type: a.type || "",
         awarded: Number(a.NumAwarded) || 0
-      }));
+      }))
+      .filter(r => r.points > 0);      // 0-point meta achievements never count as a tier
 
     if (!rows.length) return [];
     rows.sort((a, b) => a.ratio - b.ratio || a.points - b.points || a.id - b.id);
@@ -49,11 +58,12 @@ const ACH = (() => {
 
     const easy = rows[0];
     const hard = rows[rows.length - 1];
-    // Intermediate: the row closest to the midpoint of the ratio range, excluding the ends.
-    const mid = (easy.ratio + hard.ratio) / 2;
+    // Intermediate: closest to the geometric midpoint (difficulty multiplies, it doesn't add).
+    const mid = Math.sqrt(Math.max(easy.ratio, 1) * Math.max(hard.ratio, 1));
+    const dist = r => Math.abs(Math.log(Math.max(r.ratio, 1)) - Math.log(mid));
     let midRow = rows[1];
     for (const r of rows.slice(1, -1)) {
-      if (Math.abs(r.ratio - mid) < Math.abs(midRow.ratio - mid)) midRow = r;
+      if (dist(r) < dist(midRow)) midRow = r;
     }
     return [
       { ...easy, tier: "easy" },

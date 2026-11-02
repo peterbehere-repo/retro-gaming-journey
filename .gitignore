@@ -3,3 +3,4 @@
 device.secret
 __pycache__/
 .DS_Store
+.harvest/

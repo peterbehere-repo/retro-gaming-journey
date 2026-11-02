@@ -1,5 +1,2761 @@
 {
-  "schema": "rgj-achievements-v1",
-  "generatedAt": null,
-  "games": {}
+ "schema": "rgj-achievements-v1",
+ "generatedAt": "2026-11-02T22:49:40Z",
+ "source": "retroachievements.org public game pages",
+ "games": {
+  "nes|adventures of lolo": {
+   "raId": 1533,
+   "raTitle": "Adventures of Lolo",
+   "picks": [
+    {
+     "id": 24596,
+     "title": "Devil's Haunted Castle Crasher",
+     "desc": "Complete all 5 rooms of Floor 1 in one session",
+     "points": 5,
+     "ratio": 5,
+     "type": "progression",
+     "tier": "easy"
+    },
+    {
+     "id": 24606,
+     "title": "One Life Left to Lolo - Floor 5",
+     "desc": "Complete all 5 rooms of Floor 5 in order in one session without dying or using the restart button",
+     "points": 10,
+     "ratio": 35,
+     "type": "",
+     "tier": "intermediate"
+    },
+    {
+     "id": 24696,
+     "title": "Failure Is Not an Option!",
+     "desc": "Beat the entire game without using the restart button",
+     "points": 50,
+     "ratio": 241,
+     "type": "",
+     "tier": "advanced"
+    }
+   ],
+   "unmatched": false
+  },
+  "nes|adventures of lolo 2": {
+   "raId": 1531,
+   "raTitle": "Adventures of Lolo 2",
+   "picks": [
+    {
+     "id": 36487,
+     "title": "Floor One",
+     "desc": "Complete Floor One.",
+     "points": 5,
+     "ratio": 6,
+     "type": "progression",
+     "tier": "easy"
+    },
+    {
+     "id": 36496,
+     "title": "Ace Floor Five",
+     "desc": "Complete Floor Five without losing a life or giving up.",
+     "points": 10,
+     "ratio": 45,
+     "type": "",
+     "tier": "intermediate"
+    },
+    {
+     "id": 37021,
+     "title": "Don't Give Up! (The Second Chapter)",
+     "desc": "Get to King Egger without pressing select.",
+     "points": 50,
+     "ratio": 330,
+     "type": "",
+     "tier": "advanced"
+    }
+   ],
+   "unmatched": false
+  },
+  "nes|adventures of lolo 3": {
+   "raId": 1533,
+   "raTitle": "Adventures of Lolo",
+   "picks": [
+    {
+     "id": 24596,
+     "title": "Devil's Haunted Castle Crasher",
+     "desc": "Complete all 5 rooms of Floor 1 in one session",
+     "points": 5,
+     "ratio": 5,
+     "type": "progression",
+     "tier": "easy"
+    },
+    {
+     "id": 24606,
+     "title": "One Life Left to Lolo - Floor 5",
+     "desc": "Complete all 5 rooms of Floor 5 in order in one session without dying or using the restart button",
+     "points": 10,
+     "ratio": 35,
+     "type": "",
+     "tier": "intermediate"
+    },
+    {
+     "id": 24696,
+     "title": "Failure Is Not an Option!",
+     "desc": "Beat the entire game without using the restart button",
+     "points": 50,
+     "ratio": 241,
+     "type": "",
+     "tier": "advanced"
+    }
+   ],
+   "unmatched": false
+  },
+  "nes|bard s tale": {
+   "raId": 1559,
+   "raTitle": "The Bard's Tale",
+   "picks": [
+    {
+     "id": 355304,
+     "title": "I'm Here For the Juice",
+     "desc": "Enter the Scarlet Bard.",
+     "points": 5,
+     "ratio": 22,
+     "type": "progression",
+     "tier": "easy"
+    },
+    {
+     "id": 355294,
+     "title": "Maestro",
+     "desc": "Have a character reach level 15.",
+     "points": 10,
+     "ratio": 76,
+     "type": "",
+     "tier": "intermediate"
+    },
+    {
+     "id": 355292,
+     "title": "Bringing Back Summer",
+     "desc": "Defeat Mangar in his tower.",
+     "points": 25,
+     "ratio": 254,
+     "type": "win_condition",
+     "tier": "advanced"
+    }
+   ],
+   "unmatched": false
+  },
+  "nes|battle of olympus": {
+   "raId": 1571,
+   "raTitle": "The Battle of Olympus",
+   "picks": [
+    {
+     "id": 263857,
+     "title": "The First Test of the Gods",
+     "desc": "Defeat Taurus.",
+     "points": 5,
+     "ratio": 6,
+     "type": "progression",
+     "tier": "easy"
+    },
+    {
+     "id": 264933,
+     "title": "Blessed of the Gods",
+     "desc": "In a single playthrough, obtain all possible items including a maxed out life bar and the fire ability for the Staff of Fennel.",
+     "points": 10,
+     "ratio": 40,
+     "type": "",
+     "tier": "intermediate"
+    },
+    {
+     "id": 300927,
+     "title": "Survivor",
+     "desc": "Beat the game using 12 or fewer lives and without entering passwords.",
+     "points": 25,
+     "ratio": 269,
+     "type": "",
+     "tier": "advanced"
+    }
+   ],
+   "unmatched": false
+  },
+  "nes|bionic commando": {
+   "raId": 1580,
+   "raTitle": "Bionic Commando",
+   "picks": [
+    {
+     "id": 27318,
+     "title": "Not-So-Friendly Fire",
+     "desc": "Shoot while in a neutral area",
+     "points": 1,
+     "ratio": 1,
+     "type": "",
+     "tier": "easy"
+    },
+    {
+     "id": 27296,
+     "title": "Ranged to a T",
+     "desc": "Obtain the 3-Way",
+     "points": 5,
+     "ratio": 10,
+     "type": "",
+     "tier": "intermediate"
+    },
+    {
+     "id": 27333,
+     "title": "The Raddest Guy Around",
+     "desc": "Beat the game with no more than 4 life points by collecting less than 100 bullets",
+     "points": 25,
+     "ratio": 96,
+     "type": "",
+     "tier": "advanced"
+    }
+   ],
+   "unmatched": false
+  },
+  "nes|blaster master": {
+   "raId": 1459,
+   "raTitle": "Blaster Master",
+   "picks": [
+    {
+     "id": 24703,
+     "title": "Gun Turret Grassland",
+     "desc": "Defeat Mother Brain and obtain the Hyper from Area 1.",
+     "points": 5,
+     "ratio": 5,
+     "type": "progression",
+     "tier": "easy"
+    },
+    {
+     "id": 24716,
+     "title": "World's Bravest Pet Owner",
+     "desc": "Defeat the Underworld Lord and save Fred.",
+     "points": 10,
+     "ratio": 52,
+     "type": "win_condition",
+     "tier": "intermediate"
+    },
+    {
+     "id": 24731,
+     "title": "Super-Planetary Survivor",
+     "desc": "Beat the game without dying.",
+     "points": 50,
+     "ratio": 425,
+     "type": "",
+     "tier": "advanced"
+    }
+   ],
+   "unmatched": false
+  },
+  "nes|bomberman": {
+   "raId": 4568,
+   "raTitle": "Bomberman",
+   "picks": [
+    {
+     "id": 24948,
+     "title": "One Direction",
+     "desc": "Find the Fire Power Up",
+     "points": 2,
+     "ratio": 2,
+     "type": "",
+     "tier": "easy"
+    },
+    {
+     "id": 133625,
+     "title": "Goddess Mask",
+     "desc": "Collect the Goddess Mask item in any stage it appears in.",
+     "points": 5,
+     "ratio": 19,
+     "type": "",
+     "tier": "intermediate"
+    },
+    {
+     "id": 133629,
+     "title": "Dezeniman-san",
+     "desc": "Collect the Dezeniman-san item in any stage it appears in.",
+     "points": 25,
+     "ratio": 149,
+     "type": "",
+     "tier": "advanced"
+    }
+   ],
+   "unmatched": false
+  },
+  "nes|bomberman ii": {
+   "raId": 1586,
+   "raTitle": "Bomberman II",
+   "picks": [
+    {
+     "id": 27338,
+     "title": "Level Clear!",
+     "desc": "Complete a stage",
+     "points": 5,
+     "ratio": 5,
+     "type": "",
+     "tier": "easy"
+    },
+    {
+     "id": 27346,
+     "title": "Bonus on a Lakeside Swim",
+     "desc": "Find the bonus level in Area 4",
+     "points": 10,
+     "ratio": 27,
+     "type": "",
+     "tier": "intermediate"
+    },
+    {
+     "id": 27365,
+     "title": "Bomber Domination",
+     "desc": "Complete the game with at least 4 lives remaining",
+     "points": 25,
+     "ratio": 143,
+     "type": "",
+     "tier": "advanced"
+    }
+   ],
+   "unmatched": false
+  },
+  "nes|boulder dash": {
+   "raId": 1589,
+   "raTitle": "Boulder Dash",
+   "picks": [
+    {
+     "id": 223283,
+     "title": "1-1 Stage Complete",
+     "desc": "Beat the stage 1-1",
+     "points": 1,
+     "ratio": 1,
+     "type": "progression",
+     "tier": "easy"
+    },
+    {
+     "id": 223305,
+     "title": "Ice World",
+     "desc": "Beat Ice World in first level (password aren't valid)",
+     "points": 5,
+     "ratio": 52,
+     "type": "progression",
+     "tier": "intermediate"
+    },
+    {
+     "id": 223353,
+     "title": "Golden Miner",
+     "desc": "Finish the entire 4th level game (only the password for the 4th level Boulder World is allowed)",
+     "points": 50,
+     "ratio": 2415,
+     "type": "",
+     "tier": "advanced"
+    }
+   ],
+   "unmatched": false
+  },
+  "nes|bubble bobble": {
+   "raId": 1460,
+   "raTitle": "Bubble Bobble",
+   "picks": [
+    {
+     "id": 26653,
+     "title": "Green Candy",
+     "desc": "Collect the Green Candy",
+     "points": 1,
+     "ratio": 1,
+     "type": "",
+     "tier": "easy"
+    },
+    {
+     "id": 26558,
+     "title": "Rain Gutter Checkpoint",
+     "desc": "Complete Round 90",
+     "points": 10,
+     "ratio": 42,
+     "type": "progression",
+     "tier": "intermediate"
+    },
+    {
+     "id": 26591,
+     "title": "Angry Incendo Survival",
+     "desc": "Defeat 75 enemies without losing any lives past Round 57",
+     "points": 50,
+     "ratio": 1831,
+     "type": "",
+     "tier": "advanced"
+    }
+   ],
+   "unmatched": false
+  },
+  "nes|castlevania iii": {
+   "raId": 2221,
+   "raTitle": "Castlevania III: Dracula's Curse",
+   "picks": [
+    {
+     "id": 12634,
+     "title": "Cross Your Heart",
+     "desc": "Feel the power of a rosary.",
+     "points": 1,
+     "ratio": 1,
+     "type": "",
+     "tier": "easy"
+    },
+    {
+     "id": 12601,
+     "title": "Candle Conservator",
+     "desc": "Finish Stage 1 without hitting a single candle.",
+     "points": 5,
+     "ratio": 19,
+     "type": "",
+     "tier": "intermediate"
+    },
+    {
+     "id": 12621,
+     "title": "You Don't Belong in This World!",
+     "desc": "Slay Dracula on Hard Mode.",
+     "points": 50,
+     "ratio": 321,
+     "type": "",
+     "tier": "advanced"
+    }
+   ],
+   "unmatched": false
+  },
+  "nes|clash at demonhead": {
+   "raId": 1620,
+   "raTitle": "Clash at Demonhead",
+   "picks": [
+    {
+     "id": 117934,
+     "title": "Sad Soda Statue",
+     "desc": "A grieving sprite reveals the hidden path to Route 35",
+     "points": 5,
+     "ratio": 11,
+     "type": "progression",
+     "tier": "easy"
+    },
+    {
+     "id": 117932,
+     "title": "Fighting Robots, Mega Bang!",
+     "desc": "Wear one Supersuit from one end of Route 29 to the other",
+     "points": 10,
+     "ratio": 68,
+     "type": "",
+     "tier": "intermediate"
+    },
+    {
+     "id": 117945,
+     "title": "Bang and Joe's Bogus Clash",
+     "desc": "Rely on Joe's power and fight twice as hard to save the world start to finish- no shop visits, no password",
+     "points": 50,
+     "ratio": 436,
+     "type": "",
+     "tier": "advanced"
+    }
+   ],
+   "unmatched": false
+  },
+  "nes|contra": {
+   "raId": 1447,
+   "raTitle": "Contra",
+   "picks": [
+    {
+     "id": 6850,
+     "title": "Shock Trooper",
+     "desc": "Get zapped by an electric barrier.",
+     "points": 1,
+     "ratio": 1,
+     "type": "",
+     "tier": "easy"
+    },
+    {
+     "id": 6771,
+     "title": "Forward March",
+     "desc": "Clear Stage 1 without pressing left and without using the Konami Code.",
+     "points": 10,
+     "ratio": 27,
+     "type": "",
+     "tier": "intermediate"
+    },
+    {
+     "id": 51295,
+     "title": "Walking Tall",
+     "desc": "Beat the game without crouching, except when dropping through the required platforms in Stage 6 and without using the Konami code.",
+     "points": 50,
+     "ratio": 385,
+     "type": "",
+     "tier": "advanced"
+    }
+   ],
+   "unmatched": false
+  },
+  "nes|crystalis": {
+   "raId": 1636,
+   "raTitle": "Crystalis",
+   "picks": [
+    {
+     "id": 239856,
+     "title": "A Little Cash to Get You on Your Way",
+     "desc": "Get the extra free money at the begining of the game from Zebu's disciple",
+     "points": 1,
+     "ratio": 1,
+     "type": "",
+     "tier": "easy"
+    },
+    {
+     "id": 8031,
+     "title": "Sword of Fire",
+     "desc": "Obtain and equip the Sword of Fire",
+     "points": 5,
+     "ratio": 7,
+     "type": "progression",
+     "tier": "intermediate"
+    },
+    {
+     "id": 8045,
+     "title": "God Slayer",
+     "desc": "Defeat Dyna and thrust Crystalis into the reactor!",
+     "points": 25,
+     "ratio": 54,
+     "type": "win_condition",
+     "tier": "advanced"
+    }
+   ],
+   "unmatched": false
+  },
+  "nes|destiny of emperor": {
+   "raId": 1651,
+   "raTitle": "Destiny of an Emperor",
+   "picks": [
+    {
+     "id": 68028,
+     "title": "Zhang Shi Ping in Lou Sang Village",
+     "desc": "Receive a gift of 200 gold coins and 1000 rations from the fortunate horse trader",
+     "points": 1,
+     "ratio": 1,
+     "type": "",
+     "tier": "easy"
+    },
+    {
+     "id": 68088,
+     "title": "The Brigand Force I",
+     "desc": "Defeat a full team of Brigand Force random encounters 5 times in one session",
+     "points": 5,
+     "ratio": 16,
+     "type": "",
+     "tier": "intermediate"
+    },
+    {
+     "id": 68544,
+     "title": "The Wei Generals",
+     "desc": "Hire the 29 recruitable generals that fought for the Cao Family in Wei",
+     "points": 25,
+     "ratio": 268,
+     "type": "",
+     "tier": "advanced"
+    }
+   ],
+   "unmatched": false
+  },
+  "nes|double dragon ii": {
+   "raId": 1661,
+   "raTitle": "Double Dragon II: The Revenge",
+   "picks": [
+    {
+     "id": 3849,
+     "title": "Novice",
+     "desc": "Score 10,000 points.",
+     "points": 2,
+     "ratio": 2,
+     "type": "",
+     "tier": "easy"
+    },
+    {
+     "id": 351727,
+     "title": "Double Trouble",
+     "desc": "Defeat the two ninjas in Mission 2 in less than 10 seconds on Supreme Master difficulty.",
+     "points": 10,
+     "ratio": 37,
+     "type": "",
+     "tier": "intermediate"
+    },
+    {
+     "id": 351367,
+     "title": "Old Fashioned Street Fight",
+     "desc": "Complete the game on Supreme Master without picking up a weapon, using a cyclone kick or flying knee.",
+     "points": 50,
+     "ratio": 663,
+     "type": "",
+     "tier": "advanced"
+    }
+   ],
+   "unmatched": false
+  },
+  "nes|dr jekyll and mr hyde": {
+   "raId": 1664,
+   "raTitle": "Dr. Jekyll and Mr. Hyde",
+   "picks": [
+    {
+     "id": 24001,
+     "title": "Just Take It Easy...",
+     "desc": "Lose all of your Stress and transform back into Dr. Jekyll.",
+     "points": 3,
+     "ratio": 4,
+     "type": "",
+     "tier": "easy"
+    },
+    {
+     "id": 23996,
+     "title": "Heart of Gold",
+     "desc": "Without transforming into Mr. Hyde, complete stage 2.",
+     "points": 10,
+     "ratio": 46,
+     "type": "",
+     "tier": "intermediate"
+    },
+    {
+     "id": 24000,
+     "title": "No Harm, True Reward",
+     "desc": "Without transforming into Mr. Hyde, complete stage 6.",
+     "points": 25,
+     "ratio": 429,
+     "type": "",
+     "tier": "advanced"
+    }
+   ],
+   "unmatched": false
+  },
+  "nes|dr mario": {
+   "raId": 1469,
+   "raTitle": "Dr. Mario",
+   "picks": [
+    {
+     "id": 8874,
+     "title": "Virus Buster 0 - Low",
+     "desc": "Clear Level 0 on Low speed or higher",
+     "points": 1,
+     "ratio": 1,
+     "type": "progression",
+     "tier": "easy"
+    },
+    {
+     "id": 8935,
+     "title": "Virus Buster 20 - Medium",
+     "desc": "Clear Level 20 on Medium speed or higher",
+     "points": 10,
+     "ratio": 38,
+     "type": "",
+     "tier": "intermediate"
+    },
+    {
+     "id": 8873,
+     "title": "The Highest Fever",
+     "desc": "Clear Levels 0-20 without dying on High speed",
+     "points": 100,
+     "ratio": 1565,
+     "type": "",
+     "tier": "advanced"
+    }
+   ],
+   "unmatched": false
+  },
+  "nes|dragon warrior ii": {
+   "raId": 1470,
+   "raTitle": "Dragon Quest II",
+   "picks": [
+    {
+     "id": 46412,
+     "title": "'Tis Dangerous to Venture Alone",
+     "desc": "Find and equip the Copper Sword",
+     "points": 1,
+     "ratio": 1,
+     "type": "",
+     "tier": "easy"
+    },
+    {
+     "id": 46419,
+     "title": "Thou Hast the Crest of Thine Line",
+     "desc": "Find the Token of Erdrick",
+     "points": 5,
+     "ratio": 6,
+     "type": "",
+     "tier": "intermediate"
+    },
+    {
+     "id": 46460,
+     "title": "Thine Quest, 'Tis Over!",
+     "desc": "Vanquish the otherworldly demon, Malroth",
+     "points": 25,
+     "ratio": 33,
+     "type": "progression",
+     "tier": "advanced"
+    }
+   ],
+   "unmatched": false
+  },
+  "nes|dragon warrior iii": {
+   "raId": 1667,
+   "raTitle": "Dragon Quest III",
+   "picks": [
+    {
+     "id": 50465,
+     "title": "With a Little Help from My Friends",
+     "desc": "Build a full party",
+     "points": 1,
+     "ratio": 1,
+     "type": "",
+     "tier": "easy"
+    },
+    {
+     "id": 50423,
+     "title": "Boulder Mover",
+     "desc": "Get the Vase of Drought",
+     "points": 5,
+     "ratio": 6,
+     "type": "",
+     "tier": "intermediate"
+    },
+    {
+     "id": 50651,
+     "title": "We're Not Scared",
+     "desc": "Defeat Zoma without using the Sphere of Light",
+     "points": 25,
+     "ratio": 37,
+     "type": "",
+     "tier": "advanced"
+    }
+   ],
+   "unmatched": false
+  },
+  "nes|dragon warrior iv": {
+   "raId": 4612,
+   "raTitle": "Dragon Quest IV: Michibikareshi Monotachi",
+   "picks": [
+    {
+     "id": 52318,
+     "title": "Reunited",
+     "desc": "Help Flora find her missing husband",
+     "points": 5,
+     "ratio": 5,
+     "type": "progression",
+     "tier": "easy"
+    },
+    {
+     "id": 52331,
+     "title": "Refugees",
+     "desc": "Complete Chapter 4",
+     "points": 10,
+     "ratio": 13,
+     "type": "progression",
+     "tier": "intermediate"
+    },
+    {
+     "id": 52360,
+     "title": "Small Medal Collector",
+     "desc": "Find all 32 small medals",
+     "points": 50,
+     "ratio": 74,
+     "type": "missable",
+     "tier": "advanced"
+    }
+   ],
+   "unmatched": false
+  },
+  "nes|duck tales": {
+   "raId": 1472,
+   "raTitle": "DuckTales",
+   "picks": [
+    {
+     "id": 3546,
+     "title": "Superduck!",
+     "desc": "Find a Magic Coin",
+     "points": 1,
+     "ratio": 1,
+     "type": "",
+     "tier": "easy"
+    },
+    {
+     "id": 45118,
+     "title": "Lunar Treasure Hunter II",
+     "desc": "Find the second secret area on the Moon",
+     "points": 5,
+     "ratio": 16,
+     "type": "",
+     "tier": "intermediate"
+    },
+    {
+     "id": 3541,
+     "title": "The Curse of Flintheart Glomgold",
+     "desc": "Beat the game with a final total wealth of $0",
+     "points": 50,
+     "ratio": 214,
+     "type": "",
+     "tier": "advanced"
+    }
+   ],
+   "unmatched": false
+  },
+  "nes|earthbound beginnings": {
+   "raId": 3814,
+   "raTitle": "EarthBound Beginnings",
+   "picks": [
+    {
+     "id": 7371,
+     "title": "Lucky Guess",
+     "desc": "Find Pippi without checking any other coffin",
+     "points": 5,
+     "ratio": 5,
+     "type": "missable",
+     "tier": "easy"
+    },
+    {
+     "id": 7676,
+     "title": "Master of PSI",
+     "desc": "Have every PSI ability for Ana",
+     "points": 10,
+     "ratio": 16,
+     "type": "",
+     "tier": "intermediate"
+    },
+    {
+     "id": 7628,
+     "title": "Party of One",
+     "desc": "Defeat Giegue with only Ninten in your party",
+     "points": 50,
+     "ratio": 89,
+     "type": "missable",
+     "tier": "advanced"
+    }
+   ],
+   "unmatched": false
+  },
+  "nes|faxanadu": {
+   "raId": 1682,
+   "raTitle": "Faxanadu",
+   "picks": [
+    {
+     "id": 21562,
+     "title": "I've Been On A Long Journey",
+     "desc": "Leave the castle town of Eilos.",
+     "points": 1,
+     "ratio": 1,
+     "type": "",
+     "tier": "easy"
+    },
+    {
+     "id": 21574,
+     "title": "It Means \"Knight\"",
+     "desc": "Reach rank Chevalier.",
+     "points": 5,
+     "ratio": 7,
+     "type": "",
+     "tier": "intermediate"
+    },
+    {
+     "id": 21636,
+     "title": "The Head Of Ultimate Evil",
+     "desc": "Defeat Shadow Eura in the Evil Fortress and complete the game.",
+     "points": 25,
+     "ratio": 51,
+     "type": "progression",
+     "tier": "advanced"
+    }
+   ],
+   "unmatched": false
+  },
+  "nes|final fantasy": {
+   "raId": 1449,
+   "raTitle": "Final Fantasy",
+   "picks": [
+    {
+     "id": 398472,
+     "title": "May Thou Rest in Peace",
+     "desc": "Pay respects to a rival hero.",
+     "points": 2,
+     "ratio": 3,
+     "type": "",
+     "tier": "easy"
+    },
+    {
+     "id": 3575,
+     "title": "Molten Fire",
+     "desc": "Defeat Kary and purify the Fire Crystal.",
+     "points": 10,
+     "ratio": 14,
+     "type": "progression",
+     "tier": "intermediate"
+    },
+    {
+     "id": 398476,
+     "title": "Merchandise Madness",
+     "desc": "Defeat Chaos without opening any optional treasure chests, except the Tail if desired.",
+     "points": 25,
+     "ratio": 66,
+     "type": "missable",
+     "tier": "advanced"
+    }
+   ],
+   "unmatched": false
+  },
+  "nes|fire n ice": {
+   "raId": 1686,
+   "raTitle": "Fire 'n Ice",
+   "picks": [
+    {
+     "id": 21868,
+     "title": "Imp's Greenhorn Glacier",
+     "desc": "Clear all 10 rounds of World 1: Ice Rock Island in a single session",
+     "points": 10,
+     "ratio": 10,
+     "type": "progression",
+     "tier": "easy"
+    },
+    {
+     "id": 60352,
+     "title": "Defrosting an Exciting Epilogue",
+     "desc": "View a secret message from the Queen of the Winter Fairies after the ending",
+     "points": 10,
+     "ratio": 30,
+     "type": "",
+     "tier": "intermediate"
+    },
+    {
+     "id": 60357,
+     "title": "And Now, Dana Searches for Solomon's Key...",
+     "desc": "Clear all 10 rounds of World 15 in a single session",
+     "points": 25,
+     "ratio": 85,
+     "type": "",
+     "tier": "advanced"
+    }
+   ],
+   "unmatched": false
+  },
+  "nes|gargoyle s quest ii": {
+   "raId": 5060,
+   "raTitle": "Gargoyle's Quest II: The Demon Darkness",
+   "picks": [
+    {
+     "id": 15188,
+     "title": "The Beginning of the Quest",
+     "desc": "Complete your training",
+     "points": 5,
+     "ratio": 5,
+     "type": "progression",
+     "tier": "easy"
+    },
+    {
+     "id": 15195,
+     "title": "Mt. Imaus",
+     "desc": "Defeat the Twin Guardian and get the Jump Upgrade",
+     "points": 10,
+     "ratio": 22,
+     "type": "progression",
+     "tier": "intermediate"
+    },
+    {
+     "id": 15199,
+     "title": "Fake Firebrand",
+     "desc": "Defeat the Doppelganger using only the Fireball (No Soulstream)",
+     "points": 25,
+     "ratio": 99,
+     "type": "",
+     "tier": "advanced"
+    }
+   ],
+   "unmatched": false
+  },
+  "nes|goonies": {
+   "raId": 1720,
+   "raTitle": "The Goonies",
+   "picks": [
+    {
+     "id": 61355,
+     "title": "Passageway A",
+     "desc": "Complete the passageway A",
+     "points": 2,
+     "ratio": 2,
+     "type": "",
+     "tier": "easy"
+    },
+    {
+     "id": 61492,
+     "title": "50k extra Life",
+     "desc": "Get your first extra life (50k score)",
+     "points": 10,
+     "ratio": 18,
+     "type": "",
+     "tier": "intermediate"
+    },
+    {
+     "id": 61501,
+     "title": "Goonies Never Say Die (Hard quest)",
+     "desc": "Finish the second quest of the game (beat the game two times in sequence)",
+     "points": 50,
+     "ratio": 170,
+     "type": "",
+     "tier": "advanced"
+    }
+   ],
+   "unmatched": false
+  },
+  "nes|goonies ii": {
+   "raId": 1719,
+   "raTitle": "The Goonies II",
+   "picks": [
+    {
+     "id": 5199,
+     "title": "Chain Link",
+     "desc": "Collect a Key Holder",
+     "points": 5,
+     "ratio": 5,
+     "type": "",
+     "tier": "easy"
+    },
+    {
+     "id": 30331,
+     "title": "Son of Molotov",
+     "desc": "Collect all 4 Fire Boxes for a maximum of 20 Molotov cocktails",
+     "points": 10,
+     "ratio": 38,
+     "type": "",
+     "tier": "intermediate"
+    },
+    {
+     "id": 30380,
+     "title": "100% Full-Blooded Goonie",
+     "desc": "Reach Annie's cell with 5 lives, maximum energy, every item, and all of the Goonie Pals rescued",
+     "points": 25,
+     "ratio": 302,
+     "type": "",
+     "tier": "advanced"
+    }
+   ],
+   "unmatched": false
+  },
+  "nes|gradius": {
+   "raId": 1722,
+   "raTitle": "Gradius",
+   "picks": [
+    {
+     "id": 27789,
+     "title": "A Stalag-Mighty Bonus",
+     "desc": "Collect the hidden 5,000-point bonus in Stage 1",
+     "points": 5,
+     "ratio": 5,
+     "type": "",
+     "tier": "easy"
+    },
+    {
+     "id": 27751,
+     "title": "The Big Core Blues",
+     "desc": "Use the hidden warp in Stage 2 to skip to Stage 4",
+     "points": 10,
+     "ratio": 47,
+     "type": "",
+     "tier": "intermediate"
+    },
+    {
+     "id": 27799,
+     "title": "The Long and Lonely Trip",
+     "desc": "Beat the game without using any Options",
+     "points": 50,
+     "ratio": 458,
+     "type": "",
+     "tier": "advanced"
+    }
+   ],
+   "unmatched": false
+  },
+  "nes|home alone": {
+   "raId": 1737,
+   "raTitle": "Home Alone",
+   "picks": [
+    {
+     "id": 31454,
+     "title": "Pair o' Screwballs",
+     "desc": "Knock down both Marv and Harry at the same time.",
+     "points": 1,
+     "ratio": 1,
+     "type": "",
+     "tier": "easy"
+    },
+    {
+     "id": 31452,
+     "title": "McCallister Riches",
+     "desc": "Score 50,000 points.",
+     "points": 5,
+     "ratio": 5,
+     "type": "",
+     "tier": "intermediate"
+    },
+    {
+     "id": 31461,
+     "title": "Just Hangin'",
+     "desc": "Evade the robbers for 20 minutes for the police to arrive.",
+     "points": 25,
+     "ratio": 28,
+     "type": "win_condition",
+     "tier": "advanced"
+    }
+   ],
+   "unmatched": false
+  },
+  "nes|hudson hawk": {
+   "raId": 1740,
+   "raTitle": "Hudson Hawk",
+   "picks": [
+    {
+     "id": 524324,
+     "title": "Swinging on a Star",
+     "desc": "Beat Level 1",
+     "points": 5,
+     "ratio": 50,
+     "type": "progression",
+     "tier": "easy"
+    },
+    {
+     "id": 524325,
+     "title": "We Will Not Lie Down for Some Schmuck from New Jersey",
+     "desc": "Beat Level 2",
+     "points": 10,
+     "ratio": 180,
+     "type": "progression",
+     "tier": "intermediate"
+    },
+    {
+     "id": 524329,
+     "title": "Money isn't everything. Gold Is!",
+     "desc": "Beat Level 3 without losing a life",
+     "points": 25,
+     "ratio": 779,
+     "type": "",
+     "tier": "advanced"
+    }
+   ],
+   "unmatched": false
+  },
+  "nes|ikari warriors": {
+   "raId": 1747,
+   "raTitle": "Ikari Warriors",
+   "picks": [
+    {
+     "id": 52707,
+     "title": "Gimme! Gimme! Gimme!",
+     "desc": "Won't somebody help and chase the shadows away? (P1)",
+     "points": 1,
+     "ratio": 2,
+     "type": "",
+     "tier": "easy"
+    },
+    {
+     "id": 52681,
+     "title": "First Steps",
+     "desc": "Survive Area 1 (1P-2P)",
+     "points": 10,
+     "ratio": 52,
+     "type": "progression",
+     "tier": "intermediate"
+    },
+    {
+     "id": 52688,
+     "title": "First Tier Action Hero",
+     "desc": "Score 500k points (P1)",
+     "points": 50,
+     "ratio": 2910,
+     "type": "",
+     "tier": "advanced"
+    }
+   ],
+   "unmatched": false
+  },
+  "nes|jackal": {
+   "raId": 1477,
+   "raTitle": "Jackal",
+   "picks": [
+    {
+     "id": 15125,
+     "title": "Vehicular Vigilance",
+     "desc": "Score 20,000 points and earn an extra life [1P]",
+     "points": 2,
+     "ratio": 2,
+     "type": "",
+     "tier": "easy"
+    },
+    {
+     "id": 15101,
+     "title": "Rescue Round-Up Zulu",
+     "desc": "Drop off every POW at the heliport in Stage 6",
+     "points": 10,
+     "ratio": 40,
+     "type": "",
+     "tier": "intermediate"
+    },
+    {
+     "id": 156529,
+     "title": "Incoming Transmission to Zulu",
+     "desc": "Reveal the final boss on Stage 6 without pressing down and without dying",
+     "points": 50,
+     "ratio": 789,
+     "type": "",
+     "tier": "advanced"
+    }
+   ],
+   "unmatched": false
+  },
+  "nes|jesus dreadful bio monster": {
+   "raId": 6295,
+   "raTitle": "Jesus: Kyoufu no Bio Monster",
+   "picks": [
+    {
+     "id": 399116,
+     "title": "Terrible End",
+     "desc": "Find out what happened to Vargas",
+     "points": 1,
+     "ratio": 2,
+     "type": "missable",
+     "tier": "easy"
+    },
+    {
+     "id": 399117,
+     "title": "Cold Bothered Him Anyway",
+     "desc": "Use the Valve to make the Monster flee",
+     "points": 3,
+     "ratio": 6,
+     "type": "progression",
+     "tier": "intermediate"
+    },
+    {
+     "id": 399123,
+     "title": "Remembering Love",
+     "desc": "The Monster has been dealt with, but is it truly the end?",
+     "points": 10,
+     "ratio": 20,
+     "type": "win_condition",
+     "tier": "advanced"
+    }
+   ],
+   "unmatched": false
+  },
+  "nes|kickle cubicle": {
+   "raId": 1777,
+   "raTitle": "Kickle Cubicle",
+   "picks": [
+    {
+     "id": 5283,
+     "title": "Kicking the Ice",
+     "desc": "Clear any level",
+     "points": 2,
+     "ratio": 2,
+     "type": "progression",
+     "tier": "easy"
+    },
+    {
+     "id": 23588,
+     "title": "Clowning Around",
+     "desc": "Defeat Piro without missing any shots",
+     "points": 10,
+     "ratio": 31,
+     "type": "",
+     "tier": "intermediate"
+    },
+    {
+     "id": 23161,
+     "title": "Can't Touch This",
+     "desc": "Beat the game without using any continues",
+     "points": 25,
+     "ratio": 464,
+     "type": "",
+     "tier": "advanced"
+    }
+   ],
+   "unmatched": false
+  },
+  "nes|kid icarus": {
+   "raId": 1478,
+   "raTitle": "Kid Icarus",
+   "picks": [
+    {
+     "id": 25526,
+     "title": "Tune Your Enemies",
+     "desc": "Obtain the Harp.",
+     "points": 1,
+     "ratio": 1,
+     "type": "",
+     "tier": "easy"
+    },
+    {
+     "id": 9103,
+     "title": "Skyworld Savior",
+     "desc": "Obtain the Wings of Pegasus, the last of the Three Sacred Treasures.",
+     "points": 5,
+     "ratio": 20,
+     "type": "progression",
+     "tier": "intermediate"
+    },
+    {
+     "id": 25612,
+     "title": "Like an Angel",
+     "desc": "From Stage 1-1, obtain an Angel's Feather in the Underworld and reach Stage 4-1 without losing it.",
+     "points": 50,
+     "ratio": 574,
+     "type": "",
+     "tier": "advanced"
+    }
+   ],
+   "unmatched": false
+  },
+  "nes|king s quest v": {
+   "raId": 1783,
+   "raTitle": "King's Quest V: Absence Makes the Heart Go Yonder!",
+   "picks": [
+    {
+     "id": 24411,
+     "title": "That Slithery Varmint",
+     "desc": "Thanks for playing King's Quest V.",
+     "points": 3,
+     "ratio": 5,
+     "type": "",
+     "tier": "easy"
+    },
+    {
+     "id": 24454,
+     "title": "Graham The Supplier",
+     "desc": "Help all the townspeople with their problems.",
+     "points": 10,
+     "ratio": 25,
+     "type": "progression",
+     "tier": "intermediate"
+    },
+    {
+     "id": 24462,
+     "title": "The True King",
+     "desc": "Complete the game with a perfect score.",
+     "points": 25,
+     "ratio": 79,
+     "type": "",
+     "tier": "advanced"
+    }
+   ],
+   "unmatched": false
+  },
+  "nes|klax": {
+   "raId": 5925,
+   "raTitle": "Klax",
+   "picks": [
+    {
+     "id": 69229,
+     "title": "Klax Amateur",
+     "desc": "Create fifteen Klaxes without a game over",
+     "points": 5,
+     "ratio": 6,
+     "type": "",
+     "tier": "easy"
+    },
+    {
+     "id": 66118,
+     "title": "Wave Destroyer III",
+     "desc": "Complete Waves 11-15",
+     "points": 10,
+     "ratio": 90,
+     "type": "progression",
+     "tier": "intermediate"
+    },
+    {
+     "id": 69228,
+     "title": "Wave Destroyer XXI",
+     "desc": "Complete Wave 100",
+     "points": 50,
+     "ratio": 1249,
+     "type": "win_condition",
+     "tier": "advanced"
+    }
+   ],
+   "unmatched": false
+  },
+  "nes|legacy of wizard": {
+   "raId": 1795,
+   "raTitle": "Legacy of the Wizard",
+   "picks": [
+    {
+     "id": 116065,
+     "title": "Titan's Mitt",
+     "desc": "Find the glove.",
+     "points": 5,
+     "ratio": 7,
+     "type": "",
+     "tier": "easy"
+    },
+    {
+     "id": 122536,
+     "title": "Dragon Master",
+     "desc": "Defeat Keela without taking damage.",
+     "points": 10,
+     "ratio": 36,
+     "type": "",
+     "tier": "intermediate"
+    },
+    {
+     "id": 116076,
+     "title": "Rock Smasher",
+     "desc": "Defeat Rockgaea and prepare Roas for his quest.",
+     "points": 50,
+     "ratio": 158,
+     "type": "progression",
+     "tier": "advanced"
+    }
+   ],
+   "unmatched": false
+  },
+  "nes|legend of zelda": {
+   "raId": 1454,
+   "raTitle": "The Legend of Zelda",
+   "picks": [
+    {
+     "id": 3735,
+     "title": "It's Dangerous to Go Alone!",
+     "desc": "Obtain the sword.",
+     "points": 1,
+     "ratio": 1,
+     "type": "progression",
+     "tier": "easy"
+    },
+    {
+     "id": 3752,
+     "title": "It's a Dragon if You Squint Hard Enough",
+     "desc": "Complete Level-6 in the first quest.",
+     "points": 10,
+     "ratio": 20,
+     "type": "progression",
+     "tier": "intermediate"
+    },
+    {
+     "id": 33776,
+     "title": "Swords Are for Wimps",
+     "desc": "Reach Ganon's room in Level-9 in the second quest without having a sword.",
+     "points": 50,
+     "ratio": 405,
+     "type": "missable",
+     "tier": "advanced"
+    }
+   ],
+   "unmatched": false
+  },
+  "nes|life force": {
+   "raId": 1800,
+   "raTitle": "Life Force",
+   "picks": [
+    {
+     "id": 16206,
+     "title": "Curly Energy",
+     "desc": "Activate the Ripple Laser",
+     "points": 5,
+     "ratio": 5,
+     "type": "",
+     "tier": "easy"
+    },
+    {
+     "id": 29182,
+     "title": "Serpent's Secrets V",
+     "desc": "Find the third hidden 5,000-point bonus in the Volcanic Stage",
+     "points": 10,
+     "ratio": 61,
+     "type": "",
+     "tier": "intermediate"
+    },
+    {
+     "id": 29202,
+     "title": "Spotless Vic Viper",
+     "desc": "Beat the game without dying and without using the Force Field",
+     "points": 50,
+     "ratio": 766,
+     "type": "",
+     "tier": "advanced"
+    }
+   ],
+   "unmatched": false
+  },
+  "nes|linus spacehead s cosmic crusade": {
+   "raId": 6147,
+   "raTitle": "~Unlicensed~ Linus Spacehead's Cosmic Crusade",
+   "picks": [
+    {
+     "id": 44676,
+     "title": "Cosmic Candies of Cape Carnival",
+     "desc": "On the way to Cape Carnival, get every Cosmic Candy.",
+     "points": 5,
+     "ratio": 19,
+     "type": "",
+     "tier": "easy"
+    },
+    {
+     "id": 44678,
+     "title": "When You Grab Every Candy Down By The River",
+     "desc": "On the way to the River Bank, get every Cosmic Candy.",
+     "points": 10,
+     "ratio": 81,
+     "type": "",
+     "tier": "intermediate"
+    },
+    {
+     "id": 44688,
+     "title": "Sittin On The Dock of Can-day",
+     "desc": "On the way to Linoville's shore, get every Cosmic Candy.",
+     "points": 25,
+     "ratio": 346,
+     "type": "",
+     "tier": "advanced"
+    }
+   ],
+   "unmatched": false
+  },
+  "nes|magic of scheherazade": {
+   "raId": 1818,
+   "raTitle": "The Magic of Scheherazade",
+   "picks": [
+    {
+     "id": 38640,
+     "title": "Itty-Bitty Living Space",
+     "desc": "Recruit Faruk the Genie!",
+     "points": 5,
+     "ratio": 12,
+     "type": "",
+     "tier": "easy"
+    },
+    {
+     "id": 38648,
+     "title": "Grumpy Old Men",
+     "desc": "Recruit old man Mustafa for 100 rupias.",
+     "points": 10,
+     "ratio": 36,
+     "type": "",
+     "tier": "intermediate"
+    },
+    {
+     "id": 38654,
+     "title": "An End to Arabian Nights",
+     "desc": "Defeat the final boss!",
+     "points": 50,
+     "ratio": 186,
+     "type": "win_condition",
+     "tier": "advanced"
+    }
+   ],
+   "unmatched": false
+  },
+  "nes|maniac mansion": {
+   "raId": 1482,
+   "raTitle": "Maniac Mansion",
+   "picks": [
+    {
+     "id": 28464,
+     "title": "Let's Go Rescue Sandy!",
+     "desc": "Find your way inside the Maniac Mansion.",
+     "points": 5,
+     "ratio": 5,
+     "type": "progression",
+     "tier": "easy"
+    },
+    {
+     "id": 28473,
+     "title": "Garage-Be-Gone",
+     "desc": "Start the Weird Edsel.",
+     "points": 5,
+     "ratio": 10,
+     "type": "",
+     "tier": "intermediate"
+    },
+    {
+     "id": 28488,
+     "title": "EEEEEEEEEEEEEEEEEEEEEEEE",
+     "desc": "Cause long distance destruction with the casette tape.",
+     "points": 10,
+     "ratio": 26,
+     "type": "",
+     "tier": "advanced"
+    }
+   ],
+   "unmatched": false
+  },
+  "nes|mega man 2": {
+   "raId": 1451,
+   "raTitle": "Mega Man 2",
+   "picks": [
+    {
+     "id": 3304,
+     "title": "Making an Entrance",
+     "desc": "Enter a boss door while jumping",
+     "points": 1,
+     "ratio": 1,
+     "type": "",
+     "tier": "easy"
+    },
+    {
+     "id": 3286,
+     "title": "The Blue Bomber Saves the Day Once Again!",
+     "desc": "Beat the game",
+     "points": 10,
+     "ratio": 15,
+     "type": "win_condition",
+     "tier": "intermediate"
+    },
+    {
+     "id": 45409,
+     "title": "The Perfect Rematch",
+     "desc": "Defeat all Robot Masters in Boss Rush stage without being damaged",
+     "points": 50,
+     "ratio": 227,
+     "type": "",
+     "tier": "advanced"
+    }
+   ],
+   "unmatched": false
+  },
+  "nes|mendel palace": {
+   "raId": 1830,
+   "raTitle": "Mendel Palace",
+   "picks": [
+    {
+     "id": 43487,
+     "title": "Slow Roller",
+     "desc": "Win a 1-up from a slot tile.",
+     "points": 5,
+     "ratio": 6,
+     "type": "",
+     "tier": "easy"
+    },
+    {
+     "id": 43502,
+     "title": "Moko Master",
+     "desc": "Complete the Moko-Moko dollhouse without losing a life.",
+     "points": 25,
+     "ratio": 156,
+     "type": "",
+     "tier": "intermediate"
+    },
+    {
+     "id": 43491,
+     "title": "Dollhouse Devastator",
+     "desc": "Complete the game without continuing.",
+     "points": 50,
+     "ratio": 2470,
+     "type": "",
+     "tier": "advanced"
+    }
+   ],
+   "unmatched": false
+  },
+  "nes|metroid": {
+   "raId": 1487,
+   "raTitle": "Metroid",
+   "picks": [
+    {
+     "id": 3507,
+     "title": "Ballin'",
+     "desc": "Obtain the Morph Ball.",
+     "points": 2,
+     "ratio": 2,
+     "type": "progression",
+     "tier": "easy"
+    },
+    {
+     "id": 3510,
+     "title": "Little Extra",
+     "desc": "Obtain the Varia Suit.",
+     "points": 10,
+     "ratio": 20,
+     "type": "",
+     "tier": "intermediate"
+    },
+    {
+     "id": 3531,
+     "title": "Ready for the Magazine",
+     "desc": "Complete the game's first loop fast enough to witness the fastest ending sequence without using passwords. (Roughly 59 Minutes or faster)",
+     "points": 50,
+     "ratio": 190,
+     "type": "missable",
+     "tier": "advanced"
+    }
+   ],
+   "unmatched": false
+  },
+  "nes|monster party": {
+   "raId": 1490,
+   "raTitle": "Monster Party",
+   "picks": [
+    {
+     "id": 29037,
+     "title": "Sorry, He's Dead",
+     "desc": "Defeat the Corpse without taking damage.",
+     "points": 2,
+     "ratio": 2,
+     "type": "",
+     "tier": "easy"
+    },
+    {
+     "id": 29050,
+     "title": "That One",
+     "desc": "Defeat the Chameleon Man without taking damage.",
+     "points": 10,
+     "ratio": 38,
+     "type": "",
+     "tier": "intermediate"
+    },
+    {
+     "id": 29057,
+     "title": "Came And Died",
+     "desc": "Defeat Dark World Master without taking damage.",
+     "points": 50,
+     "ratio": 612,
+     "type": "",
+     "tier": "advanced"
+    }
+   ],
+   "unmatched": false
+  },
+  "nes|nightshade": {
+   "raId": 1855,
+   "raTitle": "Nightshade",
+   "picks": [
+    {
+     "id": 69047,
+     "title": "Smarter than JonTron",
+     "desc": "Escape the chair without taking damage",
+     "points": 3,
+     "ratio": 6,
+     "type": "missable",
+     "tier": "easy"
+    },
+    {
+     "id": 69058,
+     "title": "Ug, The Human Steam-Shovel",
+     "desc": "Defeat Goliath and collect his scarab",
+     "points": 10,
+     "ratio": 62,
+     "type": "progression",
+     "tier": "intermediate"
+    },
+    {
+     "id": 69099,
+     "title": "Cooler than Bond Too!",
+     "desc": "Complete the game without falling into any of Sutekh's death traps",
+     "points": 50,
+     "ratio": 531,
+     "type": "missable",
+     "tier": "advanced"
+    }
+   ],
+   "unmatched": false
+  },
+  "nes|ninja gaiden": {
+   "raId": 1859,
+   "raTitle": "Ninja Gaiden",
+   "picks": [
+    {
+     "id": 6030,
+     "title": "Essential Ammunition",
+     "desc": "Obtain the Shuriken",
+     "points": 1,
+     "ratio": 1,
+     "type": "",
+     "tier": "easy"
+    },
+    {
+     "id": 6076,
+     "title": "Insurmountable Strength I",
+     "desc": "Complete Act 1 with full health",
+     "points": 10,
+     "ratio": 21,
+     "type": "",
+     "tier": "intermediate"
+    },
+    {
+     "id": 6080,
+     "title": "Bloody Murder",
+     "desc": "Defeat Bloody Malth without taking damage",
+     "points": 50,
+     "ratio": 344,
+     "type": "",
+     "tier": "advanced"
+    }
+   ],
+   "unmatched": false
+  },
+  "nes|north and south": {
+   "raId": 1863,
+   "raTitle": "North and South",
+   "picks": [
+    {
+     "id": 102859,
+     "title": "Photograss",
+     "desc": "You HAD to do it",
+     "points": 1,
+     "ratio": 1,
+     "type": "",
+     "tier": "easy"
+    },
+    {
+     "id": 102908,
+     "title": "The Last Ride",
+     "desc": "Defeat a full battalion with only one member of your cavalry left on the battlefield",
+     "points": 5,
+     "ratio": 17,
+     "type": "",
+     "tier": "intermediate"
+    },
+    {
+     "id": 102920,
+     "title": "The Trooper",
+     "desc": "Capture the flag in the fort without being killed",
+     "points": 25,
+     "ratio": 283,
+     "type": "",
+     "tier": "advanced"
+    }
+   ],
+   "unmatched": false
+  },
+  "nes|pipe dream": {
+   "raId": 1878,
+   "raTitle": "Pipe Dream",
+   "picks": [
+    {
+     "id": 59572,
+     "title": "A-1 Plumber",
+     "desc": "Complete all four rounds of level 1 in mode A",
+     "points": 5,
+     "ratio": 6,
+     "type": "progression",
+     "tier": "easy"
+    },
+    {
+     "id": 59596,
+     "title": "There and Back Again",
+     "desc": "Earn at least 20,000 points from a single loop",
+     "points": 10,
+     "ratio": 33,
+     "type": "",
+     "tier": "intermediate"
+    },
+    {
+     "id": 59604,
+     "title": "So Much Flooz",
+     "desc": "Have at least 500,000 points in mode C",
+     "points": 25,
+     "ratio": 184,
+     "type": "",
+     "tier": "advanced"
+    }
+   ],
+   "unmatched": false
+  },
+  "nes|pool of radiance": {
+   "raId": 1523,
+   "raTitle": "Advanced Dungeons & Dragons: Pool of Radiance",
+   "picks": [
+    {
+     "id": 413359,
+     "title": "Apothacary's Friend",
+     "desc": "Bring a specific potion to Ohlo in the Old Phlan Slums",
+     "points": 5,
+     "ratio": 26,
+     "type": "",
+     "tier": "easy"
+    },
+    {
+     "id": 415042,
+     "title": "Storming the Gate",
+     "desc": "Complete the special commission from Lord Urslingen to retake Stojanow Gate",
+     "points": 10,
+     "ratio": 101,
+     "type": "",
+     "tier": "intermediate"
+    },
+    {
+     "id": 415481,
+     "title": "Saviors of Phlan",
+     "desc": "Defeat the dastardly Tryanthraxus, see the credits roll and claim your reward",
+     "points": 50,
+     "ratio": 507,
+     "type": "win_condition",
+     "tier": "advanced"
+    }
+   ],
+   "unmatched": false
+  },
+  "nes|princess tomato in salad kingdom": {
+   "raId": 1887,
+   "raTitle": "Princess Tomato in the Salad Kingdom",
+   "picks": [
+    {
+     "id": 98041,
+     "title": "Diospyros Who?",
+     "desc": "Use a peculiarly-named command before meeting the character it belongs to",
+     "points": 1,
+     "ratio": 1,
+     "type": "missable",
+     "tier": "easy"
+    },
+    {
+     "id": 98086,
+     "title": "Fight-or-Fillet Matriarch",
+     "desc": "Win a Finger Wars battle against the Mama Monster",
+     "points": 3,
+     "ratio": 7,
+     "type": "missable",
+     "tier": "intermediate"
+    },
+    {
+     "id": 98092,
+     "title": "One-Course Veggie Tale",
+     "desc": "Complete all 9 chapters and beat the game without using any passwords",
+     "points": 25,
+     "ratio": 63,
+     "type": "missable",
+     "tier": "advanced"
+    }
+   ],
+   "unmatched": false
+  },
+  "nes|punch out": {
+   "raId": 1489,
+   "raTitle": "Mike Tyson's Punch-Out!!",
+   "picks": [
+    {
+     "id": 87859,
+     "title": "Help! Doc!!",
+     "desc": "Gain health between rounds",
+     "points": 1,
+     "ratio": 1,
+     "type": "",
+     "tier": "easy"
+    },
+    {
+     "id": 8390,
+     "title": "Flame Off!",
+     "desc": "TKO Don Flamenco II",
+     "points": 10,
+     "ratio": 41,
+     "type": "",
+     "tier": "intermediate"
+    },
+    {
+     "id": 8395,
+     "title": "Iron Mac",
+     "desc": "KO Mike Tyson",
+     "points": 100,
+     "ratio": 1842,
+     "type": "win_condition",
+     "tier": "advanced"
+    }
+   ],
+   "unmatched": false
+  },
+  "nes|puzznic": {
+   "raId": 1891,
+   "raTitle": "Puzznic",
+   "picks": [
+    {
+     "id": 383064,
+     "title": "Puzzle Novice",
+     "desc": "Reach a score of 10,000 in Puzznic",
+     "points": 1,
+     "ratio": 1,
+     "type": "",
+     "tier": "easy"
+    },
+    {
+     "id": 383090,
+     "title": "Gravnic Level 2 - Levity Lagoon",
+     "desc": "In a single session, complete all of the Gravnic puzzles on level 2 [No continues]",
+     "points": 3,
+     "ratio": 36,
+     "type": "progression",
+     "tier": "intermediate"
+    },
+    {
+     "id": 383072,
+     "title": "Puzzle Grandmaster",
+     "desc": "Reach a score of 8,000,000 in Puzznic",
+     "points": 25,
+     "ratio": 1252,
+     "type": "",
+     "tier": "advanced"
+    }
+   ],
+   "unmatched": false
+  },
+  "nes|q bert": {
+   "raId": 1494,
+   "raTitle": "Q*bert",
+   "picks": [
+    {
+     "id": 240458,
+     "title": "Snake Safety Training",
+     "desc": "Trick Coily into falling off the map",
+     "points": 2,
+     "ratio": 2,
+     "type": "",
+     "tier": "easy"
+    },
+    {
+     "id": 238142,
+     "title": "Avoiding Coilys Like There's No Tomorrow",
+     "desc": "Complete Level 4 in 1 player mode",
+     "points": 10,
+     "ratio": 180,
+     "type": "progression",
+     "tier": "intermediate"
+    },
+    {
+     "id": 238159,
+     "title": "Q*bert Perfectionism",
+     "desc": "Complete Level 9 without dying and beat the game in 1 player mode",
+     "points": 100,
+     "ratio": 17506,
+     "type": "",
+     "tier": "advanced"
+    }
+   ],
+   "unmatched": false
+  },
+  "nes|river city ransom": {
+   "raId": 1452,
+   "raTitle": "River City Ransom",
+   "picks": [
+    {
+     "id": 22573,
+     "title": "Get Back Up!!!",
+     "desc": "We all get our asses kicked sometimes..",
+     "points": 1,
+     "ratio": 1,
+     "type": "",
+     "tier": "easy"
+    },
+    {
+     "id": 23420,
+     "title": "Was That a Midboss?",
+     "desc": "Defeat Rocko.",
+     "points": 10,
+     "ratio": 18,
+     "type": "progression",
+     "tier": "intermediate"
+    },
+    {
+     "id": 78306,
+     "title": "Late for School",
+     "desc": "Get from the first screen to inside River City High without entering shops, fighting, or taking damage.",
+     "points": 50,
+     "ratio": 341,
+     "type": "",
+     "tier": "advanced"
+    }
+   ],
+   "unmatched": false
+  },
+  "nes|rygar": {
+   "raId": 1498,
+   "raTitle": "Rygar",
+   "picks": [
+    {
+     "id": 16475,
+     "title": "Power up!",
+     "desc": "Get a Power Up for your Weapon!",
+     "points": 3,
+     "ratio": 3,
+     "type": "progression",
+     "tier": "easy"
+    },
+    {
+     "id": 16481,
+     "title": "Magic Flute!",
+     "desc": "Gain the Magic Flute from Indora!",
+     "points": 10,
+     "ratio": 17,
+     "type": "progression",
+     "tier": "intermediate"
+    },
+    {
+     "id": 18225,
+     "title": "The Warrior of Argus!",
+     "desc": "Beat the game with 9 or less HP max slots!",
+     "points": 50,
+     "ratio": 178,
+     "type": "",
+     "tier": "advanced"
+    }
+   ],
+   "unmatched": false
+  },
+  "nes|section z": {
+   "raId": 1932,
+   "raTitle": "Section-Z",
+   "picks": [
+    {
+     "id": 118167,
+     "title": "Need for Speed",
+     "desc": "Collect your first speed powerup.",
+     "points": 1,
+     "ratio": 1,
+     "type": "",
+     "tier": "easy"
+    },
+    {
+     "id": 118146,
+     "title": "Degeneration 1-1",
+     "desc": "Destroy the first generator of Area 1",
+     "points": 5,
+     "ratio": 18,
+     "type": "",
+     "tier": "intermediate"
+    },
+    {
+     "id": 118164,
+     "title": "Insane in the L-Brain",
+     "desc": "Defeat L-Brain and clear area 3",
+     "points": 25,
+     "ratio": 364,
+     "type": "win_condition",
+     "tier": "advanced"
+    }
+   ],
+   "unmatched": false
+  },
+  "nes|shadowgate": {
+   "raId": 1499,
+   "raTitle": "Shadowgate",
+   "picks": [
+    {
+     "id": 70221,
+     "title": "The Final Frontier",
+     "desc": "Seek out new worlds and new civilizations",
+     "points": 2,
+     "ratio": 2,
+     "type": "",
+     "tier": "easy"
+    },
+    {
+     "id": 70215,
+     "title": "Three Are One",
+     "desc": "Assemble the legendary Staff of Ages",
+     "points": 10,
+     "ratio": 13,
+     "type": "progression",
+     "tier": "intermediate"
+    },
+    {
+     "id": 70235,
+     "title": "Lord Jair",
+     "desc": "Complete the game in one session lighting no more than 3 additional torches without dying or accessing the save screen",
+     "points": 50,
+     "ratio": 92,
+     "type": "missable",
+     "tier": "advanced"
+    }
+   ],
+   "unmatched": false
+  },
+  "nes|simon s quest": {
+   "raId": 1461,
+   "raTitle": "Castlevania II: Simon's Quest",
+   "picks": [
+    {
+     "id": 4244,
+     "title": "What A Horrible Night",
+     "desc": "Make it to the horrible night.",
+     "points": 1,
+     "ratio": 1,
+     "type": "progression",
+     "tier": "easy"
+    },
+    {
+     "id": 67209,
+     "title": "Stairs From Dead End",
+     "desc": "Find and climb the invisible stairs.",
+     "points": 5,
+     "ratio": 13,
+     "type": "",
+     "tier": "intermediate"
+    },
+    {
+     "id": 18295,
+     "title": "A Belmont Legacy",
+     "desc": "Beat the game without continuing or using passwords",
+     "points": 50,
+     "ratio": 169,
+     "type": "",
+     "tier": "advanced"
+    }
+   ],
+   "unmatched": false
+  },
+  "nes|skate or die": {
+   "raId": 1952,
+   "raTitle": "Skate or Die",
+   "picks": [
+    {
+     "id": 112413,
+     "title": "A Talkative Skater",
+     "desc": "Watch everything in the Skate Shop.",
+     "points": 3,
+     "ratio": 6,
+     "type": "",
+     "tier": "easy"
+    },
+    {
+     "id": 112397,
+     "title": "Jam - Time - Silver",
+     "desc": "Cross the finish line in 35\" max.",
+     "points": 10,
+     "ratio": 30,
+     "type": "",
+     "tier": "intermediate"
+    },
+    {
+     "id": 112389,
+     "title": "Freestyle - Gold",
+     "desc": "Score at least 15.000 points",
+     "points": 25,
+     "ratio": 162,
+     "type": "progression",
+     "tier": "advanced"
+    }
+   ],
+   "unmatched": false
+  },
+  "nes|solomon s key": {
+   "raId": 1964,
+   "raTitle": "Solomon's Key",
+   "picks": [
+    {
+     "id": 160051,
+     "title": "Deadly Mistake",
+     "desc": "Murder a fairy with a fireball",
+     "points": 1,
+     "ratio": 3,
+     "type": "",
+     "tier": "easy"
+    },
+    {
+     "id": 160042,
+     "title": "Constellation - Virgo",
+     "desc": "Conquer the rooms aligned with the constellation Virgo",
+     "points": 5,
+     "ratio": 41,
+     "type": "progression",
+     "tier": "intermediate"
+    },
+    {
+     "id": 160058,
+     "title": "Happily Ever After",
+     "desc": "Save the world forevermore by getting the perfect ending.",
+     "points": 50,
+     "ratio": 588,
+     "type": "",
+     "tier": "advanced"
+    }
+   ],
+   "unmatched": false
+  },
+  "nes|startropics": {
+   "raId": 1985,
+   "raTitle": "StarTropics",
+   "picks": [
+    {
+     "id": 5826,
+     "title": "You're Kidding, Right?",
+     "desc": "You got the mighty Yo-Yo!",
+     "points": 1,
+     "ratio": 1,
+     "type": "progression",
+     "tier": "easy"
+    },
+    {
+     "id": 5844,
+     "title": "Search and Destroy",
+     "desc": "You found and defeated the final Minie in the Graveyard!",
+     "points": 5,
+     "ratio": 14,
+     "type": "missable",
+     "tier": "intermediate"
+    },
+    {
+     "id": 5850,
+     "title": "Galactic Domination",
+     "desc": "You defeated Zoda Prime without taking damage!",
+     "points": 50,
+     "ratio": 250,
+     "type": "",
+     "tier": "advanced"
+    }
+   ],
+   "unmatched": false
+  },
+  "nes|strider": {
+   "raId": 1988,
+   "raTitle": "Strider",
+   "picks": [
+    {
+     "id": 67478,
+     "title": "Slide In Upgrade",
+     "desc": "Reach Level 2 and learn the 'Slide In' Ability.",
+     "points": 5,
+     "ratio": 6,
+     "type": "progression",
+     "tier": "easy"
+    },
+    {
+     "id": 67474,
+     "title": "Data File #3",
+     "desc": "Find Data File #3 in Kazakh and analyse it in Strider's Headquarter.",
+     "points": 10,
+     "ratio": 19,
+     "type": "progression",
+     "tier": "intermediate"
+    },
+    {
+     "id": 67496,
+     "title": "Strider Hiryu",
+     "desc": "Defeat Yugdesimal in Red Dragon.",
+     "points": 25,
+     "ratio": 54,
+     "type": "win_condition",
+     "tier": "advanced"
+    }
+   ],
+   "unmatched": false
+  },
+  "nes|super mario bros 3": {
+   "raId": 1995,
+   "raTitle": "Super Mario Bros. 3",
+   "picks": [
+    {
+     "id": 4126,
+     "title": "Prepare For Take-Off",
+     "desc": "Use a Super Leaf",
+     "points": 2,
+     "ratio": 2,
+     "type": "",
+     "tier": "easy"
+    },
+    {
+     "id": 4222,
+     "title": "Dominated Ice Land",
+     "desc": "Clear every stage and minigame in World 6",
+     "points": 10,
+     "ratio": 43,
+     "type": "",
+     "tier": "intermediate"
+    },
+    {
+     "id": 559446,
+     "title": "Pipe Down, Little Rulebreaker",
+     "desc": "Complete Pipe Land without using power-ups (7-FortressA excluded; all required stages must be cleared when entering the airship)",
+     "points": 50,
+     "ratio": 903,
+     "type": "",
+     "tier": "advanced"
+    }
+   ],
+   "unmatched": false
+  },
+  "nes|sweet home": {
+   "raId": 2230,
+   "raTitle": "Sweet Home",
+   "picks": [
+    {
+     "id": 4689,
+     "title": "Penumbra",
+     "desc": "Acquire the Flashlight",
+     "points": 2,
+     "ratio": 2,
+     "type": "",
+     "tier": "easy"
+    },
+    {
+     "id": 4691,
+     "title": "Infanticide",
+     "desc": "Acquire the Coffin",
+     "points": 5,
+     "ratio": 8,
+     "type": "progression",
+     "tier": "intermediate"
+    },
+    {
+     "id": 53448,
+     "title": "Rock-a-bye Lady",
+     "desc": "Put Lady Mamiya to rest",
+     "points": 25,
+     "ratio": 43,
+     "type": "win_condition",
+     "tier": "advanced"
+    }
+   ],
+   "unmatched": false
+  },
+  "nes|tetris": {
+   "raId": 2022,
+   "raTitle": "Tetris",
+   "picks": [
+    {
+     "id": 4207,
+     "title": "Double",
+     "desc": "Clear two lines at once",
+     "points": 2,
+     "ratio": 2,
+     "type": "",
+     "tier": "easy"
+    },
+    {
+     "id": 11319,
+     "title": "Big Bad Monkey",
+     "desc": "A-Type: Start at level 8 and complete it by clearing at least 90 lines",
+     "points": 10,
+     "ratio": 28,
+     "type": "progression",
+     "tier": "intermediate"
+    },
+    {
+     "id": 71080,
+     "title": "Snowstorms",
+     "desc": "B-Type: Start at Level 18 Height 3 and clear it",
+     "points": 50,
+     "ratio": 403,
+     "type": "",
+     "tier": "advanced"
+    }
+   ],
+   "unmatched": false
+  },
+  "nes|tombs and treasure": {
+   "raId": 2036,
+   "raTitle": "Tombs and Treasure",
+   "picks": [
+    {
+     "id": 239297,
+     "title": "The First Guardian",
+     "desc": "Defeat Skorpor",
+     "points": 2,
+     "ratio": 3,
+     "type": "progression",
+     "tier": "easy"
+    },
+    {
+     "id": 239299,
+     "title": "The Riddle",
+     "desc": "View the pictographs in Castillo Pyramid",
+     "points": 5,
+     "ratio": 10,
+     "type": "progression",
+     "tier": "intermediate"
+    },
+    {
+     "id": 239314,
+     "title": "Heroes for Another Time",
+     "desc": "Rescue the girl and escape",
+     "points": 10,
+     "ratio": 24,
+     "type": "win_condition",
+     "tier": "advanced"
+    }
+   ],
+   "unmatched": false
+  },
+  "nes|ultima iii exodus": {
+   "raId": 2050,
+   "raTitle": "Ultima: Exodus",
+   "picks": [
+    {
+     "id": 95717,
+     "title": "First Action",
+     "desc": "Win your first battle.",
+     "points": 1,
+     "ratio": 1,
+     "type": "",
+     "tier": "easy"
+    },
+    {
+     "id": 89903,
+     "title": "Get Equipped with the Iron Sword!",
+     "desc": "Buy and equip an iron sword.",
+     "points": 3,
+     "ratio": 20,
+     "type": "",
+     "tier": "intermediate"
+    },
+    {
+     "id": 89750,
+     "title": "Ocean's Four",
+     "desc": "Loot the chests in Death Gulch and escape alive without using a Compass Heart.",
+     "points": 50,
+     "ratio": 438,
+     "type": "",
+     "tier": "advanced"
+    }
+   ],
+   "unmatched": false
+  },
+  "nes|wario s woods": {
+   "raId": 2064,
+   "raTitle": "Wario's Woods",
+   "picks": [
+    {
+     "id": 271752,
+     "title": "What Are You Doin' Here?",
+     "desc": "Clear Rounds 1 thru 9 on Game A.",
+     "points": 1,
+     "ratio": 1,
+     "type": "progression",
+     "tier": "easy"
+    },
+    {
+     "id": 271757,
+     "title": "Good Work, Mushroom!",
+     "desc": "Clear Rounds 50 thru 59 on Game A.",
+     "points": 5,
+     "ratio": 19,
+     "type": "progression",
+     "tier": "intermediate"
+    },
+    {
+     "id": 271786,
+     "title": "Perfection",
+     "desc": "Clear rounds 80-99 without continues. (Game B)",
+     "points": 25,
+     "ratio": 389,
+     "type": "",
+     "tier": "advanced"
+    }
+   ],
+   "unmatched": false
+  },
+  "nes|where in time is carmen sandiego": {
+   "raId": 2072,
+   "raTitle": "Where in Time is Carmen Sandiego?",
+   "picks": [
+    {
+     "id": 517555,
+     "title": "50 Cent Tour",
+     "desc": "Visit each location in Acme HQ before going to register your name.",
+     "points": 1,
+     "ratio": 4,
+     "type": "",
+     "tier": "easy"
+    },
+    {
+     "id": 517562,
+     "title": "Five",
+     "desc": "Get promoted to Time Detective rank.",
+     "points": 3,
+     "ratio": 41,
+     "type": "progression",
+     "tier": "intermediate"
+    },
+    {
+     "id": 517565,
+     "title": "The Best in the Biz",
+     "desc": "Successfully solve 80 cases and honorably retire.",
+     "points": 25,
+     "ratio": 475,
+     "type": "",
+     "tier": "advanced"
+    }
+   ],
+   "unmatched": false
+  },
+  "nes|willow": {
+   "raId": 2078,
+   "raTitle": "Willow",
+   "picks": [
+    {
+     "id": 12959,
+     "title": "Magic Acorns",
+     "desc": "Obtain the Magic Acorns Spell",
+     "points": 2,
+     "ratio": 2,
+     "type": "",
+     "tier": "easy"
+    },
+    {
+     "id": 12992,
+     "title": "Power of Zeus",
+     "desc": "Obtain the Thunder Spell",
+     "points": 5,
+     "ratio": 12,
+     "type": "",
+     "tier": "intermediate"
+    },
+    {
+     "id": 13009,
+     "title": "Peacemaker",
+     "desc": "Defeat Bavmorda Without Taking Damage (Both Forms)",
+     "points": 25,
+     "ratio": 75,
+     "type": "",
+     "tier": "advanced"
+    }
+   ],
+   "unmatched": false
+  },
+  "nes|wizardry proving grounds": {
+   "raId": 2081,
+   "raTitle": "Wizardry: Proving Grounds of the Mad Overlord",
+   "picks": [
+    {
+     "id": 125611,
+     "title": "Dungeon Crawler",
+     "desc": "Find the stairs down on level 1 of the maze.",
+     "points": 2,
+     "ratio": 4,
+     "type": "",
+     "tier": "easy"
+    },
+    {
+     "id": 125634,
+     "title": "Penny Pincher",
+     "desc": "Have a character with 10,000 or more GP.",
+     "points": 10,
+     "ratio": 42,
+     "type": "",
+     "tier": "intermediate"
+    },
+    {
+     "id": 125620,
+     "title": "Dungeon Master",
+     "desc": "Defeat Werdna and return the Amulet.",
+     "points": 50,
+     "ratio": 289,
+     "type": "win_condition",
+     "tier": "advanced"
+    }
+   ],
+   "unmatched": false
+  },
+  "nes|xexyz": {
+   "raId": 2098,
+   "raTitle": "Xexyz",
+   "picks": [
+    {
+     "id": 32223,
+     "title": "B-Ball",
+     "desc": "Obtain 45B Ball.",
+     "points": 1,
+     "ratio": 1,
+     "type": "",
+     "tier": "easy"
+    },
+    {
+     "id": 32233,
+     "title": "2,500,000",
+     "desc": "Score 2,500,000 pts.",
+     "points": 5,
+     "ratio": 36,
+     "type": "",
+     "tier": "intermediate"
+    },
+    {
+     "id": 32249,
+     "title": "Trusty Mega Buster",
+     "desc": "Play through Xexyz with only the Hand Beam.",
+     "points": 50,
+     "ratio": 1420,
+     "type": "",
+     "tier": "advanced"
+    }
+   ],
+   "unmatched": false
+  },
+  "nes|yoshi": {
+   "raId": 2101,
+   "raTitle": "Yoshi's Cookie",
+   "picks": [
+    {
+     "id": 22247,
+     "title": "Beginner Chainer",
+     "desc": "Earn a 2-chain OR Get a multidirectional clear.",
+     "points": 2,
+     "ratio": 2,
+     "type": "",
+     "tier": "easy"
+    },
+    {
+     "id": 22253,
+     "title": "Curtain Call (Low)",
+     "desc": "Beat the last level of secret mode on Low speed or faster.",
+     "points": 5,
+     "ratio": 56,
+     "type": "",
+     "tier": "intermediate"
+    },
+    {
+     "id": 22245,
+     "title": "Yoshi's Cookie Grandmaster",
+     "desc": "Beat full game deathless on High speed.",
+     "points": 100,
+     "ratio": 2734,
+     "type": "",
+     "tier": "advanced"
+    }
+   ],
+   "unmatched": false
+  },
+  "nes|yoshi s cookie": {
+   "raId": 2101,
+   "raTitle": "Yoshi's Cookie",
+   "picks": [
+    {
+     "id": 22247,
+     "title": "Beginner Chainer",
+     "desc": "Earn a 2-chain OR Get a multidirectional clear.",
+     "points": 2,
+     "ratio": 2,
+     "type": "",
+     "tier": "easy"
+    },
+    {
+     "id": 22253,
+     "title": "Curtain Call (Low)",
+     "desc": "Beat the last level of secret mode on Low speed or faster.",
+     "points": 5,
+     "ratio": 56,
+     "type": "",
+     "tier": "intermediate"
+    },
+    {
+     "id": 22245,
+     "title": "Yoshi's Cookie Grandmaster",
+     "desc": "Beat full game deathless on High speed.",
+     "points": 100,
+     "ratio": 2734,
+     "type": "",
+     "tier": "advanced"
+    }
+   ],
+   "unmatched": false
+  },
+  "nes|zelda ii adventure of link": {
+   "raId": 1453,
+   "raTitle": "Zelda II: The Adventure of Link",
+   "picks": [
+    {
+     "id": 302736,
+     "title": "Snazzy",
+     "desc": "Pick up a sharply dressed 1-up.",
+     "points": 1,
+     "ratio": 2,
+     "type": "missable",
+     "tier": "easy"
+    },
+    {
+     "id": 4085,
+     "title": "Horse Dewormer",
+     "desc": "Defeat Horsehead without being harmed.",
+     "points": 10,
+     "ratio": 19,
+     "type": "",
+     "tier": "intermediate"
+    },
+    {
+     "id": 4111,
+     "title": "Adventure Master",
+     "desc": "Obtain the Triforce of Courage and awaken the Princess without continuing.",
+     "points": 50,
+     "ratio": 198,
+     "type": "",
+     "tier": "advanced"
+    }
+   ],
+   "unmatched": false
+  }
+ }
 }
