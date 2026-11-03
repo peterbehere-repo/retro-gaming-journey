@@ -4,3 +4,6 @@ device.secret
 __pycache__/
 .DS_Store
 .harvest/
+
+# Local secrets — never commit
+.env
