@@ -89,6 +89,7 @@ function totalUnlocks() {
 /* ------------------------------------------------------------------ */
 
 function render() {
+  renderWho();
   renderDashboard();
   renderLibrary();
   renderAchievements();
@@ -106,6 +107,29 @@ function fmtPct(done, total) {
   if (!total) return "0%";
   const pct = done / total * 100;
   return `${pct >= 1 ? Math.round(pct) : Math.round(pct * 10) / 10}%`;
+}
+
+// A one-line statement of whose dashboard this is, so a shared browser never
+// misleads anyone into thinking the numbers are theirs.
+function renderWho() {
+  const el = $("#who-line");
+  if (!el) return;
+  const id = (typeof IDENT !== "undefined") ? IDENT : null;
+  if (!id || !id.signedIn()) {
+    el.hidden = true;
+    el.textContent = "";
+    return;
+  }
+  el.hidden = false;
+  el.innerHTML = `Showing <strong>${esc(id.name())}</strong>'s journey ` +
+    `<span class="who-note">· <a href="#" id="who-switch">switch account</a></span>`;
+  const sw = $("#who-switch");
+  if (sw) sw.addEventListener("click", (e) => {
+    e.preventDefault();
+    doSignOut();
+    paintAccounts();
+    $("#auth-dialog").showModal();
+  });
 }
 
 function renderDashboard() {
@@ -251,6 +275,7 @@ function renderSync() {
   // cloud-push label when no card is linked (sdcard.js overwrites this once a marker loads).
   $("#sync-device").textContent = linkedDeviceId() || "no card linked";
   renderAuth();
+  renderRA();
 }
 
 /* Header identity. There are two kinds of session — a RetroAchievements account

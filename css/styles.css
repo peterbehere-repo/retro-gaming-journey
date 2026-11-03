@@ -263,3 +263,13 @@ footer { padding: 1.2rem; text-align: center; font-size: .7rem; color: var(--mut
   margin: 0 .4rem .4rem 0; padding: .25rem .7rem .25rem .3rem;
 }
 .account-chip img { width: 22px; height: 22px; border-radius: 50%; object-fit: cover; }
+
+/* Whose dashboard this is — stated once, at the top of the panel. */
+.who-line {
+  margin: 0 0 1rem; padding: .55rem .9rem; border-radius: 8px;
+  border: 1px solid var(--border); background: rgba(120,180,255,.06);
+  font-size: .82rem; color: var(--muted);
+}
+.who-line strong { color: var(--text); font-weight: 600; }
+.who-line a { color: var(--accent); text-decoration: none; }
+.who-line a:hover { text-decoration: underline; }
