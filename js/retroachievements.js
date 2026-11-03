@@ -160,6 +160,15 @@ const RA = (() => {
     return out;
   }
 
+  // First finite number wins; RA has shipped two spellings for the same field.
+  function num(...vals) {
+    for (const v of vals) {
+      const n = Number(v);
+      if (Number.isFinite(n)) return n;
+    }
+    return 0;
+  }
+
   // Fold RA progress into app state. Only games this page knows about are written,
   // and nothing local is ever downgraded or erased.
   async function pullIntoState(games, state) {
@@ -175,13 +184,19 @@ const RA = (() => {
     for (const row of rows) {
       const gameId = byRaId[row.GameID];
       if (!gameId) continue;
-      const achieved = row.NumAwardedToUser || 0;
+      // API_GetUserCompletionProgress names these NumAwarded / NumAwardedHardcore and
+      // dates the last unlock MostRecentAwardedDate. Older docs and the per-game
+      // endpoint use NumAwardedToUser / LastPlayed, so both spellings are accepted —
+      // reading only one of them silently reported zero progress for every player.
+      const achieved = num(row.NumAwarded, row.NumAwardedToUser, 0);
+      const hardcoreCount = num(row.NumAwardedHardcore, row.NumAwardedToUserHardcore, 0);
       const possible = row.MaxPossible || 0;
+      const lastStamp = Date.parse(row.MostRecentAwardedDate || row.LastPlayed || "") || 0;
       state.ra.games[gameId] = {
         raId: row.GameID,
         achieved, possible,
-        hardcore: row.NumAwardedToUserHardcore || 0,
-        lastPlayed: row.LastPlayed ? Date.parse(row.LastPlayed) : null,
+        hardcore: hardcoreCount,
+        lastPlayed: lastStamp || null,
         pct: possible ? achieved / possible : 0
       };
       if (achieved > 0) {
@@ -191,8 +206,8 @@ const RA = (() => {
         const localAhead = (prev.count || 0) > achieved;
         state.unlocks[gameId] = {
           count: Math.max(prev.count || 0, achieved),
-          last: Math.max(prev.last || 0, Date.parse(row.LastPlayed) || 0) || prev.last || 0,
-          hardcore: localAhead ? !!prev.hardcore : (row.NumAwardedToUserHardcore || 0) > 0,
+          last: Math.max(prev.last || 0, lastStamp) || prev.last || 0,
+          hardcore: localAhead ? !!prev.hardcore : hardcoreCount > 0,
           source: localAhead ? (prev.source || "local") : "ra"
         };
       }
