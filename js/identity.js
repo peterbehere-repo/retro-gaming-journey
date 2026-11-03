@@ -44,13 +44,24 @@ const IDENT = (() => {
     if (!/^[A-Za-z0-9]{16,64}$/.test(k))
       return { ok: false, error: "That does not look like a web API key — they are 32 letters and digits." };
 
+    // A request that never answers used to leave the dialog saying "Checking the
+    // account…" with the button disabled, forever. Anything that can hang needs a
+    // deadline, and the deadline error has to say what to do next.
+    const ctl = new AbortController();
+    const timer = setTimeout(() => ctl.abort(), 15000);
     let r;
     try {
       r = await fetch(`${API}API_GetUserProfile.php?u=${encodeURIComponent(u)}&y=${encodeURIComponent(k)}`,
-        { headers: { Accept: "application/json" } });
+        { headers: { Accept: "application/json" }, cache: "no-store", signal: ctl.signal });
     } catch (e) {
-      return { ok: false, error: "Could not reach RetroAchievements — check the connection." };
+      clearTimeout(timer);
+      if (e && e.name === "AbortError")
+        return { ok: false, error: "RetroAchievements did not answer within 15 seconds. " +
+          "Check that retroachievements.org opens in another tab, then try again." };
+      return { ok: false, error: "Could not reach RetroAchievements — check the connection, " +
+        "or whether something is blocking retroachievements.org." };
     }
+    clearTimeout(timer);
     if (r.status === 401) return { ok: false, error: "That API key was rejected (401 Unauthorized)." };
     if (r.status === 429) return { ok: false, error: "RetroAchievements is rate-limiting this connection. Try again in a minute." };
     if (!r.ok) return { ok: false, error: `RetroAchievements answered HTTP ${r.status}.` };

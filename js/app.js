@@ -465,7 +465,11 @@ async function markEarnedForPlayed() {
   return marked;
 }
 
+let signingIn = false;
+
 async function doSignIn(user, key, keep) {
+  if (signingIn) return false;              // double-click must not fire two verifications
+  signingIn = true;
   authError("Checking the account…");
   const btn = $("#auth-submit");
   if (btn) btn.disabled = true;
@@ -482,7 +486,11 @@ async function doSignIn(user, key, keep) {
       `${res.profile.TotalSoftcorePoints || 0} softcore points.`, "ok");
     await enterProfile(false);
     return true;
+  } catch (err) {
+    authError(`Sign-in failed: ${err && err.message ? err.message : err}`);
+    return false;
   } finally {
+    signingIn = false;
     if (btn) btn.disabled = false;
   }
 }
