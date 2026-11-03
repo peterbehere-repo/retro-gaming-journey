@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Retro Gaming Journey</title>
   <meta name="description" content="Offline-first retro emulation progress dashboard. Sync your handheld achievements on demand." />
-  <link rel="stylesheet" href="css/styles.css?v=iter2" />
+  <link rel="stylesheet" href="css/styles.css?v=iter3" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎮</text></svg>" />
 </head>
 <body>
@@ -212,17 +212,40 @@
 
   <!-- Sign-in modal -->
   <dialog id="auth-dialog">
-    <form id="auth-form" method="dialog">
+    <form id="auth-form" method="dialog" novalidate>
       <h2>Sign in</h2>
-      <p class="modal-note">Supabase auth. If no backend is configured the app runs in offline
-      demo mode with progress stored locally in this browser.</p>
-      <label>Email <input type="email" name="email" required /></label>
-      <label>Password <input type="password" name="password" required minlength="6" /></label>
-      <div class="modal-actions">
-        <button type="submit" name="mode" value="signin" class="btn">Sign in</button>
-        <button type="submit" name="mode" value="signup" class="btn btn-ghost">Create account</button>
-        <button type="button" id="auth-cancel" class="btn btn-ghost">Cancel</button>
-      </div>
+      <p class="modal-note">Your RetroAchievements account is the identity on this page: it decides
+      whose progress is shown and which achievements are read. The key stays in this browser and is
+      sent only to retroachievements.org.</p>
+
+      <div id="auth-accounts" hidden></div>
+
+      <fieldset class="auth-pane">
+        <legend>RetroAchievements</legend>
+        <label>Username
+          <input name="rauser" id="auth-ra-user" type="text" autocomplete="username" spellcheck="false" autofocus />
+        </label>
+        <label>Web API key
+          <input name="rakey" id="auth-ra-key" type="password" autocomplete="off" spellcheck="false" />
+        </label>
+        <p class="modal-note">Your key is on retroachievements.org under <strong>Settings → Keys</strong>.</p>
+        <div class="modal-actions">
+          <button type="submit" id="auth-submit" class="btn">Sign in</button>
+          <button type="button" id="auth-cancel" class="btn btn-ghost">Cancel</button>
+        </div>
+      </fieldset>
+
+      <details class="auth-alt">
+        <summary>Or sign in with an email account</summary>
+        <p class="modal-note">Only useful when this deployment has a Supabase project, which keeps the
+        achievement queue in the cloud. Without one, the RetroAchievements account above is enough.</p>
+        <label>Email <input type="email" name="email" autocomplete="username" /></label>
+        <label>Password <input type="password" name="password" autocomplete="current-password" /></label>
+        <div class="modal-actions">
+          <button type="submit" name="mode" value="email" class="btn btn-ghost">Sign in with email</button>
+        </div>
+      </details>
+
       <p id="auth-error" class="error"></p>
     </form>
   </dialog>
@@ -237,7 +260,8 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/retroachievements.js?v=2"></script>
   <script src="js/achievements.js?v=1"></script>
-  <script src="js/app.js?v=iter7"></script>
+  <script src="js/identity.js?v=1"></script>
+  <script src="js/app.js?v=iter8"></script>
   <script src="js/sdcard.js?v=4"></script>
   <script src="js/httpsync.js?v=5"></script>
   <script type="module" src="js/mtp.js?v=1"></script>

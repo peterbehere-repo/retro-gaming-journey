@@ -245,3 +245,21 @@ footer { padding: 1.2rem; text-align: center; font-size: .7rem; color: var(--mut
   font-size: .72rem; color: var(--muted); border: 1px dashed var(--border);
   border-radius: var(--radius); padding: .55rem .7rem;
 }
+
+/* --- Identity: the signed-in player ------------------------------------- */
+.auth-pic {
+  width: 28px; height: 28px; border-radius: 50%;
+  border: 1px solid var(--border); object-fit: cover; background: #14182a;
+}
+.auth-pane { border: 1px solid var(--border); border-radius: 10px; padding: .4rem 1rem .9rem; margin: 1rem 0 .6rem; }
+.auth-pane legend { font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); padding: 0 .4rem; }
+.auth-alt { border-top: 1px solid var(--border); padding-top: .7rem; margin-top: .9rem; }
+.auth-alt summary { font-size: .76rem; color: var(--muted); cursor: pointer; }
+.auth-alt summary:hover { color: var(--text); }
+#auth-accounts { margin: .2rem 0 .4rem; }
+#auth-accounts .modal-note { margin: .2rem 0 .4rem; }
+.account-chip {
+  display: inline-flex; align-items: center; gap: .5rem;
+  margin: 0 .4rem .4rem 0; padding: .25rem .7rem .25rem .3rem;
+}
+.account-chip img { width: 22px; height: 22px; border-radius: 50%; object-fit: cover; }

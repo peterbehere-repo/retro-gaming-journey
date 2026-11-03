@@ -5,7 +5,10 @@
 /* State                                                               */
 /* ------------------------------------------------------------------ */
 
+// Progress is per account, so the storage key follows the session (IDENT.stateKey()).
+// Guest progress keeps the original key so nothing earned before signing in is lost.
 const STORE_KEY = "rgj-state-v1";
+const stateStore = () => (typeof IDENT !== "undefined" ? IDENT.stateKey() : STORE_KEY);
 
 const DEFAULT_STATE = {
   statuses: {},      // gameId -> "playing" | "completed"
@@ -16,20 +19,38 @@ const DEFAULT_STATE = {
 
 let state = loadState();
 let user = null;                 // supabase user or null (offline demo profile)
+let profile = null;              // verified RetroAchievements profile of the signed-in user
 let sb = null;                   // supabase client or null
 let genreFilter = GENRES[0];
 let platformFilter = "all";
 let searchQuery = "";
 
 
-function loadState() {
+function loadState(key) {
   try {
-    const raw = localStorage.getItem(STORE_KEY);
+    const raw = localStorage.getItem(key || stateStore());
     if (raw) return { ...structuredClone(DEFAULT_STATE), ...JSON.parse(raw) };
   } catch (e) { /* corrupted store -> start fresh */ }
   return structuredClone(DEFAULT_STATE);
 }
-function saveState() { localStorage.setItem(STORE_KEY, JSON.stringify(state)); }
+function saveState() { localStorage.setItem(stateStore(), JSON.stringify(state)); }
+
+/* Adopt guest progress into a profile on its first sign-in.
+   Someone who used the page before signing in has real unlocks under the guest key;
+   making them sign in and then showing an empty dashboard reads as data loss. The
+   guest key is copied once, never merged back, and never deleted. */
+function adoptGuestState(who) {
+  const target = `${STORE_KEY}:u:${String(who).toLowerCase()}`;
+  if (localStorage.getItem(target)) return false;
+  const guest = localStorage.getItem(STORE_KEY);
+  if (!guest) return false;
+  try {
+    const parsed = JSON.parse(guest);
+    if (!parsed || (!Object.keys(parsed.statuses || {}).length && !Object.keys(parsed.unlocks || {}).length)) return false;
+    localStorage.setItem(target, guest);
+    return true;
+  } catch (e) { return false; }
+}
 
 /* ------------------------------------------------------------------ */
 /* Helpers                                                             */
@@ -229,9 +250,40 @@ function renderSync() {
   // The linked volume owns the identity; the config value is only a fallback for the
   // cloud-push label when no card is linked (sdcard.js overwrites this once a marker loads).
   $("#sync-device").textContent = linkedDeviceId() || "no card linked";
-  $("#auth-status").textContent = user ? `online · ${user.email}` : "offline mode";
-  $("#auth-status").className = `auth-status ${user ? "online" : "offline"}`;
-  $("#btn-signin").textContent = user ? "Sign out" : "Sign in";
+  renderAuth();
+}
+
+/* Header identity. There are two kinds of session — a RetroAchievements account
+   (the real one, which knows the player) and a Supabase account (optional backend) —
+   and the header should say which, and whose progress is on screen. */
+function renderAuth() {
+  const box = $("#auth-box");
+  if (!box) return;
+  const id = (typeof IDENT !== "undefined") ? IDENT : null;
+  const raOn = !!(id && id.signedIn());
+
+  let img = $("#auth-pic");
+  if (raOn) {
+    if (!img) {
+      img = document.createElement("img");
+      img.id = "auth-pic";
+      img.className = "auth-pic";
+      img.alt = "";
+      box.prepend(img);
+    }
+    img.src = id.pic();
+    img.hidden = false;
+    $("#auth-status").textContent = id.name();
+    $("#auth-status").className = "auth-status online";
+    $("#auth-status").title = "RetroAchievements account — progress on this page is this account's";
+    $("#btn-signin").textContent = "Sign out";
+  } else {
+    if (img) img.hidden = true;
+    $("#auth-status").textContent = user ? `online · ${user.email}` : "guest";
+    $("#auth-status").className = `auth-status ${user ? "online" : "offline"}`;
+    $("#auth-status").title = user ? "Supabase session" : "No account — progress is stored for this browser only";
+    $("#btn-signin").textContent = "Sign in";
+  }
 }
 
 function esc(s) {
@@ -310,25 +362,132 @@ function initBackend() {
   });
 }
 
-$("#btn-signin").addEventListener("click", async () => {
-  if (user) { await sb.auth.signOut(); user = null; logSync("Signed out. Progress kept locally."); render(); return; }
-  if (!SUPABASE_CONFIGURED) {
-    logSync("No backend configured — running in offline demo mode (progress saved in this browser).", "err");
-    $("#auth-dialog").showModal(); return;
+/* ------------------------------------------------------------------ */
+/* Sign-in: the RetroAchievements account is the identity              */
+/* ------------------------------------------------------------------ */
+
+function authError(msg) {
+  const el = $("#auth-error");
+  if (el) el.textContent = msg || "";
+}
+
+// After any successful sign-in: load that profile's progress, point the RA layer at
+// it, and pull. Everything downstream keys off the session, so this is the only place
+// switching accounts has to be handled.
+async function enterProfile(quiet, opts) {
+  const id = IDENT.current();
+  if (!id) return;
+  const o = opts || {};
+  const adopted = adoptGuestState(id.user);
+  state = loadState();
+  RA.configure(id.user, id.key);
+  render();
+  if (!quiet) logSync(`Signed in as ${id.user}. Showing this account's progress.`, "ok");
+  if (adopted) logSync("Progress from before you signed in was copied into this profile.", "ok");
+  if (o.pull === false) return;
+  await pullProfile({ quiet: true });
+}
+
+// One pull path, used by sign-in, by page load, and by the button in the Sync tab.
+async function pullProfile(opts) {
+  const o = opts || {};
+  if (!RA.configured()) {
+    if (!o.quiet) logSync("No RetroAchievements account on this session.", "err");
+    return null;
   }
+  try {
+    const res = await RA.pullIntoState(ACTIVE_GAMES, state);
+    saveState();
+    render();
+    logSync(`RA pull: ${res.applied} game${res.applied === 1 ? "" : "s"} updated ` +
+      `(${res.matched} matched of ${ACTIVE_GAMES.length} in scope, ${res.scanned} rows scanned).`,
+      res.applied ? "ok" : undefined);
+    return res;
+  } catch (err) {
+    logSync(`RA pull failed: ${err.message}`, "err");
+    return null;
+  }
+}
+
+async function doSignIn(user, key, keep) {
+  authError("Checking the account…");
+  const btn = $("#auth-submit");
+  if (btn) btn.disabled = true;
+  try {
+    const res = await IDENT.verify(user, key);
+    if (!res.ok) { authError(res.error); return false; }
+    IDENT.signIn(res.profile.User, String(key).trim(), res.profile.UserPic || "");
+    profile = res.profile;
+    const dlg = $("#auth-dialog");
+    if (dlg && dlg.open) dlg.close();
+    authError("");
+    $("#auth-ra-key").value = "";
+    logSync(`${res.profile.User} · member since ${String(res.profile.MemberSince).slice(0, 10)} · ` +
+      `${res.profile.TotalSoftcorePoints || 0} softcore points.`, "ok");
+    await enterProfile(false);
+    return true;
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+function doSignOut() {
+  const who = IDENT.signedIn() ? IDENT.name() : "";
+  IDENT.signOut();
+  RA.forget();
+  profile = null;
+  state = loadState();          // falls back to the guest store
+  render();
+  logSync(who ? `Signed out ${who}. That account's progress stays saved on this device.`
+              : "Signed out.", "ok");
+  paintAccounts();
+}
+
+// Device profiles: anyone who has signed in here before, one click back.
+function paintAccounts() {
+  const host = $("#auth-accounts");
+  if (!host) return;
+  const list = (typeof IDENT !== "undefined" ? IDENT.accounts() : []).filter(a => !IDENT.current() || a.user !== IDENT.current().user);
+  if (!list.length) { host.innerHTML = ""; host.hidden = true; return; }
+  host.hidden = false;
+  host.innerHTML = '<p class="modal-note">On this device before</p>' + list.map(a => `
+    <button type="button" class="btn btn-ghost btn-small account-chip" data-account="${esc(a.user)}">
+      ${a.pic ? `<img src="${esc(/^https?:/.test(a.pic) ? a.pic : "https://retroachievements.org" + a.pic)}" alt="" onerror="this.remove()">` : ""}
+      <span>${esc(a.user)}</span>
+    </button>`).join("");
+  host.querySelectorAll("[data-account]").forEach(b => b.addEventListener("click", async () => {
+    const who = b.dataset.account;
+    const acct = IDENT.accounts().find(a => a.user === who);
+    if (!acct) return;
+    await doSignIn(acct.user, acct.key);
+  }));
+}
+
+$("#btn-signin").addEventListener("click", async () => {
+  if (IDENT.signedIn()) { doSignOut(); return; }
+  if (user && sb) { await sb.auth.signOut(); user = null; logSync("Signed out. Progress kept locally."); render(); return; }
+  authError("");
+  paintAccounts();
   $("#auth-dialog").showModal();
 });
+
 $("#auth-cancel").addEventListener("click", () => $("#auth-dialog").close());
+
 $("#auth-form").addEventListener("submit", async (e) => {
-  const mode = e.submitter?.value || "signin";
-  const email = e.target.email.value, password = e.target.password.value;
-  $("#auth-error").textContent = "";
-  if (!sb) { $("#auth-error").textContent = "Offline mode: configure Supabase in js/supabase-config.js."; return; }
-  const { data, error } = mode === "signup"
-    ? await sb.auth.signUp({ email, password })
-    : await sb.auth.signInWithPassword({ email, password });
-  if (error) { $("#auth-error").textContent = error.message; return; }
-  user = data.user; $("#auth-dialog").close(); logSync(`Signed in as ${email}.`, "ok"); render();
+  e.preventDefault();
+  if ((e.submitter && e.submitter.value) === "email") {
+    const email = e.target.email.value, password = e.target.password.value;
+    authError("");
+    if (!sb) { authError("Email sign-in needs a Supabase backend — none is configured, so use the RetroAchievements account above."); return; }
+    const { data, error } = await sb.auth.signInWithPassword({ email, password });
+    if (error) { authError(error.message); return; }
+    user = data.user;
+    $("#auth-dialog").close();
+    logSync(`Signed in as ${email}.`, "ok");
+    render();
+    return;
+  }
+  await doSignIn(e.target.rauser.value, e.target.rakey.value);
 });
 
 async function pushQueue() {
@@ -467,12 +626,21 @@ function raHint(msg, cls) {
 function renderRA() {
   if (typeof RA === "undefined" || !$("#ra-card")) return;
   const s = RA.summary();
+  const on = IDENT.signedIn();
+  // When the session owns the account, these fields are not the source of truth —
+  // say so by disabling them rather than letting an edit sit there doing nothing.
+  $("#ra-user").disabled = on;
+  $("#ra-key").disabled = on;
+  $("#btn-ra-save").disabled = on;
+  $("#btn-ra-forget").disabled = on;
+
   if (s.configured) {
     $("#ra-user").value = s.user;
     $("#ra-key").value = "";
-    $("#ra-key").placeholder = "saved — leave blank to keep";
+    $("#ra-key").placeholder = on ? "managed by your session" : "saved — leave blank to keep";
     const when = s.lastPull ? new Date(s.lastPull).toLocaleString() : "never";
-    raHint(`${s.user} · ${s.tracked} game${s.tracked === 1 ? "" : "s"} tracked · pulled ${when}`);
+    const scope = on ? `${s.user} · signed in on this device` : `${s.user} · saved for this browser`;
+    raHint(`${scope} · ${s.tracked} game${s.tracked === 1 ? "" : "s"} tracked · pulled ${when}`);
     const box = $("#ra-unmatched");
     const list = (RA._state().unmatched || []);
     box.innerHTML = list.length
@@ -482,48 +650,46 @@ function renderRA() {
       : "";
   } else {
     $("#ra-key").placeholder = "32-character key";
-    raHint("Not connected. Saves locally; nothing is sent anywhere until you pull.");
+    raHint("Not signed in. Progress stays in this browser until you sign in with your RetroAchievements account.");
     $("#ra-unmatched").innerHTML = "";
   }
 }
 
-$("#btn-ra-save").addEventListener("click", () => {
+$("#btn-ra-save").addEventListener("click", async () => {
   const u = $("#ra-user").value.trim();
   const saved = RA.summary().configured ? RA._state().key : "";
   const k = $("#ra-key").value.trim() || saved;
   if (!u) return raHint("Enter your RA username.", "err");
   if (!k) return raHint("Enter your web API key.", "err");
-  RA.configure(u, k);
-  renderRA();
-  logSync(`RetroAchievements account saved for ${u}.`, "ok");
+  // Saving manually is the same act as signing in: verify, then adopt the identity.
+  const ok = await doSignIn(u, k);
+  if (!ok) raHint($("#auth-error").textContent || "Could not sign in with that account.", "err");
 });
 
 $("#btn-ra-forget").addEventListener("click", () => {
+  const who = IDENT.signedIn() ? IDENT.name() : RA.user();
+  IDENT.forgetAccount(who);
+  IDENT.signOut();
   RA.forget();
   $("#ra-user").value = "";
   $("#ra-key").value = "";
-  renderRA();
-  logSync("RetroAchievements account removed from this browser.", "ok");
+  state = loadState();
+  render();
+  logSync("RetroAchievements account removed from this device.", "ok");
 });
 
 $("#btn-ra-pull").addEventListener("click", async () => {
   if (typeof RA === "undefined") return;
-  if (!RA.configured()) return raHint("Save your RA account first.", "err");
+  if (!RA.configured()) return raHint("Sign in with your RetroAchievements account first.", "err");
   const btn = $("#btn-ra-pull");
   btn.disabled = true;
   raHint("Contacting RetroAchievements…");
   try {
-    const res = await RA.pullIntoState(ACTIVE_GAMES, state);
-    saveState();
-    render();
-    renderRA();
-    logSync(`RA pull: ${res.applied} game${res.applied === 1 ? "" : "s"} updated ` +
-            `(${res.matched} matched of ${ACTIVE_GAMES.length} in scope, ${res.scanned} rows scanned).`, "ok");
+    const res = await pullProfile({ quiet: true });
+    if (!res) return raHint("Pull failed — see the sync log.", "err");
     if (res.applied === 0 && res.matched === 0)
       raHint("Nothing matched. Check the username — that account may have no progress.", "warn");
-  } catch (err) {
-    raHint(`Pull failed: ${err.message}`, "err");
-    logSync(`RA pull failed: ${err.message}`, "err");
+    else renderRA();
   } finally {
     btn.disabled = false;
   }
@@ -542,7 +708,7 @@ function achHint(msg, cls) {
 }
 
 $("#ach-load").addEventListener("click", async () => {
-  if (!RA.configured()) return achHint("Add your RetroAchievements username and web API key in the Sync tab first.", "err");
+  if (!RA.configured()) return achHint("Sign in with your RetroAchievements account first — the button in the top right.", "err");
   const btn = $("#ach-load");
   btn.disabled = true;
   const groups = achGroups();
@@ -599,3 +765,27 @@ $("#ach-export").addEventListener("click", () => {
 initBackend();
 render();
 renderRA();
+
+/* Resume the session, if there is one. A stored key can be revoked, and a page that
+   silently shows an empty dashboard is indistinguishable from lost progress — so the
+   key is revalidated before it is trusted, and says so when it is not. */
+(async function bootIdentity() {
+  if (typeof IDENT === "undefined" || !IDENT.signedIn()) return;
+  const who = IDENT.name();
+  const status = await IDENT.revalidate();
+  if (status === "invalid") {
+    RA.forget();
+    state = loadState();
+    render();
+    logSync(`The saved key for ${who} is no longer valid — sign in again.`, "err");
+    return;
+  }
+  if (status === "offline") {
+    RA.configure(IDENT.name(), IDENT.current().key);
+    state = loadState();
+    render();
+    logSync(`Offline — showing saved progress for ${who}. Achievements will refresh when the connection returns.`, "err");
+    return;
+  }
+  await enterProfile(true);
+})();
