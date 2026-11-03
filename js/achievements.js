@@ -124,9 +124,19 @@ const ACH = (() => {
 
   // Which of a game's three picks the player has actually earned. Pulled from
   // API_GetGameInfoAndUserProgress (that endpoint keys the game as `g`), cached per game.
-  async function ensureEarned(platform, title) {
+  // Earned marks are refetched at most once per TTL per game. Without this, every
+  // page load would re-ask RA about every played title, and a player with fifty played
+  // games would spend fifty requests to learn nothing new.
+  const FETCHED = "rgj-ach-fetched-v1";
+  const TTL_MS = 6 * 60 * 60 * 1000;
+
+  async function ensureEarned(platform, title, opts) {
     const g = get(platform, title);
     if (!g || !g.raId || !RA.configured()) return {};
+    const fetched = load(FETCHED);
+    const fresh = !!(opts && opts.force) === false && fetched[g.raId] &&
+      (Date.now() - fetched[g.raId]) < TTL_MS;
+    if (fresh) return earned()[g.raId] || {};
     const e = earned();
     const det = await RA.gameDetail(g.raId);
     const out = {};
@@ -137,6 +147,8 @@ const ACH = (() => {
     // has ever been asked, and a later RA pull must not wipe it (local wins on collision).
     e[g.raId] = { ...out, ...(e[g.raId] || {}) };
     save(EARNED, e);
+    fetched[g.raId] = Date.now();
+    save(FETCHED, fetched);
     return e[g.raId];
   }
 

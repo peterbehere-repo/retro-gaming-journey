@@ -424,6 +424,9 @@ async function pullProfile(opts) {
     const res = await RA.pullIntoState(ACTIVE_GAMES, state);
     saveState();
     render();
+    // Which of the three picks are earned can only come from RA's per-game detail, so
+    // it is fetched here for the games this account has actually played (and cached).
+    await markEarnedForPlayed();
     logSync(`RA pull: ${res.applied} game${res.applied === 1 ? "" : "s"} updated ` +
       `(${res.matched} matched of ${ACTIVE_GAMES.length} in scope, ${res.scanned} rows scanned).`,
       res.applied ? "ok" : undefined);
@@ -432,6 +435,18 @@ async function pullProfile(opts) {
     logSync(`RA pull failed: ${err.message}`, "err");
     return null;
   }
+}
+
+async function markEarnedForPlayed() {
+  if (typeof ACH === "undefined" || !RA.configured()) return 0;
+  const played = ACTIVE_GAMES.filter(g => ((state.unlocks || {})[g.id] || {}).count > 0);
+  let marked = 0;
+  for (const g of played) {
+    try { const e = await ACH.ensureEarned(g.platform, g.title); marked += Object.keys(e || {}).length; }
+    catch (err) { /* one game's detail must not stop the pull */ }
+  }
+  if (played.length) renderAchievements();
+  return marked;
 }
 
 async function doSignIn(user, key, keep) {
