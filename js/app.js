@@ -121,8 +121,9 @@ function renderWho() {
     return;
   }
   el.hidden = false;
-  el.innerHTML = `Showing <strong>${esc(id.name())}</strong>'s journey ` +
-    `<span class="who-note">· <a href="#" id="who-switch">switch account</a></span>`;
+  el.innerHTML = `Showing <strong>${esc(id.name())}</strong>'s journey` +
+    outOfScopeNote() +
+    ` <span class="who-note">· <a href="#" id="who-switch">switch account</a></span>`;
   const sw = $("#who-switch");
   if (sw) sw.addEventListener("click", (e) => {
     e.preventDefault();
@@ -130,6 +131,21 @@ function renderWho() {
     paintAccounts();
     $("#auth-dialog").showModal();
   });
+}
+
+// Platforms are revealed one iteration at a time, so an account can have plenty of
+// progress that this page does not display yet. Say so; silence looks like a bug.
+function outOfScopeNote() {
+  const counts = (state.ra && state.ra.consoles) || {};
+  const names = { nes: "NES", snes: "SNES", genesis: "Genesis", tg16: "TurboGrafx-16", gba: "GBA", nds: "DS" };
+  const outside = Object.entries(counts)
+    .filter(([k, n]) => n > 0 && !ACTIVE_PLATFORMS.includes(k))
+    .sort((a, b) => b[1] - a[1]);
+  if (!outside.length) return "";
+  const total = outside.reduce((n, [, c]) => n + c, 0);
+  const list = outside.slice(0, 3).map(([k, c]) => `${names[k] || k} ${c}`).join(" · ");
+  return ` <span class="who-note">· ${total} game${total === 1 ? "" : "s"} on consoles this ` +
+    `iteration does not show yet (${esc(list)})</span>`;
 }
 
 function renderDashboard() {

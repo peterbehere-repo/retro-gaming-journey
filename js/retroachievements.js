@@ -160,6 +160,8 @@ const RA = (() => {
     return out;
   }
 
+  const CONSOLE_BY_ID = { 1: "genesis", 3: "snes", 5: "gba", 7: "nes", 8: "tg16", 18: "nds" };
+
   // First finite number wins; RA has shipped two spellings for the same field.
   function num(...vals) {
     for (const v of vals) {
@@ -180,6 +182,16 @@ const RA = (() => {
     let applied = 0;
     state.ra = state.ra || {};
     state.ra.games = state.ra.games || {};
+
+    // Count what this account has played per console before filtering to the page's
+    // scope: a player whose progress is all on GBA should be told why the NES
+    // dashboard looks empty, not left to conclude their data is missing.
+    const consoles = {};
+    for (const row of rows) {
+      const key = (CONSOLE_BY_ID[row.ConsoleID]) || String(row.ConsoleName || "other");
+      consoles[key] = (consoles[key] || 0) + 1;
+    }
+    state.ra.consoles = consoles;
 
     for (const row of rows) {
       const gameId = byRaId[row.GameID];
