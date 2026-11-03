@@ -1,3 +1,12 @@
+# SUPERSEDED by tools/harvest-ra-api.py (2026-11-02). This merged scraped harvest
+# files that only ever covered NES and landed on ~Hack~ sets; the API builder covers
+# every platform and is authoritative. Kept for reference only — it overwrites
+# data/ra-achievements.json, so it refuses to run without --force.
+import sys as _sys
+if "--force" not in _sys.argv:
+    _sys.exit("build-achievement-bundle.py is superseded by harvest-ra-api.py; "
+              "re-run with --force only if you really mean to overwrite the bundle.")
+
 #!/usr/bin/env python3
 """Assemble data/ra-achievements.json from a harvest of RetroAchievements public pages.
 
