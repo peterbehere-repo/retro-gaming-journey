@@ -163,6 +163,8 @@ footer { padding: 1.2rem; text-align: center; font-size: .7rem; color: var(--mut
 /* Journey map */
 /* Journey header sits tight so the map gets the height, and the width follows from it. */
 /* Title, pills and blurb share one compact row so the map gets every spare pixel of height. */
+/* On the Journey tab the map wants the whole window, so the bar stops sticking and scrolls away. */
+body.journey-view .topbar { position: static; }
 .journey-head { display: flex; align-items: center; gap: .35rem 1.1rem; flex-wrap: wrap; margin: 0 0 .5rem; }
 #panel-journey h2 { margin: 0; white-space: nowrap; }
 .map-bar { display: flex; align-items: center; gap: .5rem 1rem; flex-wrap: wrap; margin: 0; flex: 1 1 520px; }

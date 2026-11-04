@@ -366,7 +366,8 @@ document.querySelectorAll(".tab").forEach(t =>
       p.classList.toggle("active", p.id === `panel-${t.dataset.tab}`));
     // The journey map is the one panel that wants the full width of the window.
     document.querySelector("main").classList.toggle("wide", t.dataset.tab === "journey");
-    if (t.dataset.tab === "journey") { loadJourney(); requestAnimationFrame(sizeJourneyFrame); }
+    document.body.classList.toggle("journey-view", t.dataset.tab === "journey");
+    if (t.dataset.tab === "journey") { loadJourney(); requestAnimationFrame(sizeJourneyFrame); requestAnimationFrame(settleJourneyMap); }
   }));
 
 // Journey maps: one per genre per platform. Each is a self-contained document with the
@@ -428,6 +429,18 @@ function loadJourney(id) {
 
 // The map wants all the width it can get, but never more than the height on offer — a 16:9 frame
 // taller than the window would cut the bottom row of path points off.
+// The map runs the full width of the window, which on a 16:9 screen makes it a shade taller than a
+// 1080px window. Rather than shrink it back into side padding, let the page scroll just enough that
+// the frame starts at the top of the window — then the whole map sits on screen with nothing wasted.
+function settleJourneyMap() {
+  const wrap = document.querySelector("#panel-journey .journey-frame-wrap");
+  if (!wrap || !wrap.offsetParent) return;
+  const r = wrap.getBoundingClientRect();
+  if (r.height <= window.innerHeight && r.bottom > window.innerHeight && r.top > 0) {
+    window.scrollTo({ top: Math.round(window.scrollY + r.top - 4), behavior: "smooth" });
+  }
+}
+
 function sizeJourneyFrame() {
   const wrap = document.querySelector("#panel-journey .journey-frame-wrap");
   if (!wrap || !wrap.offsetParent) return;
