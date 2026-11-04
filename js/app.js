@@ -380,6 +380,7 @@ const JOURNEY_MAPS = [
     platform: "NES",
     genre: "Action",
     file: "journey-map.html",
+    sea: "#059299",
     blurb: "The NES action route as one continuous trail — twenty path points from the Contra " +
            "jungle to the final fortress, each with its own artwork and three achievement tiers.",
   },
@@ -389,6 +390,7 @@ const JOURNEY_MAPS = [
     platform: "NES",
     genre: "Adventure",
     file: "journey-map-adventure.html",
+    sea: "#2ea7af",
     blurb: "The NES adventure route — Zelda to Kid Icarus across one continuous overworld, every " +
            "point standing on its own themed corner of the island, in a single clean serpentine.",
   },
@@ -424,6 +426,8 @@ function loadJourney(id) {
   f.src = `${map.file}?v=${JOURNEY_MAP_VERSION}`;
   f.dataset.loaded = map.id;
   f.title = `Journey map — ${map.platform} ${map.genre}`;
+  const wrap = f.parentElement;
+  if (wrap && map.sea) wrap.style.setProperty("--sea", map.sea);
   journeyLoaded = true;
 }
 
