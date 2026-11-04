@@ -432,25 +432,22 @@ function loadJourney(id) {
 // The map runs the full width of the window, which on a 16:9 screen makes it a shade taller than a
 // 1080px window. Rather than shrink it back into side padding, let the page scroll just enough that
 // the frame starts at the top of the window — then the whole map sits on screen with nothing wasted.
-function settleJourneyMap(force) {
-  const wrap = document.querySelector("#panel-journey .journey-frame-wrap");
-  if (!wrap || !wrap.offsetParent) return;
-  const r = wrap.getBoundingClientRect();
-  const off = Math.round(window.scrollY + r.top - 4);
-  // Full width makes the map a touch taller than the window, so nudge the page down until the
-  // frame starts at the top. `force` re-settles even when the map already begins on screen.
-  if (r.height <= window.innerHeight && (force || r.bottom > window.innerHeight) && off > 0) {
-    window.scrollTo({ top: off, behavior: force ? "auto" : "smooth" });
-  }
+function settleJourneyMap() {
+  // The frame now fits the window, so there is nothing to scroll into place.
 }
+
 
 function sizeJourneyFrame() {
   const wrap = document.querySelector("#panel-journey .journey-frame-wrap");
   if (!wrap || !wrap.offsetParent) return;
-  // Full width, height follows from 16:9 (CSS aspect-ratio). A wide screen means a taller map, so
-  // the page scrolls a little rather than the map sitting in side padding.
-  wrap.style.width = "100%";
-  wrap.style.height = "";
+  // Fit the window rather than overflow it: take whatever height is left under the header, turn
+  // that into a 16:9 frame, and centre it. The Action artwork has no ocean margin, so cropping is
+  // not an option — scaling down is what keeps the whole map on screen without scrolling.
+  const top = wrap.getBoundingClientRect().top + window.scrollY;
+  const avail = window.innerHeight - top - 10;
+  const h = Math.max(320, Math.min(avail, window.innerWidth * 9 / 16));
+  wrap.style.height = Math.round(h) + "px";
+  wrap.style.width = Math.round(Math.min(h * 16 / 9, window.innerWidth)) + "px";
 }
 
 window.addEventListener("resize", sizeJourneyFrame);
@@ -464,7 +461,7 @@ function selectJourneyMap(id) {
   if (panel && panel.classList.contains("active")) {
     loadJourney(id);
     // Swapping the iframe's src pulls the page back to the top; settle it again on the new map.
-    requestAnimationFrame(() => settleJourneyMap(true));
+    requestAnimationFrame(sizeJourneyFrame);
   }
 }
 

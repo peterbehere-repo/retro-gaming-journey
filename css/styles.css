@@ -163,17 +163,28 @@ footer { padding: 1.2rem; text-align: center; font-size: .7rem; color: var(--mut
 /* Journey map */
 /* Journey header sits tight so the map gets the height, and the width follows from it. */
 /* Title, pills and blurb share one compact row so the map gets every spare pixel of height. */
-/* On the Journey tab the map wants the whole window, so the bar stops sticking and scrolls away. */
-body.journey-view .topbar { position: static; }
+/* On the Journey tab the map wants the whole window: the header goes compact, the page stops
+   scrolling, and every pixel saved up here becomes map. */
+body.journey-view { overflow: hidden; }
+body.journey-view .topbar { position: static; padding: .5rem 1.1rem; }
+body.journey-view .brand h1 { font-size: .95rem; }
+body.journey-view .tabs { padding: .2rem 1.1rem .45rem; }
+body.journey-view .tab { padding: .32rem .7rem; }
+body.journey-view footer { display: none; }
+body.journey-view main.wide { padding: .5rem .7rem .6rem; }
+
 .journey-head { display: flex; align-items: center; gap: .35rem 1.1rem; flex-wrap: wrap; margin: 0 0 .5rem; }
 #panel-journey h2 { margin: 0; white-space: nowrap; }
-.map-bar { display: flex; align-items: center; gap: .5rem 1rem; flex-wrap: wrap; margin: 0; flex: 1 1 520px; }
-.map-bar .map-blurb { margin: 0; flex: 1 1 320px; font-size: .7rem; line-height: 1.4; }
+
+.journey-head .map-blurb {
+  margin: 0; font-size: .66rem; line-height: 1.3; color: var(--fg);
+  max-width: 32rem;
+  background: rgba(13,15,26,.78); border: 1px solid var(--border); border-radius: 999px;
+  padding: .3rem .7rem; backdrop-filter: blur(6px);
+}
 /* Let the blurb run to the width on offer: every line it wastes costs map height, and with a
    16:9 frame height is what sets the map's size. */
-@media (min-width: 1150px) {
-  .map-bar .map-blurb { max-width: none; }
-}
+
 .map-picker { display: flex; flex-wrap: wrap; gap: .45rem; margin: 0; }
 .map-pill {
   font: inherit; font-size: .72rem; letter-spacing: .06em; cursor: pointer;
@@ -300,3 +311,8 @@ body.journey-view .topbar { position: static; }
 .who-line strong { color: var(--text); font-weight: 600; }
 .who-line a { color: var(--accent); text-decoration: none; }
 .who-line a:hover { text-decoration: underline; }
+
+/* Narrow windows: the pill row alone, so the floating header stays a slim chip. */
+@media (max-width: 1500px) {
+  .journey-head .map-blurb { display: none; }
+}
