@@ -88,6 +88,9 @@ The dashboard uses the grid as the progression canvas: cycle any card between
 itself comes from RetroAchievements: every NES title carries three picks — easy,
 intermediate, advanced — ordered by RA's own TrueRatio, and those same three are the stars
 on each Journey map path point (see [`js/achievements.js`](js/achievements.js)).
+The character sprites beside a path point stay hidden until you earn them: the first star
+paints the first sprite, the second star adds the second, the third completes the row — so
+the map fills in as you beat each game's three achievements.
 
 ## Quick start — dashboard
 

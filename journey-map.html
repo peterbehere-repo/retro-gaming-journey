@@ -70,6 +70,7 @@ body { padding:0; margin:0; overflow:hidden;
 <div class="map-wrap" id="viewport"><div class="jm-legend">
   <span>&#9679; gold ring = fully completed</span>
   <span>&#9733;&#9733;&#9733; Beginner / Intermediate / Advanced</span>
+  <span>&#9670; each star reveals a game sprite</span>
   <span>drag to pan &middot; scroll to zoom</span>
 </div>
 <div class="zoombar">
@@ -140,21 +141,27 @@ function catmull(pts){
   }
   return d;
 }
-ov.innerHTML = `<path class="trail" d="${catmull(pts)}"/>`;
-let defs=`<defs>`;
-DATA.games.forEach((g,i)=>{
-  const done = g.stars===3;
-  ov.innerHTML += `<g class="pnode" data-i="${i}">
+/* Only the sprites you have actually earned are drawn: 1 star paints the
+   first sprite on a point, the 2nd star adds the second, the 3rd adds the third.
+   The pick order is the same Beginner -> Intermediate -> Advanced order the
+   achievement cache uses, so the art always matches the card. */
+function nodeMarkup(){
+  let out = `<path class="trail" d="${catmull(pts)}"/>`;
+  DATA.games.forEach((g,i)=>{
+  const got = starsFor(g.name);
+  out += `<g class="pnode" data-i="${i}">
     <circle class="ph" cx="${g.x}" cy="${g.y}" r="13"/>
-    ${i===0?`<image class="sprite" x="${g.x-19}" y="${g.y+21}" width="15" height="26" href="${BILL_GIF}"/>`:""}${i===0?`<image class="sprite" x="${g.x+3}" y="${g.y+21}" width="16" height="26" href="${LANCE_GIF}"/>`:""}${i===0?`<image class="hover-s sprite" x="${g.x+26}" y="${g.y+32}" width="24" height="15" href="${S_GIF}"/>`:""}${i===1?`<image class="sprite" x="${g.x-22.57}" y="${g.y+21}" width="24.14" height="26" href="${MARIO_GIF}"/>`:""}${i===1?`<image class="sprite" x="${g.x+6}" y="${g.y+21}" width="17" height="26" href="${KOOPA_GIF}"/>`:""}${i===1?`<image class="sprite" x="${g.x+29}" y="${g.y+32}" width="15" height="15" href="${GOOMBA_GIF}"/>`:""}${i===2?`<image class="sprite" x="${g.x-36}" y="${g.y+22}" width="26" height="25" href="${MM_WALK_GIF}"/>`:""}${i===2?`<image class="sprite" x="${g.x-4}" y="${g.y+28}" width="18" height="19" href="${MET_GIF}"/>`:""}${i===2?`<image class="sprite" x="${g.x+20}" y="${g.y+31}" width="17" height="16" href="${ETANK_GIF}"/>`:""}${i===3?`<image class="sprite" x="${g.x-36}" y="${g.y+21}" width="19.3" height="26" href="${RYU_GIF}"/>`:""}${i===3?`<image class="sprite" x="${g.x-10.7}" y="${g.y+21}" width="12" height="18" href="${BIRD_GIF}"/>`:""}${i===3?`<image class="sprite" x="${g.x+7.3}" y="${g.y+21}" width="19.9" height="26" href="${SWORD_GIF}"/>`:""}
-${i===4?`<image class="sprite" x="${g.x-28.7}" y="${g.y+21}" width="13.4" height="26" href="${TREVOR_GIF}"/>`:""}${i===4?`<image class="sprite" x="${g.x-6.35}" y="${g.y+21}" width="12.7" height="26" href="${SYFA_GIF}"/>`:""}${i===4?`<image class="sprite" x="${g.x+16.3}" y="${g.y+21}" width="11.4" height="26" href="${ALUCARD_GIF}"/>`:""}
-${i===5?`<image class="sprite" x="${g.x-29.45}" y="${g.y+21.00}" width="13.87" height="26.00" href="${BILLY2_GIF}"/>`:""}${i===5?`<image class="sprite" x="${g.x-7.58}" y="${g.y+21.00}" width="13.87" height="26.00" href="${JIMMY_GIF}"/>`:""}${i===5?`<image class="sprite" x="${g.x+14.30}" y="${g.y+15.00}" width="16.44" height="32.00" href="${ABOBO_GIF}"/>`:""}
-${i===6?`<image class="sprite" x="${g.x-41.78125}" y="${g.y+21}" width="23.5625" height="26" href="${PT7_GIF}"/>`:""}${i===6?`<image class="sprite" x="${g.x-10.15625}" y="${g.y+21}" width="20.3125" height="26" href="${KNIFE_GIF}"/>`:""}${i===6?`<image class="hover-s sprite" x="${g.x+18.21875}" y="${g.y+21}" width="13" height="26" href="${HOVER_GIF}"/>`:""}
-${i===7?`<image class="sprite" x="${g.x-36.91487}" y="${g.y+21}" width="21.51724" height="26" href="${SCROOGE_GIF}"/>`:""}${i===7?`<image class="sprite" x="${g.x-7.39763}" y="${g.y+21}" width="20.31250" height="26" href="${RAT_GIF}"/>`:""}${i===7?`<image class="hover-s sprite" x="${g.x+20.91487}" y="${g.y+31}" width="16.0" height="16" href="${DIA_GIF}"/>`:""}
+    ${i===0&&got>0?`<image class="sprite" x="${g.x-19}" y="${g.y+21}" width="15" height="26" href="${BILL_GIF}"/>`:""}${i===0&&got>1?`<image class="sprite" x="${g.x+3}" y="${g.y+21}" width="16" height="26" href="${LANCE_GIF}"/>`:""}${i===0&&got>2?`<image class="hover-s sprite" x="${g.x+26}" y="${g.y+32}" width="24" height="15" href="${S_GIF}"/>`:""}${i===1&&got>0?`<image class="sprite" x="${g.x-22.57}" y="${g.y+21}" width="24.14" height="26" href="${MARIO_GIF}"/>`:""}${i===1&&got>1?`<image class="sprite" x="${g.x+6}" y="${g.y+21}" width="17" height="26" href="${KOOPA_GIF}"/>`:""}${i===1&&got>2?`<image class="sprite" x="${g.x+29}" y="${g.y+32}" width="15" height="15" href="${GOOMBA_GIF}"/>`:""}${i===2&&got>0?`<image class="sprite" x="${g.x-36}" y="${g.y+22}" width="26" height="25" href="${MM_WALK_GIF}"/>`:""}${i===2&&got>1?`<image class="sprite" x="${g.x-4}" y="${g.y+28}" width="18" height="19" href="${MET_GIF}"/>`:""}${i===2&&got>2?`<image class="sprite" x="${g.x+20}" y="${g.y+31}" width="17" height="16" href="${ETANK_GIF}"/>`:""}${i===3&&got>0?`<image class="sprite" x="${g.x-36}" y="${g.y+21}" width="19.3" height="26" href="${RYU_GIF}"/>`:""}${i===3&&got>1?`<image class="sprite" x="${g.x-10.7}" y="${g.y+21}" width="12" height="18" href="${BIRD_GIF}"/>`:""}${i===3&&got>2?`<image class="sprite" x="${g.x+7.3}" y="${g.y+21}" width="19.9" height="26" href="${SWORD_GIF}"/>`:""}
+${i===4&&got>0?`<image class="sprite" x="${g.x-28.7}" y="${g.y+21}" width="13.4" height="26" href="${TREVOR_GIF}"/>`:""}${i===4&&got>1?`<image class="sprite" x="${g.x-6.35}" y="${g.y+21}" width="12.7" height="26" href="${SYFA_GIF}"/>`:""}${i===4&&got>2?`<image class="sprite" x="${g.x+16.3}" y="${g.y+21}" width="11.4" height="26" href="${ALUCARD_GIF}"/>`:""}
+${i===5&&got>0?`<image class="sprite" x="${g.x-29.45}" y="${g.y+21.00}" width="13.87" height="26.00" href="${BILLY2_GIF}"/>`:""}${i===5&&got>1?`<image class="sprite" x="${g.x-7.58}" y="${g.y+21.00}" width="13.87" height="26.00" href="${JIMMY_GIF}"/>`:""}${i===5&&got>2?`<image class="sprite" x="${g.x+14.30}" y="${g.y+15.00}" width="16.44" height="32.00" href="${ABOBO_GIF}"/>`:""}
+${i===6&&got>0?`<image class="sprite" x="${g.x-41.78125}" y="${g.y+21}" width="23.5625" height="26" href="${PT7_GIF}"/>`:""}${i===6&&got>1?`<image class="sprite" x="${g.x-10.15625}" y="${g.y+21}" width="20.3125" height="26" href="${KNIFE_GIF}"/>`:""}${i===6&&got>2?`<image class="hover-s sprite" x="${g.x+18.21875}" y="${g.y+21}" width="13" height="26" href="${HOVER_GIF}"/>`:""}
+${i===7&&got>0?`<image class="sprite" x="${g.x-36.91487}" y="${g.y+21}" width="21.51724" height="26" href="${SCROOGE_GIF}"/>`:""}${i===7&&got>1?`<image class="sprite" x="${g.x-7.39763}" y="${g.y+21}" width="20.31250" height="26" href="${RAT_GIF}"/>`:""}${i===7&&got>2?`<image class="hover-s sprite" x="${g.x+20.91487}" y="${g.y+31}" width="16.0" height="16" href="${DIA_GIF}"/>`:""}
     <text class="pnum" x="${g.x}" y="${g.y+4.5}">${i+1}</text>
 
   </g>`;
-});
+  });
+  return out;
+}
 const pop=document.getElementById("pop"), card=document.getElementById("popcard");
 let currentGame = null;
 function openCard(g){
@@ -170,15 +177,27 @@ function openCard(g){
     <div class="hint">click anywhere to close</div>`;
   pop.classList.add("open");
 }
-document.querySelectorAll(".pnode").forEach(el=>{
-  el.addEventListener("click", e=>{
-    e.stopPropagation();
-    openCard(DATA.games[+el.dataset.i]);
+function wireNodes(){
+  document.querySelectorAll(".pnode").forEach(el=>{
+    el.addEventListener("click", e=>{
+      e.stopPropagation();
+      openCard(DATA.games[+el.dataset.i]);
+    });
+    // a drag that ends on a point must not open its card
+    el.addEventListener("click", e => { if (moved > 5) { e.stopImmediatePropagation(); e.preventDefault(); } }, true);
   });
-});
-// Repaint if achievements finish loading while a card is open.
+}
+function drawNodes(){ ov.innerHTML = nodeMarkup(); wireNodes(); }
+// Repaint when achievements arrive: the stars on a card, and the sprites on the map.
 window.addEventListener("message", e=>{
-  if(e.data && e.data.type==="rgj-ach" && currentGame && pop.classList.contains("open")) openCard(currentGame);
+  if(!e.data || e.data.type!=="rgj-ach") return;
+  drawNodes();
+  if(currentGame && pop.classList.contains("open")) openCard(currentGame);
+});
+// Same page, no iframe message (the map opened on its own): catch a star landing.
+window.addEventListener("storage", e=>{
+  if(e.key==="rgj-ach-earned-v1" || e.key==="rgj-ach-v1"){ drawNodes();
+    if(currentGame && pop.classList.contains("open")) openCard(currentGame); }
 });
 pop.addEventListener("click", ()=>pop.classList.remove("open"));
 document.addEventListener("keydown", e=>{ if(e.key==="Escape") pop.classList.remove("open"); });
@@ -277,10 +296,7 @@ function goPt(i) { touched = true; const g = DATA.games[i]; flyTo(g.x, g.y, PT_Z
 function detachPt() { if (ptsel.value !== "") ptsel.value = ""; }
 function fitAll() { touched = true; ptsel.value = ""; flyTo(MAPW / 2, MAPH / 2, fitScale()); }
 ptsel.onchange = () => { if (ptsel.value === "") fitAll(); else goPt(+ptsel.value); };
-// suppress click-through after a drag
-document.querySelectorAll(".pnode").forEach(el => {
-  el.addEventListener("click", e => { if (moved > 5) { e.stopImmediatePropagation(); e.preventDefault(); } }, true);
-});
+drawNodes();
 fit();
 // The map is embedded in an iframe that can settle after load; refit while the
 // view is still untouched so the artwork always fills the frame.
