@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Retro Gaming Journey</title>
   <meta name="description" content="Offline-first retro emulation progress dashboard. Sync your handheld achievements on demand." />
-  <link rel="stylesheet" href="css/styles.css?v=iter8" />
+  <link rel="stylesheet" href="css/styles.css?v=iter11" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎮</text></svg>" />
 </head>
 <body>
@@ -66,11 +66,13 @@
 
     <!-- JOURNEY -->
     <section id="panel-journey" class="panel">
+      <div class="journey-head">
       <h2>Journey map</h2>
       <div class="map-bar">
         <div class="map-picker" id="map-picker" role="tablist" aria-label="Choose a journey map"></div>
         <p class="scope-note map-blurb" id="map-blurb">One continuous trail per genre &mdash; twenty path points,
         each on its own themed corner of the map, with its own artwork and three achievement tiers.</p>
+      </div>
       </div>
       <div class="journey-frame-wrap">
         <iframe id="journey-frame" title="Journey map" data-src=""></iframe>
@@ -264,7 +266,7 @@
   <script src="js/retroachievements.js?v=4"></script>
   <script src="js/achievements.js?v=2"></script>
   <script src="js/identity.js?v=2"></script>
-  <script src="js/app.js?v=iter15"></script>
+  <script src="js/app.js?v=iter17"></script>
   <script src="js/sdcard.js?v=4"></script>
   <script src="js/httpsync.js?v=5"></script>
   <script type="module" src="js/mtp.js?v=1"></script>

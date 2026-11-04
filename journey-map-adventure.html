@@ -12,9 +12,13 @@ h1 { font-size:1.25rem; margin-bottom:.15rem; }
 .jm-legend { position:absolute; bottom:10px; left:12px; z-index:6; display:flex; gap:1rem; flex-wrap:wrap;
              font-size:.66rem; color:#cfd6ff; background:#0c0f1de6; border:1px solid #252b52;
              border-radius:8px; padding:.35rem .7rem; pointer-events:none; }
-.map-wrap { position:absolute; inset:0; overflow:hidden; background:#0a3a4a; cursor:grab; }
+.map-wrap { position:absolute; inset:0; overflow:hidden; background:#2ca7b1; cursor:grab; }
+/* When the frame is wider than 16:9 the map sits centred at fit scale and its own ocean has to carry
+   on into the side bands. The same artwork, stretched to the frame, is laid behind the map so the
+   bands continue the sea instead of showing a flat colour or a hard edge. */
+
 .map-wrap.dragging { cursor:grabbing; }
-.map-inner { position:relative; width:1280px; height:720px; transform-origin:0 0; will-change:transform; }
+.map-inner { position:relative; z-index:2; width:1280px; height:720px; transform-origin:0 0; will-change:transform; }
 .zoombar { position:absolute; top:10px; right:10px; z-index:7; display:flex; gap:6px; }
 .zoombar button, .zoombar select { background:#141831ee; color:var(--gold); border:1.5px solid var(--gold); border-radius:8px;
                   font:inherit; font-size:.8rem; padding:.3rem .65rem; cursor:pointer; }

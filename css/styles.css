@@ -162,8 +162,10 @@ footer { padding: 1.2rem; text-align: center; font-size: .7rem; color: var(--mut
 
 /* Journey map */
 /* Journey header sits tight so the map gets the height, and the width follows from it. */
-#panel-journey h2 { margin: 0 0 .45rem; }
-.map-bar { display: flex; align-items: center; gap: .5rem 1rem; flex-wrap: wrap; margin: 0 0 .55rem; }
+/* Title, pills and blurb share one compact row so the map gets every spare pixel of height. */
+.journey-head { display: flex; align-items: center; gap: .35rem 1.1rem; flex-wrap: wrap; margin: 0 0 .5rem; }
+#panel-journey h2 { margin: 0; white-space: nowrap; }
+.map-bar { display: flex; align-items: center; gap: .5rem 1rem; flex-wrap: wrap; margin: 0; flex: 1 1 520px; }
 .map-bar .map-blurb { margin: 0; flex: 1 1 320px; font-size: .7rem; line-height: 1.4; }
 /* Let the blurb run to the width on offer: every line it wastes costs map height, and with a
    16:9 frame height is what sets the map's size. */

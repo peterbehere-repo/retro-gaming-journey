@@ -431,10 +431,12 @@ function loadJourney(id) {
 function sizeJourneyFrame() {
   const wrap = document.querySelector("#panel-journey .journey-frame-wrap");
   if (!wrap || !wrap.offsetParent) return;
-  const host = wrap.parentElement;
-  const avail = Math.max(320, window.innerHeight - wrap.getBoundingClientRect().top - 22);
-  wrap.style.width = Math.round(Math.min(host.clientWidth, avail * 16 / 9)) + "px";
+  // Full width, height follows from 16:9 (CSS aspect-ratio). A wide screen means a taller map, so
+  // the page scrolls a little rather than the map sitting in side padding.
+  wrap.style.width = "100%";
+  wrap.style.height = "";
 }
+
 window.addEventListener("resize", sizeJourneyFrame);
 
 function selectJourneyMap(id) {
