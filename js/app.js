@@ -394,6 +394,36 @@ const JOURNEY_MAPS = [
     blurb: "The NES adventure route — Zelda to Kid Icarus across one continuous overworld, every " +
            "point standing on its own themed corner of the island, in a single clean serpentine.",
   },
+  {
+    id: "nes-rpg",
+    label: "NES · RPG",
+    platform: "NES",
+    genre: "RPG",
+    file: "journey-map-rpg.html",
+    sea: "#388f99",
+    blurb: "The NES role-playing route — Final Fantasy to Tombs & Treasure over a fantasy overworld " +
+           "of castles, dragon keeps, desert palaces and dungeon mazes, one region per game.",
+  },
+  {
+    id: "nes-puzzle",
+    label: "NES · Puzzle",
+    platform: "NES",
+    genre: "Puzzle",
+    file: "journey-map-puzzle.html",
+    sea: "#299ba5",
+    blurb: "The NES puzzle route — Tetris to Bomberman II through a world of block towers, capsule " +
+           "labs, cookie factories and bomb yards, each puzzle palace its own region.",
+  },
+  {
+    id: "nes-vn",
+    label: "NES · Adventure Games",
+    platform: "NES",
+    genre: "Visual Novels / Point & Click",
+    file: "journey-map-vn.html",
+    sea: "#179baa",
+    blurb: "The NES point-and-click route — Shadowgate to Home Alone across a mystery island of " +
+           "haunted mansions, neon crime cities, jungle temples and time-travel clock towers.",
+  },
 ];
 const JOURNEY_MAP_VERSION = "iter1";
 const JOURNEY_MAP_KEY = "rgj.journeyMap";
