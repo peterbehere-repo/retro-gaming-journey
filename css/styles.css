@@ -49,6 +49,8 @@ h3 { font-size: .85rem; text-transform: uppercase; letter-spacing: .1em; color: 
 .tab.active { color: var(--fg); background: var(--surface); border-color: var(--border); }
 
 main { flex: 1; padding: 1.4rem; max-width: 1200px; width: 100%; margin: 0 auto; }
+/* The journey map earns the extra width — the shell loosens up while that tab is showing. */
+main.wide { max-width: 2400px; padding: .9rem 1rem 1.2rem; }
 .panel { display: none; }
 .panel.active { display: block; animation: fade .25s ease; }
 @keyframes fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; } }
@@ -159,7 +161,16 @@ footer { padding: 1.2rem; text-align: center; font-size: .7rem; color: var(--mut
 }
 
 /* Journey map */
-.map-picker { display: flex; flex-wrap: wrap; gap: .45rem; margin: .2rem 0 .75rem; }
+/* Journey header sits tight so the map gets the height, and the width follows from it. */
+#panel-journey h2 { margin: 0 0 .45rem; }
+.map-bar { display: flex; align-items: center; gap: .5rem 1rem; flex-wrap: wrap; margin: 0 0 .55rem; }
+.map-bar .map-blurb { margin: 0; flex: 1 1 320px; font-size: .7rem; line-height: 1.4; }
+/* Let the blurb run to the width on offer: every line it wastes costs map height, and with a
+   16:9 frame height is what sets the map's size. */
+@media (min-width: 1150px) {
+  .map-bar .map-blurb { max-width: none; }
+}
+.map-picker { display: flex; flex-wrap: wrap; gap: .45rem; margin: 0; }
 .map-pill {
   font: inherit; font-size: .72rem; letter-spacing: .06em; cursor: pointer;
   padding: .42rem .85rem; border-radius: 999px; color: var(--muted);
@@ -171,6 +182,7 @@ footer { padding: 1.2rem; text-align: center; font-size: .7rem; color: var(--mut
   font-weight: 700; box-shadow: 0 0 14px rgba(84,242,184,.35);
 }
 .journey-frame-wrap {
+  width: 100%; margin-inline: auto;
   border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden;
   background: var(--bg); box-shadow: inset 0 0 40px rgba(123,108,255,.08);
   aspect-ratio: 16 / 9;

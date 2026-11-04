@@ -364,7 +364,9 @@ document.querySelectorAll(".tab").forEach(t =>
     document.querySelectorAll(".tab").forEach(x => x.classList.toggle("active", x === t));
     document.querySelectorAll(".panel").forEach(p =>
       p.classList.toggle("active", p.id === `panel-${t.dataset.tab}`));
-    if (t.dataset.tab === "journey") loadJourney();
+    // The journey map is the one panel that wants the full width of the window.
+    document.querySelector("main").classList.toggle("wide", t.dataset.tab === "journey");
+    if (t.dataset.tab === "journey") { loadJourney(); requestAnimationFrame(sizeJourneyFrame); }
   }));
 
 // Journey maps: one per genre per platform. Each is a self-contained document with the
@@ -423,6 +425,17 @@ function loadJourney(id) {
   f.title = `Journey map — ${map.platform} ${map.genre}`;
   journeyLoaded = true;
 }
+
+// The map wants all the width it can get, but never more than the height on offer — a 16:9 frame
+// taller than the window would cut the bottom row of path points off.
+function sizeJourneyFrame() {
+  const wrap = document.querySelector("#panel-journey .journey-frame-wrap");
+  if (!wrap || !wrap.offsetParent) return;
+  const host = wrap.parentElement;
+  const avail = Math.max(320, window.innerHeight - wrap.getBoundingClientRect().top - 22);
+  wrap.style.width = Math.round(Math.min(host.clientWidth, avail * 16 / 9)) + "px";
+}
+window.addEventListener("resize", sizeJourneyFrame);
 
 function selectJourneyMap(id) {
   const map = JOURNEY_MAPS.find(m => m.id === id);
