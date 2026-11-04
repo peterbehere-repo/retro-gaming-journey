@@ -432,12 +432,15 @@ function loadJourney(id) {
 // The map runs the full width of the window, which on a 16:9 screen makes it a shade taller than a
 // 1080px window. Rather than shrink it back into side padding, let the page scroll just enough that
 // the frame starts at the top of the window — then the whole map sits on screen with nothing wasted.
-function settleJourneyMap() {
+function settleJourneyMap(force) {
   const wrap = document.querySelector("#panel-journey .journey-frame-wrap");
   if (!wrap || !wrap.offsetParent) return;
   const r = wrap.getBoundingClientRect();
-  if (r.height <= window.innerHeight && r.bottom > window.innerHeight && r.top > 0) {
-    window.scrollTo({ top: Math.round(window.scrollY + r.top - 4), behavior: "smooth" });
+  const off = Math.round(window.scrollY + r.top - 4);
+  // Full width makes the map a touch taller than the window, so nudge the page down until the
+  // frame starts at the top. `force` re-settles even when the map already begins on screen.
+  if (r.height <= window.innerHeight && (force || r.bottom > window.innerHeight) && off > 0) {
+    window.scrollTo({ top: off, behavior: force ? "auto" : "smooth" });
   }
 }
 
@@ -458,7 +461,11 @@ function selectJourneyMap(id) {
   localStorage.setItem(JOURNEY_MAP_KEY, id);
   renderMapPicker();
   const panel = document.getElementById("panel-journey");
-  if (panel && panel.classList.contains("active")) loadJourney(id);
+  if (panel && panel.classList.contains("active")) {
+    loadJourney(id);
+    // Swapping the iframe's src pulls the page back to the top; settle it again on the new map.
+    requestAnimationFrame(() => settleJourneyMap(true));
+  }
 }
 
 renderMapPicker();
