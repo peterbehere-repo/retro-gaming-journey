@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Retro Gaming Journey</title>
   <meta name="description" content="Offline-first retro emulation progress dashboard. Sync your handheld achievements on demand." />
-  <link rel="stylesheet" href="css/styles.css?v=iter3" />
+  <link rel="stylesheet" href="css/styles.css?v=iter4" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎮</text></svg>" />
 </head>
 <body>
@@ -67,11 +67,12 @@
     <!-- JOURNEY -->
     <section id="panel-journey" class="panel">
       <h2>Journey map</h2>
-      <p class="scope-note">The NES route as one continuous trail &mdash; twenty path points from the Contra jungle
-      to the final fortress, each with its own artwork and three achievement tiers. Click any number
-      to open that game&rsquo;s card.</p>
+      <div class="map-picker" id="map-picker" role="tablist" aria-label="Choose a journey map"></div>
+      <p class="scope-note" id="map-blurb">One continuous trail per genre &mdash; twenty path points, each on its
+      own themed corner of the map, with its own artwork and three achievement tiers. Click a point to open
+      that game&rsquo;s card.</p>
       <div class="journey-frame-wrap">
-        <iframe id="journey-frame" title="Journey map" data-src="journey-map.html?v=iter5"></iframe>
+        <iframe id="journey-frame" title="Journey map" data-src=""></iframe>
       </div>
     </section>
 
@@ -262,7 +263,7 @@
   <script src="js/retroachievements.js?v=4"></script>
   <script src="js/achievements.js?v=2"></script>
   <script src="js/identity.js?v=2"></script>
-  <script src="js/app.js?v=iter11"></script>
+  <script src="js/app.js?v=iter12"></script>
   <script src="js/sdcard.js?v=4"></script>
   <script src="js/httpsync.js?v=5"></script>
   <script type="module" src="js/mtp.js?v=1"></script>

@@ -367,16 +367,73 @@ document.querySelectorAll(".tab").forEach(t =>
     if (t.dataset.tab === "journey") loadJourney();
   }));
 
-// The journey map is a self-contained 13 MB document (worldmap + per-game artwork
-// inlined as data URIs), so it stays out of the page payload until the tab is used.
+// Journey maps: one per genre per platform. Each is a self-contained document with the
+// world map and every game's artwork inlined as data URIs (13 MB for Action, 2 MB for
+// Adventure), so none of them join the page payload until the tab is used.
+const JOURNEY_MAPS = [
+  {
+    id: "nes-action",
+    label: "NES · Action",
+    platform: "NES",
+    genre: "Action",
+    file: "journey-map.html",
+    blurb: "The NES action route as one continuous trail — twenty path points from the Contra " +
+           "jungle to the final fortress, each with its own artwork and three achievement tiers.",
+  },
+  {
+    id: "nes-adventure",
+    label: "NES · Adventure",
+    platform: "NES",
+    genre: "Adventure",
+    file: "journey-map-adventure.html",
+    blurb: "The NES adventure route — Zelda to Kid Icarus across one continuous overworld, every " +
+           "point standing on its own themed corner of the island, in a single clean serpentine.",
+  },
+];
+const JOURNEY_MAP_VERSION = "iter1";
+const JOURNEY_MAP_KEY = "rgj.journeyMap";
+
+function currentJourneyMap() {
+  const saved = localStorage.getItem(JOURNEY_MAP_KEY);
+  return JOURNEY_MAPS.find(m => m.id === saved) || JOURNEY_MAPS[0];
+}
+
+function renderMapPicker() {
+  const box = document.getElementById("map-picker");
+  if (!box) return;
+  const active = currentJourneyMap();
+  box.innerHTML = JOURNEY_MAPS.map(m =>
+    `<button class="map-pill${m.id === active.id ? " active" : ""}" data-map="${m.id}"
+             role="tab" aria-selected="${m.id === active.id}">${m.label}</button>`).join("");
+  box.querySelectorAll(".map-pill").forEach(btn =>
+    btn.addEventListener("click", () => selectJourneyMap(btn.dataset.map)));
+  const blurb = document.getElementById("map-blurb");
+  if (blurb) blurb.textContent = active.blurb;
+}
+
+// A map loads the first time the Journey tab is shown, then again whenever a different one is
+// picked. Nothing downloads on page load.
 let journeyLoaded = false;
-function loadJourney() {
-  if (journeyLoaded) return;
+function loadJourney(id) {
+  const map = JOURNEY_MAPS.find(m => m.id === (id || currentJourneyMap().id)) || JOURNEY_MAPS[0];
   const f = document.getElementById("journey-frame");
-  if (!f || !f.dataset.src) return;
-  f.src = f.dataset.src;
+  if (!f || f.dataset.loaded === map.id) return;
+  f.src = `${map.file}?v=${JOURNEY_MAP_VERSION}`;
+  f.dataset.loaded = map.id;
+  f.title = `Journey map — ${map.platform} ${map.genre}`;
   journeyLoaded = true;
 }
+
+function selectJourneyMap(id) {
+  const map = JOURNEY_MAPS.find(m => m.id === id);
+  if (!map) return;
+  localStorage.setItem(JOURNEY_MAP_KEY, id);
+  renderMapPicker();
+  const panel = document.getElementById("panel-journey");
+  if (panel && panel.classList.contains("active")) loadJourney(id);
+}
+
+renderMapPicker();
 
 $("#search").addEventListener("input", (e) => { searchQuery = e.target.value; renderLibrary(); });
 
