@@ -133,22 +133,31 @@ const ACH = (() => {
 
   // Which of a game's three picks the player has actually earned. Pulled from
   // API_GetGameInfoAndUserProgress (that endpoint keys the game as `g`), cached per game.
-  // Earned marks are refetched at most once per TTL per game. Without this, every
-  // page load would re-ask RA about every played title, and a player with fifty played
-  // games would spend fifty requests to learn nothing new.
-  const TTL_MS = 6 * 60 * 60 * 1000;
+  // Without this, every page load would re-ask RA about every played title, and a player with
+  // fifty played games would spend fifty requests to learn nothing new — hence the window
+  // below, which is deliberately short:
+  // A fetch is good for one page session, not for six hours. Achievements are earned in the
+  // middle of a session: the old 6h TTL meant a fresh unlock stayed invisible until the cache
+  // aged out ("Forward March", 2026-11-04), on the Achievements tab and on every Journey map.
+  // Two minutes is long enough to keep a burst of tab-switching from hammering the API, and
+  // short enough that a reload is always enough to see new progress. `force` ignores it.
+  const TTL_MS = 2 * 60 * 1000;
 
   async function ensureEarned(platform, title, opts) {
+    const o = opts || {};
     const g = get(platform, title);
     if (!g || !g.raId || !RA.configured()) return {};
     const fetched = load(FETCHED());
-    const fresh = !!(opts && opts.force) === false && fetched[g.raId] &&
-      (Date.now() - fetched[g.raId]) < TTL_MS;
-    if (fresh) return earned()[g.raId] || {};
+    const age = fetched[g.raId] ? Date.now() - fetched[g.raId] : Infinity;
+    const maxAge = o.force ? 0 : (o.maxAgeMs != null ? o.maxAgeMs : TTL_MS);
+    if (age < maxAge) return earned()[g.raId] || {};
     const e = earned();
     const det = await RA.gameDetail(g.raId);
+    // A failed call returns nothing — do not stamp it as "fetched", or the 2-minute window
+    // turns into a silent lie and the next attempt is skipped.
+    if (!det) return e[g.raId] || {};
     const out = {};
-    for (const a of Object.values((det && det.Achievements) || {})) {
+    for (const a of Object.values(det.Achievements || {})) {
       if (a && a.DateEarned) out[a.ID] = a.DateEarned;
     }
     // Merge, never replace: an unlock imported from a device is written here before RA

@@ -707,7 +707,7 @@ async function pullProfile(opts) {
     render();
     // Which of the three picks are earned can only come from RA's per-game detail, so
     // it is fetched here for the games this account has actually played (and cached).
-    await markEarnedForPlayed();
+    await markEarnedForPlayed({ force: !!o.force });
     logSync(`RA pull: ${res.applied} game${res.applied === 1 ? "" : "s"} updated ` +
       `(${res.matched} matched of ${ACTIVE_GAMES.length} in scope, ${res.scanned} rows scanned).`,
       res.applied ? "ok" : undefined);
@@ -718,12 +718,19 @@ async function pullProfile(opts) {
   }
 }
 
-async function markEarnedForPlayed() {
+async function markEarnedForPlayed(opts) {
   if (typeof ACH === "undefined" || !RA.configured()) return 0;
+  const o = opts || {};
+  // Every title this account has played. Their earned marks come from RA's per-game detail;
+  // the fresh window in ACH.ensureEarned (2 min) means a reload is enough to see a new unlock,
+  // and the Sync tab's Pull button forces the read.
   const played = ACTIVE_GAMES.filter(g => ((state.unlocks || {})[g.id] || {}).count > 0);
   let marked = 0;
   for (const g of played) {
-    try { const e = await ACH.ensureEarned(g.platform, g.title); marked += Object.keys(e || {}).length; }
+    try {
+      const e = await ACH.ensureEarned(g.platform, g.title, { force: !!o.force });
+      marked += Object.keys(e || {}).length;
+    }
     catch (err) { /* one game's detail must not stop the pull */ }
   }
   if (played.length) renderAchievements();
@@ -1127,3 +1134,16 @@ renderRA();
   }
   await enterProfile(true);
 })();
+
+/* Coming back to the tab is the moment a player expects to see what they just earned on the
+   handheld. Progress is fetched again on return (rate-limited, and ACH keeps its own 2-minute
+   window), so the stars, the sprites and the achievement count catch up without a reload. */
+let lastReturnPull = 0;
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState !== "visible") return;
+  if (typeof IDENT === "undefined" || !IDENT.signedIn()) return;
+  if (typeof RA === "undefined" || !RA.configured()) return;
+  if (Date.now() - lastReturnPull < 60 * 1000) return;
+  lastReturnPull = Date.now();
+  pullProfile({ quiet: true });
+});
