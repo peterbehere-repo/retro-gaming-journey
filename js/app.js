@@ -380,6 +380,7 @@ const JOURNEY_MAPS = [
     platform: "NES",
     genre: "Action",
     file: "journey-map.html",
+    marker: "Retro Gaming Journey",
     sea: "#059299",
     blurb: "The NES action route as one continuous trail — twenty path points from the Contra " +
            "jungle to the final fortress, each with its own artwork and three achievement tiers.",
@@ -390,6 +391,7 @@ const JOURNEY_MAPS = [
     platform: "NES",
     genre: "Adventure",
     file: "journey-map-adventure.html",
+    marker: "Journey Map 4",
     sea: "#2ea7af",
     blurb: "The NES adventure route — Zelda to Kid Icarus across one continuous overworld, every " +
            "point standing on its own themed corner of the island, in a single clean serpentine.",
@@ -400,6 +402,7 @@ const JOURNEY_MAPS = [
     platform: "NES",
     genre: "RPG",
     file: "journey-map-rpg.html",
+    marker: "Journey Map 5",
     sea: "#388f99",
     blurb: "The NES role-playing route — Final Fantasy to Tombs & Treasure over a fantasy overworld " +
            "of castles, dragon keeps, desert palaces and dungeon mazes, one region per game.",
@@ -410,6 +413,7 @@ const JOURNEY_MAPS = [
     platform: "NES",
     genre: "Puzzle",
     file: "journey-map-puzzle.html",
+    marker: "Journey Map 6",
     sea: "#299ba5",
     blurb: "The NES puzzle route — Tetris to Bomberman II through a world of block towers, capsule " +
            "labs, cookie factories and bomb yards, each puzzle palace its own region.",
@@ -420,12 +424,13 @@ const JOURNEY_MAPS = [
     platform: "NES",
     genre: "Visual Novels / Point & Click",
     file: "journey-map-vn.html",
+    marker: "Journey Map 7",
     sea: "#179baa",
     blurb: "The NES point-and-click route — Shadowgate to Home Alone across a mystery island of " +
            "haunted mansions, neon crime cities, jungle temples and time-travel clock towers.",
   },
 ];
-const JOURNEY_MAP_VERSION = "iter1";
+const JOURNEY_MAP_VERSION = "iter2";
 const JOURNEY_MAP_KEY = "rgj.journeyMap";
 
 function currentJourneyMap() {
@@ -453,12 +458,74 @@ function loadJourney(id) {
   const map = JOURNEY_MAPS.find(m => m.id === (id || currentJourneyMap().id)) || JOURNEY_MAPS[0];
   const f = document.getElementById("journey-frame");
   if (!f || f.dataset.loaded === map.id) return;
-  f.src = `${map.file}?v=${JOURNEY_MAP_VERSION}`;
+  setMapLoading(true);
   f.dataset.loaded = map.id;
+  f.dataset.retried = "";
+  f.src = `${map.file}?v=${JOURNEY_MAP_VERSION}`;
   f.title = `Journey map — ${map.platform} ${map.genre}`;
+  // Never leave the spinner up forever if a load event never lands.
+  clearTimeout(loadJourney.timer);
+  loadJourney.timer = setTimeout(() => {
+    if (f.dataset.loaded === map.id) setMapLoading(false);
+  }, 30000);
   const wrap = f.parentElement;
   if (wrap && map.sea) wrap.style.setProperty("--sea", map.sea);
   journeyLoaded = true;
+}
+
+// The Action map is 13 MB of inlined artwork and the rest are ~2 MB, so a switch can take a while.
+// Show the loader the instant the pill is clicked, and only clear it once the frame really holds the
+// chosen world — comparing the document's own title catches a frame that still shows the old map.
+function setMapLoading(on) {
+  const wrap = document.querySelector("#panel-journey .journey-frame-wrap");
+  if (wrap) wrap.classList.toggle("is-loading", !!on);
+}
+
+function journeyFrameLoaded() {
+  const f = document.getElementById("journey-frame");
+  if (!f) return;
+  const want = JOURNEY_MAPS.find(m => m.id === f.dataset.loaded);
+  if (!want) { setMapLoading(false); return; }
+  // While the frame is navigating it fires load events for the old document, whose title is still
+  // the previous world's. Only judge it once the frame actually sits on the requested file.
+  let path = "";
+  let title = "";
+  try {
+    path = (f.contentWindow && f.contentWindow.location.pathname) || "";
+    title = (f.contentDocument && f.contentDocument.title) || "";
+  } catch (e) { return; }
+  if (path.indexOf(want.file) === -1) return;
+  if (title && want.marker && title.indexOf(want.marker) === -1) {
+    // Right world chosen, wrong document in the frame — force one cache-busted reload, then accept.
+    if (f.dataset.retried !== want.id) {
+      f.dataset.retried = want.id;
+      setMapLoading(true);
+      f.src = `${want.file}?v=${JOURNEY_MAP_VERSION}&r=${Date.now()}`;
+      return;
+    }
+  }
+  f.dataset.retried = "";
+  setMapLoading(false);
+  prefetchOtherMaps(f.dataset.loaded);
+}
+
+// Pull the other worlds into the HTTP cache in idle time so the next switch is instant rather than
+// a second wait. Skipped on save-data connections, where bandwidth matters more than snappiness.
+let prefetched = false;
+function prefetchOtherMaps(activeId) {
+  if (prefetched) return;
+  prefetched = true;
+  const conn = navigator.connection;
+  if (conn && conn.saveData) return;
+  const queue = JOURNEY_MAPS.filter(m => m.id !== activeId).map(m => m.file);
+  const next = () => {
+    const file = queue.shift();
+    if (!file) return;
+    fetch(`${file}?v=${JOURNEY_MAP_VERSION}`, { cache: "force-cache", priority: "low" })
+      .catch(() => {})
+      .finally(() => setTimeout(next, 1500));
+  };
+  setTimeout(next, 2500);
 }
 
 // The map wants all the width it can get, but never more than the height on offer — a 16:9 frame
@@ -498,6 +565,9 @@ function selectJourneyMap(id) {
     requestAnimationFrame(sizeJourneyFrame);
   }
 }
+
+document.getElementById("journey-frame")
+  .addEventListener("load", journeyFrameLoaded);
 
 renderMapPicker();
 

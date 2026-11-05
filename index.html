@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Retro Gaming Journey</title>
   <meta name="description" content="Offline-first retro emulation progress dashboard. Sync your handheld achievements on demand." />
-  <link rel="stylesheet" href="css/styles.css?v=iter18" />
+  <link rel="stylesheet" href="css/styles.css?v=iter20" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎮</text></svg>" />
 </head>
 <body>
@@ -73,6 +73,9 @@
           points, each on its own themed corner of the map, with its own artwork and three achievement tiers.</p>
         </div>
         <iframe id="journey-frame" title="Journey map" data-src=""></iframe>
+        <div id="frame-loading" role="status" aria-live="polite">
+          <span class="spinner"></span><span>Loading world&hellip;</span>
+        </div>
       </div>
     </section>
 
@@ -263,7 +266,7 @@
   <script src="js/retroachievements.js?v=4"></script>
   <script src="js/achievements.js?v=2"></script>
   <script src="js/identity.js?v=2"></script>
-  <script src="js/app.js?v=iter24"></script>
+  <script src="js/app.js?v=iter26"></script>
   <script src="js/sdcard.js?v=4"></script>
   <script src="js/httpsync.js?v=5"></script>
   <script type="module" src="js/mtp.js?v=1"></script>

@@ -173,12 +173,14 @@ body.journey-view .tab { padding: .32rem .7rem; }
 body.journey-view footer { display: none; }
 body.journey-view main.wide { padding: .5rem .7rem .6rem; }
 
-.journey-head { display: flex; align-items: center; gap: .35rem 1.1rem; flex-wrap: wrap; margin: 0 0 .5rem; }
+.journey-head { position: relative; z-index: 3; display: flex; align-items: center; gap: .35rem 1.1rem; flex-wrap: wrap; margin: 0 0 .5rem; }
 #panel-journey h2 { margin: 0; white-space: nowrap; }
 
 .journey-head .map-blurb {
   margin: 0; font-size: .66rem; line-height: 1.3; color: var(--fg);
-  max-width: 32rem;
+  /* Shrink rather than overrun: a fixed max-width pushed the pill off the right edge and got
+     clipped by the frame's overflow:hidden. */
+  flex: 1 1 20ch; min-width: 0; max-width: 34ch;
   background: rgba(13,15,26,.78); border: 1px solid var(--border); border-radius: 999px;
   padding: .3rem .7rem; backdrop-filter: blur(6px);
 }
@@ -197,6 +199,7 @@ body.journey-view main.wide { padding: .5rem .7rem .6rem; }
   font-weight: 700; box-shadow: 0 0 14px rgba(84,242,184,.35);
 }
 .journey-frame-wrap {
+  position: relative;
   width: 100%; margin-inline: auto;
   border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden;
   /* Painted with the map's own sea colour (set per map from js) so the frame's letterboxing
@@ -205,6 +208,24 @@ body.journey-view main.wide { padding: .5rem .7rem .6rem; }
   aspect-ratio: 16 / 9;
 }
 #journey-frame { display: block; width: 100%; height: 100%; border: 0; }
+
+/* The Action map is 13 MB of inlined artwork and the others are ~2 MB each. Without this the
+   old world stays on screen for seconds after a switch, which reads as the click failing. */
+#frame-loading {
+  position: absolute; inset: 0; z-index: 2; display: none;
+  flex-direction: column; align-items: center; justify-content: center; gap: .7rem;
+  background: rgba(6,10,18,.62); backdrop-filter: blur(2px);
+  color: var(--fg); font-size: .74rem; letter-spacing: .12em; text-transform: uppercase;
+  pointer-events: none;
+}
+.journey-frame-wrap.is-loading #frame-loading { display: flex; }
+#frame-loading .spinner {
+  width: 28px; height: 28px; border-radius: 50%;
+  border: 3px solid rgba(255,255,255,.22); border-top-color: var(--accent);
+  animation: rj-spin .8s linear infinite;
+}
+@keyframes rj-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { #frame-loading .spinner { animation-duration: 2.4s; } }
 @media (max-width: 720px) { .journey-frame-wrap { aspect-ratio: 4 / 3; } }
 
 /* USB device link */
