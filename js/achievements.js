@@ -19,10 +19,19 @@
 "use strict";
 
 const ACH = (() => {
-  const STORE   = "rgj-ach-v1";         // { "<platform>|<normTitle>": { raId, raTitle, picks[] } }
-  const EARNED  = "rgj-ach-earned-v1";  // { "<raId>": { "<achId>": "2026-10-01 12:00:00" } }
+  const STORE   = "rgj-ach-v1";         // { "<platform>|<normTitle>": { raId, raTitle, picks[] } }  — catalogue, same for everyone
+  const EARNED_BASE  = "rgj-ach-earned-v1";   // { "<raId>": { "<achId>": "2026-10-01 12:00:00" } }
+  const FETCHED_BASE = "rgj-ach-fetched-v1";  // { "<raId>": <ms> } last time RA was asked
   const TIERS   = ["easy", "intermediate", "advanced"];
   const THROTTLE_MS = 180;              // be polite to the API
+
+  /* Earned marks are an account's property, not the browser's: they live under the
+     session's key (identity.js scopedKey), so signing out or switching accounts can
+     never hand one player's stars and sprites to another. The picks catalogue above
+     is public game data and stays where it is. */
+  const scoped = (base) => (typeof IDENT !== "undefined" ? IDENT.scopedKey(base) : base);
+  const EARNED  = () => scoped(EARNED_BASE);
+  const FETCHED = () => scoped(FETCHED_BASE);
 
   function load(key) {
     try { return JSON.parse(localStorage.getItem(key) || "{}"); } catch (e) { return {}; }
@@ -30,7 +39,7 @@ const ACH = (() => {
   function save(key, obj) { localStorage.setItem(key, JSON.stringify(obj)); }
 
   const cache  = () => load(STORE);
-  const earned = () => load(EARNED);
+  const earned = () => load(EARNED());
 
   const keyOf = (platform, title) => `${platform}|${RA.normTitle(title)}`;
 
@@ -127,13 +136,12 @@ const ACH = (() => {
   // Earned marks are refetched at most once per TTL per game. Without this, every
   // page load would re-ask RA about every played title, and a player with fifty played
   // games would spend fifty requests to learn nothing new.
-  const FETCHED = "rgj-ach-fetched-v1";
   const TTL_MS = 6 * 60 * 60 * 1000;
 
   async function ensureEarned(platform, title, opts) {
     const g = get(platform, title);
     if (!g || !g.raId || !RA.configured()) return {};
-    const fetched = load(FETCHED);
+    const fetched = load(FETCHED());
     const fresh = !!(opts && opts.force) === false && fetched[g.raId] &&
       (Date.now() - fetched[g.raId]) < TTL_MS;
     if (fresh) return earned()[g.raId] || {};
@@ -146,9 +154,9 @@ const ACH = (() => {
     // Merge, never replace: an unlock imported from a device is written here before RA
     // has ever been asked, and a later RA pull must not wipe it (local wins on collision).
     e[g.raId] = { ...out, ...(e[g.raId] || {}) };
-    save(EARNED, e);
+    save(EARNED(), e);
     fetched[g.raId] = Date.now();
-    save(FETCHED, fetched);
+    save(FETCHED(), fetched);
     return e[g.raId];
   }
 
@@ -194,6 +202,7 @@ const ACH = (() => {
     return { filled, unmatched, total: titles.length };
   }
 
-  return { TIERS, pickThree, ensure, ensureEarned, earnedOf, starCount, get, summary, dump, hydrate, cache, _keyOf: keyOf };
+  return { TIERS, pickThree, ensure, ensureEarned, earnedOf, starCount, get, summary, dump, hydrate, cache,
+           EARNED_BASE, FETCHED_BASE, _keyOf: keyOf };
 })();
 window.ACH = ACH;

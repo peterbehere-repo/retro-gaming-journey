@@ -38,8 +38,9 @@ That API sends `Access-Control-Allow-Origin: *`, so no proxy is involved (contra
 retired FileBrowser/Wi-Fi channel, which had no CORS headers at all).
 
 Credentials — RA username and web API key — live in `localStorage` only, never in the repo.
-With no credentials the page still works: cards show "Not loaded", and the Journey map
-falls back to the untitled star row.
+Without a session the page shows no progress at all: the tabs are hidden and a sign-in card
+takes their place (see `locked()` / `applyGate()` in `js/app.js`). Nothing is granted to an
+anonymous visitor — not a dashboard, not a star, not a map sprite.
 
 ## Cache shape
 
@@ -49,7 +50,14 @@ falls back to the untitled star row.
 ] } }
 ```
 
-Earned state lives separately in `rgj-ach-earned-v1`, keyed `raId → achievementId → date`.
+The catalogue above is public game data and is shared by every account on the browser.
+Earned state is *not*: it lives in `rgj-ach-earned-v1:u:<user>`, keyed
+`raId → achievementId → date`, one store per RetroAchievements account (the suffix comes
+from `IDENT.scopedKey()`). The per-game fetch stamp `rgj-ach-fetched-v1:u:<user>` is scoped
+the same way, and so is the progress store `rgj-state-v1:u:<user>`. A browser that predates
+this split has one unscoped copy; the first account to sign in claims a **copy** of it
+(`adoptLegacyCaches()`), the originals stay untouched, and a second account on the same
+browser inherits nothing.
 **Local wins**: an unlock imported from a card is never downgraded by a later RA pull, so
 offline play is not lost. `summary()` reports `filled`/`total`/`unmatched` and the Sync tab
 shows the unmatched titles so gaps in RA's own catalogue are visible rather than silent.

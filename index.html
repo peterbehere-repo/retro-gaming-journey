@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Retro Gaming Journey</title>
   <meta name="description" content="Offline-first retro emulation progress dashboard. Sync your handheld achievements on demand." />
-  <link rel="stylesheet" href="css/styles.css?v=iter21" />
+  <link rel="stylesheet" href="css/styles.css?v=iter24" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎮</text></svg>" />
 </head>
 <body>
@@ -18,12 +18,12 @@
       </div>
     </div>
     <div class="auth-box" id="auth-box">
-      <span id="auth-status" class="auth-status offline">guest</span>
+      <span id="auth-status" class="auth-status" hidden></span>
       <button id="btn-signin" class="btn btn-small">Sign in</button>
     </div>
   </header>
 
-  <nav class="tabs" role="tablist">
+  <nav class="tabs" role="tablist" id="tabs">
     <button class="tab active" data-tab="dashboard" role="tab">Dashboard</button>
     <button class="tab" data-tab="journey" role="tab">Journey</button>
     <button class="tab" data-tab="library" role="tab">Library</button>
@@ -32,6 +32,27 @@
   </nav>
 
   <main>
+    <!-- THE GATE: nothing is yours until we know who you are -->
+    <section id="auth-gate" class="auth-gate" hidden>
+      <h2>Sign in to see your journey</h2>
+      <p class="gate-lede">Progress on this page belongs to a RetroAchievements account — the same
+      account your handhelds award achievements to. There is no guest view, because an empty map
+      is worse than an honest sign-in.</p>
+      <div class="gate-list">
+        <p><strong>What sign-in gives you</strong></p>
+        <ul>
+          <li>Your dashboard, library and Journey map stars, read from your own account.</li>
+          <li>Saved progress per player: signing out hides it, signing back in returns it.</li>
+          <li>Nothing about your key leaves this browser except a request to retroachievements.org.</li>
+        </ul>
+      </div>
+      <div id="gate-accounts" hidden></div>
+      <div class="gate-actions">
+        <button id="gate-signin" class="btn">Sign in</button>
+        <a class="btn btn-ghost" href="https://retroachievements.org/controlpanel.php" target="_blank" rel="noopener">Where to find my key</a>
+      </div>
+    </section>
+
     <!-- DASHBOARD -->
     <section id="panel-dashboard" class="panel active">
       <p class="who-line" id="who-line" hidden></p>
@@ -264,9 +285,9 @@
   <script src="js/supabase-config.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/retroachievements.js?v=4"></script>
-  <script src="js/achievements.js?v=2"></script>
-  <script src="js/identity.js?v=2"></script>
-  <script src="js/app.js?v=iter26"></script>
+  <script src="js/achievements.js?v=3"></script>
+  <script src="js/identity.js?v=3"></script>
+  <script src="js/app.js?v=iter27"></script>
   <script src="js/sdcard.js?v=4"></script>
   <script src="js/httpsync.js?v=5"></script>
   <script type="module" src="js/mtp.js?v=1"></script>

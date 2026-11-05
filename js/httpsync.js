@@ -314,7 +314,12 @@
   // from a later RA pull. Earliest date wins, so re-importing the same row is harmless.
   function markEarned(rows) {
     if (typeof RA === "undefined" || !RA.get) return { marked: 0, unknownGame: 0, notAPick: 0 };
-    const KEY = "rgj-ach-earned-v1";
+    // Earned marks are per account (see identity.js): a device row only ever lands in
+    // the profile that is signed in when the card is read.
+    if (typeof IDENT === "undefined" || !IDENT.signedIn())
+      return { marked: 0, unknownGame: 0, notAPick: 0, signedOut: true };
+    const KEY = (typeof ACH !== "undefined" && ACH.EARNED_BASE)
+      ? IDENT.scopedKey(ACH.EARNED_BASE) : IDENT.scopedKey("rgj-ach-earned-v1");
     let store = {};
     try { store = JSON.parse(localStorage.getItem(KEY)) || {}; } catch { /* fresh */ }
     let marked = 0, unknownGame = 0, notAPick = 0;

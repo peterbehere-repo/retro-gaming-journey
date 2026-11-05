@@ -286,7 +286,8 @@ by Wi-Fi tomorrow with no migration.
 1. `importRows()` — unchanged — dedupes into `state.queued` and logs the import.
 2. `RGJLan.markEarned()` — new — maps `game_hash` back to a library game (same djb2 the page uses),
    finds the game's answer card, and if `achievement_id` is one of that game's three RA picks, writes
-   the unlock into `rgj-ach-earned-v1`. That is what fills the star on the Journey map, and it fills
+   the unlock into the signed-in account's `rgj-ach-earned-v1:u:<user>`. That is what fills the star
+   on the Journey map, and it fills
    it **from the device**, before RetroAchievements has been asked anything.
 3. `RGJLan.ack()` writes the ack pair back so `rgj-sync prune` can retire the rows.
 

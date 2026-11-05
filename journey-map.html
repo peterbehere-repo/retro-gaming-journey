@@ -93,12 +93,21 @@ const TIER_DESC={"Beginner":"Softcore validation states; standard memory hooks",
    the dashboard's achievement cards can never disagree. */
 function normT(s){return String(s||"").toLowerCase()
   .replace(/\([^)]*\)|\[[^\]]*\]/g," ").replace(/&/g," and ")
-  .replace(/[^a-z0-9]+/g," ").replace(/\b(the|a|an)\b/g," ").trim();}
+  .replace(/[^a-z0-9]+/g," ").replace(/\b(the|a|an)\b/g," ").replace(/\s+/g," ").trim();}
 function achStore(k){try{return JSON.parse(localStorage.getItem(k)||"{}")}catch(e){return {}}}
+/* Earned marks belong to the account that signed in, and to nobody else: the
+   Achievements tab writes them under "rgj-ach-earned-v1:u:<user>". With no
+   session there is no key, so nothing on this map can show as earned. */
+function sessionUser(){
+  try{ const s=JSON.parse(localStorage.getItem("rgj-session-v1")||"null");
+       return s&&s.user?String(s.user).toLowerCase():""; }catch(e){ return ""; }
+}
 function achFor(name){
+  const who = sessionUser();
+  if(!who) return null;                               // signed out: no progress at all
   const c=achStore("rgj-ach-v1")["nes|"+normT(name)];
   if(!c||!c.picks||!c.picks.length) return null;
-  const e=achStore("rgj-ach-earned-v1")[c.raId]||{};
+  const e=achStore("rgj-ach-earned-v1:u:"+who)[c.raId]||{};
   return {raId:c.raId,raTitle:c.raTitle,picks:c.picks.map(p=>Object.assign({},p,{earned:!!e[p.id]}))};
 }
 function starsFor(name){const a=achFor(name);return a?a.picks.filter(p=>p.earned).length:0;}
@@ -196,7 +205,7 @@ window.addEventListener("message", e=>{
 });
 // Same page, no iframe message (the map opened on its own): catch a star landing.
 window.addEventListener("storage", e=>{
-  if(e.key==="rgj-ach-earned-v1" || e.key==="rgj-ach-v1"){ drawNodes();
+  if(e.key && e.key.indexOf("rgj-ach-earned-v1")===0 || e.key==="rgj-ach-v1"){ drawNodes();
     if(currentGame && pop.classList.contains("open")) openCard(currentGame); }
 });
 pop.addEventListener("click", ()=>pop.classList.remove("open"));

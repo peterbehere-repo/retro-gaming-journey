@@ -115,11 +115,18 @@ const IDENT = (() => {
     return `${PIC}/UserPic/${encodeURIComponent(session.user)}.png`;
   }
 
-  // Progress is per account. Guest progress lives under the original key so that
-  // anything earned before signing in is not lost — it becomes the signed-in
-  // profile's data on the first sign-in (see adoptGuestState).
   const GUEST_KEY = "rgj-state-v1";
-  function stateKey() { return signedIn() ? `${GUEST_KEY}:u:${session.user.toLowerCase()}` : GUEST_KEY; }
+
+  /* Nothing on this page belongs to an anonymous visitor: with no session there is no
+     dashboard, no stars and no sprites. Everything that is read or written while
+     signed in is therefore stored per account, so two people sharing a browser can
+     never see each other's progress — including the earned-achievement cache that
+     paints the Journey map's sprites. Signed out, the key is a dead one: nothing can
+     read progress, and nothing can write over a stored profile by accident. */
+  function scopedKey(base) {
+    return `${base}:u:${signedIn() ? session.user.toLowerCase() : "nosession"}`;
+  }
+  function stateKey() { return scopedKey(GUEST_KEY); }
 
   /* Revalidate on load: a stored key may have been revoked, and a silent 401 in the
      middle of a pull is worse than a prompt. Never blocks rendering — resolves to
@@ -140,7 +147,7 @@ const IDENT = (() => {
 
   return {
     verify, signIn, signOut, forgetAccount, accounts,
-    current, signedIn, name, pic, stateKey, revalidate, GUEST_KEY
+    current, signedIn, name, pic, stateKey, scopedKey, revalidate, GUEST_KEY
   };
 })();
 window.IDENT = IDENT;

@@ -6,7 +6,7 @@
 /* ------------------------------------------------------------------ */
 
 // Progress is per account, so the storage key follows the session (IDENT.stateKey()).
-// Guest progress keeps the original key so nothing earned before signing in is lost.
+// There is no guest view: signed out means no dashboard at all (see locked() / applyGate()).
 const STORE_KEY = "rgj-state-v1";
 const stateStore = () => (typeof IDENT !== "undefined" ? IDENT.stateKey() : STORE_KEY);
 
@@ -35,21 +35,27 @@ function loadState(key) {
 }
 function saveState() { localStorage.setItem(stateStore(), JSON.stringify(state)); }
 
-/* Adopt guest progress into a profile on its first sign-in.
-   Someone who used the page before signing in has real unlocks under the guest key;
-   making them sign in and then showing an empty dashboard reads as data loss. The
-   guest key is copied once, never merged back, and never deleted. */
-function adoptGuestState(who) {
-  const target = `${STORE_KEY}:u:${String(who).toLowerCase()}`;
-  if (localStorage.getItem(target)) return false;
-  const guest = localStorage.getItem(STORE_KEY);
-  if (!guest) return false;
-  try {
-    const parsed = JSON.parse(guest);
-    if (!parsed || (!Object.keys(parsed.statuses || {}).length && !Object.keys(parsed.unlocks || {}).length)) return false;
-    localStorage.setItem(target, guest);
-    return true;
-  } catch (e) { return false; }
+/* Before caches were per account, this browser kept one shared copy of "what is earned".
+   The first account to sign in here after that change inherits it (a copy — the originals
+   stay on disk, never merged back), and a marker records who inherited it so a later
+   account on the same browser cannot pick up the same data a second time. */
+const LEGACY_CLAIM = "rgj-legacy-claim-v1";
+function adoptLegacyCaches(who) {
+  const u = String(who).toLowerCase();
+  let claimed = null;
+  try { claimed = localStorage.getItem(LEGACY_CLAIM); } catch (e) { return []; }
+  if (claimed && claimed !== u) return [];
+  const copied = [];
+  for (const base of ["rgj-state-v1", "rgj-ach-earned-v1", "rgj-ach-fetched-v1"]) {
+    const target = `${base}:u:${u}`;
+    if (localStorage.getItem(target)) continue;             // already has its own history
+    const legacy = localStorage.getItem(base);
+    if (!legacy) continue;
+    localStorage.setItem(target, legacy);                    // copy, never move
+    copied.push(base);
+  }
+  if (!claimed) localStorage.setItem(LEGACY_CLAIM, u);
+  return copied;
 }
 
 /* ------------------------------------------------------------------ */
@@ -89,6 +95,9 @@ function totalUnlocks() {
 /* ------------------------------------------------------------------ */
 
 function render() {
+  renderAuth();
+  applyGate();
+  if (locked()) return;           // nothing to draw: the gate is the whole page
   renderWho();
   renderDashboard();
   renderLibrary();
@@ -149,6 +158,7 @@ function outOfScopeNote() {
 }
 
 function renderDashboard() {
+  if (locked()) return;          // signed out: the gate is the whole page
   const o = overallProgress();
   $("#stat-overall").textContent = fmtPct(o.done, o.total);
   $("#stat-completed").textContent = o.done;
@@ -174,6 +184,7 @@ function renderDashboard() {
 }
 
 function renderLibrary() {
+  if (locked()) return;          // signed out: the gate is the whole page
   $("#search").placeholder = `Search ${TOTAL_GAMES} active titles...`;
   const gt = $("#genre-tabs");
   gt.innerHTML = GENRES.map(g =>
@@ -229,6 +240,7 @@ function achGroups() {
 }
 
 function renderAchievements() {
+  if (locked()) return;          // signed out: the gate is the whole page
   const host = $("#ach-groups");
   if (!host) return;
   const status = $("#ach-status");
@@ -285,6 +297,7 @@ function renderAchievements() {
 }
 
 function renderSync() {
+  if (locked()) return;          // signed out: the gate is the whole page
   $("#sync-last").textContent = state.lastSync ? new Date(state.lastSync).toLocaleString() : "never";
   $("#sync-queued").textContent = state.queued.length;
   // The linked volume owns the identity; the config value is only a fallback for the
@@ -296,7 +309,9 @@ function renderSync() {
 
 /* Header identity. There are two kinds of session — a RetroAchievements account
    (the real one, which knows the player) and a Supabase account (optional backend) —
-   and the header should say which, and whose progress is on screen. */
+   and the header should say which, and whose progress is on screen.
+   Signed out there is no identity and no "guest": the status chip is hidden and the
+   button offers a plain "Sign in". */
 function renderAuth() {
   const box = $("#auth-box");
   if (!box) return;
@@ -313,18 +328,62 @@ function renderAuth() {
       box.prepend(img);
     }
     img.src = id.pic();
-    img.hidden = false;
+    img.hidden = !id.pic();          // no avatar on the account: show no broken image
+    $("#auth-status").hidden = false;
     $("#auth-status").textContent = id.name();
     $("#auth-status").className = "auth-status online";
     $("#auth-status").title = "RetroAchievements account — progress on this page is this account's";
     $("#btn-signin").textContent = "Sign out";
   } else {
     if (img) img.hidden = true;
-    $("#auth-status").textContent = user ? `online · ${user.email}` : "guest";
-    $("#auth-status").className = `auth-status ${user ? "online" : "offline"}`;
-    $("#auth-status").title = user ? "Supabase session" : "No account — progress is stored for this browser only";
+    const chip = $("#auth-status");
+    chip.textContent = "";
+    chip.hidden = true;                       // no guest chip: signed out shows nothing
     $("#btn-signin").textContent = "Sign in";
   }
+}
+
+/* ------------------------------------------------------------------ */
+/* The gate: signed out means no progress on screen at all             */
+/* ------------------------------------------------------------------ */
+
+// True when there is no verified RetroAchievements session. A Supabase session alone
+// is not an identity — it cannot read RA progress, so it does not unlock the page.
+function locked() {
+  return !(typeof IDENT !== "undefined" && IDENT.signedIn());
+}
+
+// Locking hides the tabs and panels and raises the sign-in card. It also drops the
+// Journey map's document, so a signed-out page holds no progress anywhere — not in the
+// DOM, not in a cached iframe.
+let gated = false;
+function applyGate() {
+  const lock = locked();
+  document.body.classList.toggle("locked", lock);
+  const gate = $("#auth-gate");
+  if (gate) gate.hidden = !lock;
+  if (!lock) { gated = false; return; }
+  paintAccounts();
+  if (gated) return;            // already blanked; nothing to do on re-render
+  gated = true;
+
+  // Wipe what a previous session left on screen. Belt and braces: the panels are hidden
+  // by CSS as well, so this is not what keeps progress private — it keeps it out of the
+  // page source too.
+  const f = $("#journey-frame");
+  if (f) {
+    if (f.dataset.loaded) { f.dataset.loaded = ""; f.removeAttribute("src"); }
+    setMapLoading(false);
+  }
+  const set = (sel, txt) => { const el = $(sel); if (el) el.textContent = txt; };
+  set("#stat-overall", "—"); set("#stat-completed", "—");
+  set("#stat-playing", "—"); set("#stat-unlocks", "—");
+  const clear = (sel) => { const el = $(sel); if (el) el.innerHTML = ""; };
+  clear("#genre-bars"); clear("#platform-bars"); clear("#recent-unlocks");
+  clear("#game-grid"); clear("#ach-groups"); clear("#sync-log");
+  set("#library-count", "Sign in to see the library.");
+  set("#who-line", "");
+  const who = $("#who-line"); if (who) who.hidden = true;
 }
 
 function esc(s) {
@@ -608,16 +667,29 @@ function authError(msg) {
 // After any successful sign-in: load that profile's progress, point the RA layer at
 // it, and pull. Everything downstream keys off the session, so this is the only place
 // switching accounts has to be handled.
+/* Bind the page to an account's stored caches: first claim the pre-account history if
+   that is still unowned, then read the profile's own state. Used by both the live
+   (verified) and offline (unverified) boot paths, so a laptop with no network still
+   shows the right player's progress — and never somebody else's. */
+function bindProfile(who) {
+  const adopted = adoptLegacyCaches(who);
+  state = loadState();
+  render();
+  const active = document.querySelector(".tab.active");
+  if (active && active.dataset.tab === "journey") { loadJourney(); }
+  if (adopted.length) logSync("Progress this browser held before accounts were separated was copied " +
+    `into this profile (${adopted.length} cache${adopted.length === 1 ? "" : "s"}).`, "ok");
+  return adopted;
+}
+
 async function enterProfile(quiet, opts) {
   const id = IDENT.current();
   if (!id) return;
   const o = opts || {};
-  const adopted = adoptGuestState(id.user);
-  state = loadState();
+  bindProfile(id.user);
   RA.configure(id.user, id.key);
   render();
   if (!quiet) logSync(`Signed in as ${id.user}. Showing this account's progress.`, "ok");
-  if (adopted) logSync("Progress from before you signed in was copied into this profile.", "ok");
   if (o.pull === false) return;
   await pullProfile({ quiet: true });
 }
@@ -693,40 +765,50 @@ function doSignOut() {
   IDENT.signOut();
   RA.forget();
   profile = null;
-  state = loadState();          // falls back to the guest store
-  render();
+  state = loadState();          // no session: an empty shell, nothing to show
+  render();                     // re-locks the page (see applyGate)
   logSync(who ? `Signed out ${who}. That account's progress stays saved on this device.`
               : "Signed out.", "ok");
   paintAccounts();
 }
 
 // Device profiles: anyone who has signed in here before, one click back.
+// Rendered into the dialog and into the gate card — same list, one source.
 function paintAccounts() {
-  const host = $("#auth-accounts");
-  if (!host) return;
-  const list = (typeof IDENT !== "undefined" ? IDENT.accounts() : []).filter(a => !IDENT.current() || a.user !== IDENT.current().user);
-  if (!list.length) { host.innerHTML = ""; host.hidden = true; return; }
-  host.hidden = false;
-  host.innerHTML = '<p class="modal-note">On this device before</p>' + list.map(a => `
-    <button type="button" class="btn btn-ghost btn-small account-chip" data-account="${esc(a.user)}">
-      ${a.pic ? `<img src="${esc(/^https?:/.test(a.pic) ? a.pic : "https://retroachievements.org" + a.pic)}" alt="" onerror="this.remove()">` : ""}
-      <span>${esc(a.user)}</span>
-    </button>`).join("");
-  host.querySelectorAll("[data-account]").forEach(b => b.addEventListener("click", async () => {
-    const who = b.dataset.account;
-    const acct = IDENT.accounts().find(a => a.user === who);
-    if (!acct) return;
-    await doSignIn(acct.user, acct.key);
-  }));
+  const hosts = document.querySelectorAll("#auth-accounts, #gate-accounts");
+  if (!hosts.length) return;
+  const list = (typeof IDENT !== "undefined" ? IDENT.accounts() : [])
+    .filter(a => !IDENT.current() || a.user !== IDENT.current().user);
+  for (const host of hosts) {
+    if (!list.length) { host.innerHTML = ""; host.hidden = true; continue; }
+    host.hidden = false;
+    host.innerHTML = '<p class="modal-note">On this device before</p>' + list.map(a => `
+      <button type="button" class="btn btn-ghost btn-small account-chip" data-account="${esc(a.user)}">
+        ${a.pic ? `<img src="${esc(/^https?:/.test(a.pic) ? a.pic : "https://retroachievements.org" + a.pic)}" alt="" onerror="this.remove()">` : ""}
+        <span>${esc(a.user)}</span>
+      </button>`).join("");
+    host.querySelectorAll("[data-account]").forEach(b => b.addEventListener("click", async () => {
+      const who = b.dataset.account;
+      const acct = IDENT.accounts().find(a => a.user === who);
+      if (!acct) return;
+      await doSignIn(acct.user, acct.key);
+    }));
+  }
+}
+
+function openSignIn() {
+  authError("");
+  paintAccounts();
+  const dlg = $("#auth-dialog");
+  if (dlg && !dlg.open) dlg.showModal();
 }
 
 $("#btn-signin").addEventListener("click", async () => {
   if (IDENT.signedIn()) { doSignOut(); return; }
-  if (user && sb) { await sb.auth.signOut(); user = null; logSync("Signed out. Progress kept locally."); render(); return; }
-  authError("");
-  paintAccounts();
-  $("#auth-dialog").showModal();
+  openSignIn();
 });
+
+$("#gate-signin").addEventListener("click", openSignIn);
 
 $("#auth-cancel").addEventListener("click", () => $("#auth-dialog").close());
 
@@ -1039,8 +1121,7 @@ renderRA();
   }
   if (status === "offline") {
     RA.configure(IDENT.name(), IDENT.current().key);
-    state = loadState();
-    render();
+    bindProfile(IDENT.name());
     logSync(`Offline — showing saved progress for ${who}. Achievements will refresh when the connection returns.`, "err");
     return;
   }
