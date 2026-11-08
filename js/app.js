@@ -489,7 +489,7 @@ const JOURNEY_MAPS = [
            "haunted mansions, neon crime cities, jungle temples and time-travel clock towers.",
   },
 ];
-const JOURNEY_MAP_VERSION = "iter9";
+const JOURNEY_MAP_VERSION = "iter10";
 const JOURNEY_MAP_KEY = "rgj.journeyMap";
 
 function currentJourneyMap() {
@@ -600,17 +600,22 @@ function settleJourneyMap() {
 function sizeJourneyFrame() {
   const wrap = document.querySelector("#panel-journey .journey-frame-wrap");
   if (!wrap || !wrap.offsetParent) return;
-  // Fit the window rather than overflow it: take whatever height is left under the header, turn
-  // that into a 16:9 frame, and centre it. The Action artwork has no ocean margin, so cropping is
-  // not an option — scaling down is what keeps the whole map on screen without scrolling.
+  // Fit the window rather than overflow it: take whatever height is left under the header and
+  // hand it to the frame. On a desktop screen that works out at 16:9; on a phone a 16:9 strip
+  // would be barely 200px tall, so portrait gets the whole height at full width instead — the
+  // map pans and pinch-zooms, and a tall frame is what makes it readable.
   const top = wrap.getBoundingClientRect().top + window.scrollY;
-  const avail = window.innerHeight - top - 10;
-  const h = Math.max(320, Math.min(avail, window.innerWidth * 9 / 16));
+  const avail = Math.max(320, window.innerHeight - top - 10);
+  const narrow = window.innerWidth <= 820;
+  const h = narrow ? avail : Math.min(avail, window.innerWidth * 9 / 16);
   wrap.style.height = Math.round(h) + "px";
-  wrap.style.width = Math.round(Math.min(h * 16 / 9, window.innerWidth)) + "px";
+  wrap.style.width = Math.round(narrow
+    ? window.innerWidth - 16
+    : Math.min(h * 16 / 9, window.innerWidth)) + "px";
 }
 
 window.addEventListener("resize", sizeJourneyFrame);
+window.addEventListener("orientationchange", () => setTimeout(sizeJourneyFrame, 200));
 
 function selectJourneyMap(id) {
   const map = JOURNEY_MAPS.find(m => m.id === id);

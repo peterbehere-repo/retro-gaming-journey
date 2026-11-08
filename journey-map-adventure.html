@@ -1,5 +1,8 @@
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<meta name="theme-color" content="#0a3a4a"/>
+
 <title>Journey Map 4 - NES Adventure</title>
 <style>
 :root { --gold:#ffcc4d; --accent:#54f2b8; --ink:#0c0f1d; --muted:#8b93c4; }
@@ -72,6 +75,25 @@ svg.overlay { position:absolute; inset:0; width:1280px; height:720px; }
 .pop-card .tier b { color:var(--gold); }
 .pop-card .hint { margin-top:.7rem; font-size:.68rem; color:var(--muted); }
 @media (max-width:560px){ .pop-card{width:min(94vw,420px);} .pc-body{flex-direction:column;align-items:center;gap:.6rem;} .pc-info{width:100%;} }
+
+/* ---------------- mobile / touch ---------------- */
+html, body { height:100%; height:100dvh; overscroll-behavior:none; }
+body { -webkit-text-size-adjust:100%; -webkit-tap-highlight-color:transparent; }
+/* the map handles every gesture itself: no page scroll, no browser pinch-zoom */
+.map-wrap { touch-action:none; -webkit-user-select:none; user-select:none; }
+#pop { padding:10px; }
+@media (max-width:760px) {
+  .zoombar { top:8px; right:8px; left:8px; justify-content:flex-end; flex-wrap:wrap; gap:5px; }
+  .zoombar button { min-width:44px; min-height:44px; font-size:1rem; padding:0 .55rem; }
+  .zoombar select { min-height:44px; font-size:.8rem; max-width:52vw; }
+  .jm-legend { left:8px; right:auto; bottom:8px; max-width:calc(100% - 74px);
+               gap:.2rem .65rem; padding:.35rem .5rem; font-size:.58rem; line-height:1.35; }
+  .zoomlabel { bottom:8px; right:8px; font-size:.62rem; }
+  .pop-card { width:min(94vw,420px); max-height:88dvh; overflow:auto; -webkit-overflow-scrolling:touch; }
+  .pop-card .hint { font-size:.72rem; }
+}
+@media (max-width:400px) { .jm-legend span:nth-child(2) { display:none; } }
+@media (max-height:430px) { .jm-legend { display:none; } }
 </style></head><body>
 <div class="map-wrap" id="viewport"><div class="jm-legend">
   <span>&#9679; gold ring = fully completed</span>
@@ -189,7 +211,7 @@ function clampT() {
 function apply() { clampT(); inner.style.transform = `translate(${tx}px,${ty}px) scale(${scale})`;
   zl.textContent = Math.round(scale * 10) / 10 + "x"; }
 function zoomAt(mx, my, s2) {
-  const ns = Math.max(1, Math.min(MAXS, s2));
+  const ns = Math.max(minScale(), Math.min(MAXS, s2));
   const wx = (mx - tx) / scale, wy = (my - ty) / scale;
   scale = ns; tx = mx - wx * scale; ty = my - wy * scale; apply();
 }
@@ -234,4 +256,86 @@ document.querySelectorAll(".pnode").forEach(el => {
   el.addEventListener("click", e => { if (moved > 5) { e.stopImmediatePropagation(); e.preventDefault(); } }, true);
 });
 fit();
+
+/* ---------------- mobile / touch: pan, pinch-zoom, tap ---------------- */
+/* A phone gets one-finger pan, two-finger pinch, and a generous tap target on every
+   path point. Mouse and wheel behaviour is untouched. minScale() keeps the zoom-out
+   floor at "whole map fits", which on a small screen is well under 1x. */
+function minScale(){ return Math.min(1, Math.min(vp.clientWidth / MAPW, vp.clientHeight / MAPH)); }
+const coarsePointer = !!(window.matchMedia && window.matchMedia("(pointer:coarse)").matches);
+let lastTouchAt = 0, pinchState = null, tapInfo = null;
+function tDist(t){ return Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY); }
+function tMid(t){ const r = vp.getBoundingClientRect();
+  return { x:(t[0].clientX + t[1].clientX)/2 - r.left, y:(t[0].clientY + t[1].clientY)/2 - r.top }; }
+
+// Synthetic mouse events that follow a touch would reset `moved` and turn a drag into a tap.
+window.addEventListener("mousedown", e => {
+  if (Date.now() - lastTouchAt < 900) e.stopPropagation();
+}, true);
+// iOS Safari's own page pinch-zoom would fight the map's.
+vp.addEventListener("gesturestart", e => e.preventDefault());
+
+vp.addEventListener("touchstart", e => {
+  lastTouchAt = Date.now();
+  touched = true;
+  if (typeof detachPt === "function") detachPt();
+  if (typeof cancelFly === "function") cancelFly();
+  if (e.touches.length === 1) {
+    const t = e.touches[0];
+    drag = { x:t.clientX, y:t.clientY, tx:tx, ty:ty };
+    moved = 0; pinchState = null;
+    tapInfo = { x:t.clientX, y:t.clientY, at:Date.now(), target:e.target };
+    vp.classList.add("dragging");
+  } else if (e.touches.length === 2) {
+    drag = null; tapInfo = null;
+    const m = tMid(e.touches);
+    pinchState = { d:tDist(e.touches) || 1, s:scale, wx:(m.x - tx)/scale, wy:(m.y - ty)/scale };
+    vp.classList.add("dragging");
+  }
+}, { passive:true });
+
+vp.addEventListener("touchmove", e => {
+  if (e.touches.length === 1 && drag) {
+    const t = e.touches[0];
+    const dx = t.clientX - drag.x, dy = t.clientY - drag.y;
+    moved = Math.max(moved, Math.abs(dx) + Math.abs(dy));
+    if (moved > 6) e.preventDefault();
+    tx = drag.tx + dx; ty = drag.ty + dy; apply();
+  } else if (e.touches.length === 2 && pinchState) {
+    e.preventDefault();
+    const m = tMid(e.touches);
+    const s2 = Math.max(minScale(), Math.min(MAXS, pinchState.s * (tDist(e.touches) / pinchState.d)));
+    scale = s2; tx = m.x - pinchState.wx * s2; ty = m.y - pinchState.wy * s2;
+    moved = Math.max(moved, 20); apply();
+  }
+}, { passive:false });
+
+vp.addEventListener("touchend", e => {
+  lastTouchAt = Date.now();
+  if (e.touches.length === 0) {
+    // A quick tap on open water zooms in a step; a tap on a point is left to its click.
+    if (tapInfo && moved <= 6 && Date.now() - tapInfo.at < 350) {
+      const onNode = tapInfo.target && tapInfo.target.closest && tapInfo.target.closest(".pnode");
+      const r = vp.getBoundingClientRect();
+      const now = Date.now(), near = Math.hypot(tapInfo.x - lastTap.x, tapInfo.y - lastTap.y) < 32;
+      if (!onNode && now - lastTap.at < 320 && near) {
+        const mx = tapInfo.x - r.left, my = tapInfo.y - r.top;
+        zoomAt(mx, my, scale * 2); lastTap = { at:0, x:0, y:0 };
+      } else if (!onNode) {
+        lastTap = { at:Date.now(), x:tapInfo.x, y:tapInfo.y };
+      }
+    }
+    drag = null; pinchState = null; tapInfo = null; vp.classList.remove("dragging");
+  } else if (e.touches.length === 1) {
+    pinchState = null;
+    drag = { x:e.touches[0].clientX, y:e.touches[0].clientY, tx:tx, ty:ty };
+  }
+}, { passive:true });
+
+if (coarsePointer) {
+  const lastLegend = document.querySelector(".jm-legend span:last-child");
+  if (lastLegend) lastLegend.textContent = "drag to pan \u00b7 pinch to zoom \u00b7 tap a point";
+  const hint = document.querySelector("#popcard");
+}
+window.addEventListener("orientationchange", () => setTimeout(() => { if (!touched) fit(); }, 120));
 </script></body></html>
