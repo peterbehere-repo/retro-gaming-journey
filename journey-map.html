@@ -45,9 +45,14 @@ svg.overlay { position:absolute; inset:0; width:1280px; height:720px; }
 /* popup */
 #pop { position:fixed; inset:0; display:none; background:rgba(5,7,15,.75); z-index:20; align-items:center; justify-content:center; }
 #pop.open { display:flex; }
-.pop-card { background:#141831; border:2px solid var(--gold); border-radius:16px; padding:1.2rem 1.4rem;
-            text-align:center; width:300px; box-shadow:0 10px 60px rgba(0,0,0,.8); cursor:default; }
-.pop-card img { display:block; margin:0 auto; width:auto; height:auto; max-width:100%; max-height:232px; border:0; border-radius:0; background:none; object-fit:contain; filter:drop-shadow(0 10px 22px rgba(0,0,0,.6)); }
+.pop-card { background:#141831; border:2px solid var(--gold); border-radius:16px; padding:1.1rem 1.3rem;
+            text-align:center; width:640px; max-width:calc(100vw - 1.4rem); max-height:calc(100vh - 1.4rem);
+            overflow-y:auto; box-shadow:0 10px 60px rgba(0,0,0,.8); cursor:default; }
+.pc-body { display:flex; gap:1.15rem; align-items:center; }
+.pc-art { flex:0 0 auto; }
+.pc-info { flex:1 1 auto; min-width:0; text-align:center; }
+.pc-info .pname { font-size:1.15rem; }
+.pop-card img { display:block; margin:0 auto; width:auto; height:auto; max-width:100%; max-height:min(232px, calc(100vh - 7.5rem)); border:0; border-radius:0; background:none; object-fit:contain; filter:drop-shadow(0 10px 22px rgba(0,0,0,.6)); }
 .pop-card .pname { font-size:1.05rem; font-weight:bold; margin:.6rem 0 .1rem; }
 .pop-card .pnum { color:var(--muted); font-size:.72rem; margin-bottom:.6rem; }
 .pop-card .bigstars { font-size:1.7rem; letter-spacing:.5rem; margin:.3rem 0 .6rem; }
@@ -75,6 +80,7 @@ body { padding:0; margin:0; overflow:hidden;
 .zoombar button { border-radius:8px; font-size:.78rem; }
 .zoomlabel { font-size:.68rem; }
 .pop-card { border:2px solid var(--gold); box-shadow:0 10px 60px rgba(0,0,0,.85); }
+@media (max-width:560px){ .pop-card{width:min(94vw,420px);} .pc-body{flex-direction:column;align-items:center;gap:.6rem;} .pc-info{width:100%;} }
 </style></head><body>
 <div class="map-wrap" id="viewport"><div class="jm-legend">
   <span>&#9679; gold ring = fully completed</span>
@@ -185,14 +191,14 @@ let currentGame = null;
 function openCard(g){
   currentGame = g;
   const a = achFor(g.name), got = starsFor(g.name);
-  card.innerHTML = `<img src="${g.img}"/>
+  card.innerHTML = `<div class="pc-body"><div class="pc-art"><img src="${g.img}"/></div><div class="pc-info">
     <div class="pname">${esc(g.name)}</div>
     <div class="pnum">Path point ${DATA.games.indexOf(g)+1} of ${DATA.games.length} &middot; NES &middot; Action</div>
     <div class="bigstars">${[0,1,2].map(k=>k<got?"&#9733;":"&#9734;").join("")}</div>
     ${a
       ? a.picks.map(p=>`<div class="tier ${p.earned?'earned':'locked'}">${p.earned?'&#9733;':'&#9734;'} <b>${esc(p.tier)}</b> &mdash; ${esc(p.title)}${p.earned?'':' <span class="lock-note">not earned yet</span>'}${p.desc?`<div class="tier-desc">${esc(p.desc)}</div>`:''}</div>`).join("")
       : `<div class="tier locked">No achievement picks cached for this title yet &mdash; open the <b>Achievements</b> tab and pull your RetroAchievements progress, then reopen this card.</div>`}
-    <div class="hint">click anywhere to close</div>`;
+    <div class="hint">click anywhere to close</div></div></div>`;
   pop.classList.add("open");
 }
 function wireNodes(){
