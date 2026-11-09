@@ -223,10 +223,10 @@ function openCard(g){
     <div class="pnum">Path point ${DATA.games.indexOf(g)+1} of ${DATA.games.length} &middot; NES &middot; Action</div>
     <div class="bigstars">${[0,1,2].map(k=>k<got?"&#9733;":"&#9734;").join("")}</div>
     ${a
-      ? a.picks.map(p=>`<div class="tier ${p.earned?'earned':'locked'}">${p.earned?'&#9733;':'&#9734;'} <b>${esc(p.tier)}</b> &mdash; ${esc(p.title)}${p.earned?'':' <span class="lock-note">not earned yet</span>'}${p.desc?`<div class="tier-desc">${esc(p.desc)}</div>`:''}</div>`).join("")
+      ? a.picks.map(p=>`<div class="tier ${p.earned?'earned':'locked'}">${p.earned?'&#9733;':'&#9734;'} <b>${esc(p.tier)}</b> &mdash; ${esc(p.title)}${p.desc?`<div class="tier-desc">${esc(p.desc)}</div>`:''}</div>`).join("")
       : (PICK_TEXT[normT(g.name)]||[]).length
-        ? PICK_TEXT[normT(g.name)].map((p,k)=>`<div class="tier locked">&#9734; <b>${TIERS[k]}</b> &mdash; ${p.t} <span class="lock-note">not earned yet</span><div class="tier-desc">${p.d}</div></div>`).join("")
-        : `<div class="tier locked">No achievement picks for this title yet &mdash; open the <b>Achievements</b> tab and pull your RetroAchievements progress, then reopen this card.</div>`}
+        ? PICK_TEXT[normT(g.name)].map((p,k)=>`<div class="tier locked">&#9734; <b>${TIERS[k]}</b> &mdash; ${p.t}<div class="tier-desc">${p.d}</div></div>`).join("")
+        : `<div class="tier locked">&#9734; <b>No RetroAchievements set</b><div class="tier-desc">RetroAchievements has no set for this title, so there is nothing to unlock at this point.</div></div>`}
     <div class="hint">click anywhere to close</div></div></div>`;
   pop.classList.add("open");
 }
