@@ -489,7 +489,7 @@ const JOURNEY_MAPS = [
            "haunted mansions, neon crime cities, jungle temples and time-travel clock towers.",
   },
 ];
-const JOURNEY_MAP_VERSION = "iter11";
+const JOURNEY_MAP_VERSION = "iter12";
 const JOURNEY_MAP_KEY = "rgj.journeyMap";
 
 function currentJourneyMap() {
