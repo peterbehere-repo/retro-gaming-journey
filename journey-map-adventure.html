@@ -77,6 +77,9 @@ svg.overlay { position:absolute; inset:0; width:1280px; height:720px; }
 .pop-card .hint { margin-top:.7rem; font-size:.68rem; color:var(--muted); }
 @media (max-width:560px){ .pop-card{width:min(94vw,420px);} .pc-body{flex-direction:column;align-items:center;gap:.6rem;} .pc-info{width:100%;} }
 
+/* sprites are pixel art: never let the browser smooth them */
+image.sprite { image-rendering: pixelated; }
+
 /* ---------------- mobile / touch ---------------- */
 html, body { height:100%; height:100dvh; overscroll-behavior:none; }
 body { -webkit-text-size-adjust:100%; -webkit-tap-highlight-color:transparent; }
