@@ -606,9 +606,9 @@ to \`<name>.before-<timestamp>\` first.
   }
   function settingsToForm(s) {
     const set = (id, v) => { const el = $(id); if (el && v != null) el.value = v; };
-    set("#saves-repo", s.owner && s.repo ? `${s.owner}/${s.repo}` : "");
+    set("#saves-repo", s.owner && s.repo ? `${s.owner}/${s.repo}` : `${D.owner}/${D.repo}`);
     set("#saves-branch", s.branch || D.branch);
-    set("#saves-user", s.user || "");
+    set("#saves-user", s.user || D.user);
     set("#saves-device", s.device || "");
     set("#saves-token", s.token || "");
     const pill = $("#saves-pill");
