@@ -3,12 +3,12 @@
   "user": "selftest",
   "model": "self-test card",
   "os": "mixed layout",
-  "updated": "2026-11-09T16:20:52.826Z",
-  "folders": 3,
+  "updated": "2026-11-09T16:20:58.698Z",
+  "folders": 1,
   "counts": {
-    "added": 8,
-    "changed": 0,
-    "unchanged": 0
+    "added": 0,
+    "changed": 1,
+    "unchanged": 7
   },
   "note": "Written by the Retro Gaming Journey page. Archive only — nothing here is deleted."
 }
