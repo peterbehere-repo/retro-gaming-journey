@@ -133,6 +133,7 @@ function sessionUser(){
 function normT(s){return String(s||"").toLowerCase()
   .replace(/\([^)]*\)|\[[^\]]*\]/g," ").replace(/&/g," and ")
   .replace(/[^a-z0-9]+/g," ").replace(/\b(the|a|an)\b/g," ").replace(/\s+/g," ").trim();}
+function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
 function achStore(k){try{return JSON.parse(localStorage.getItem(k)||"{}")}catch(e){return {}}}
 function starsFor(name){
   const who = sessionUser();
@@ -186,7 +187,7 @@ document.querySelectorAll(".pnode").forEach(el=>{
     syncStars();
     const g = DATA.games[+el.dataset.i];
     card.innerHTML = `<div class="pc-body"><div class="pc-art"><img src="${g.img}"/></div><div class="pc-info">
-      <div class="pname">${g.name}</div>
+      <div class="pname">${esc(g.name)}</div>
       <div class="pnum">Path point ${+el.dataset.i+1} of 20 &middot; NES &middot; Visual Novels / Point &amp; Click</div>
       <div class="bigstars">${TIERS.map((t,k)=>k<g.stars?"&#9733;":"&#9734;").join("")}</div>
       ${(PICK_TEXT[normT(g.name)]||[]).length

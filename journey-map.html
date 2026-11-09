@@ -225,7 +225,8 @@ function openCard(g){
     ${a
       ? a.picks.map(p=>`<div class="tier ${p.earned?'earned':'locked'}">${p.earned?'&#9733;':'&#9734;'} <b>${esc(p.tier)}</b> &mdash; ${esc(p.title)}${p.desc?`<div class="tier-desc">${esc(p.desc)}</div>`:''}</div>`).join("")
       : (PICK_TEXT[normT(g.name)]||[]).length
-        ? PICK_TEXT[normT(g.name)].map((p,k)=>`<div class="tier locked">&#9734; <b>${TIERS[k]}</b> &mdash; ${p.t}<div class="tier-desc">${p.d}</div></div>`).join("")
+        ? PICK_TEXT[normT(g.name)].map((p,k)=>{const on=k<got;
+          return `<div class="tier ${on?'earned':'locked'}">${on?'&#9733;':'&#9734;'} <b>${TIERS[k]}</b> &mdash; ${p.t}<div class="tier-desc">${p.d}</div></div>`;}).join("")
         : `<div class="tier locked">&#9734; <b>No RetroAchievements set</b><div class="tier-desc">RetroAchievements has no set for this title, so there is nothing to unlock at this point.</div></div>`}
     <div class="hint">click anywhere to close</div></div></div>`;
   pop.classList.add("open");
