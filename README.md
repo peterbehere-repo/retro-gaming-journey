@@ -163,6 +163,7 @@ js/data.js                 600-title System Directory Data Grid
 js/retroachievements.js    RA API client (CORS-open, credentials in localStorage)
 js/achievements.js         three picks per game (easy/mid/advanced) + earned-state merge
 js/app.js                  dashboard / library / achievements / sync console
+js/savesync.js             save archive: pull .srm/.state into the `saves` branch
 js/supabase-config.js      backend config (empty = offline demo mode)
 supabase/schema.sql        BaaS tables + row level security
 tools/build_library.py     asset ingestion pipeline (1,800 badge routes + index)
@@ -171,6 +172,25 @@ sync/retroarch/...lua      capture layer (RAM watch → spool file)
 docs/architecture.md       spec mapping + design notes
 .github/workflows/...yml   Pages deployment
 ```
+
+## Save archive — `.srm` and `.state` files
+
+Saves go to a **separate orphan branch, `saves`**, not to `main` and not to Supabase:
+
+```
+saves/<user>/devices/<device_id>/<system>/<rom>/<file>
+```
+
+A pull reads a linked volume (card in a reader, or MTP storage), hashes each file with git's own
+blob algorithm, and uploads only what the branch does not already hold — **one commit per pull**.
+Nothing is ever deleted, and a pull never writes to the card. Two devices cannot collide because
+each device owns its subtree; save states stay with the device that made them, because a state is
+tied to a core build. Restore goes the other way, one game at a time, and copies the file it
+replaces to `<name>.before-<timestamp>` first.
+
+The archive is plain files on GitHub — browse it at
+`github.com/<owner>/<repo>/tree/saves/saves/<user>/devices`. Full rationale and edge cases in
+[`docs/Save Sync Design.md`](docs/Save%20Sync%20Design.md).
 
 ## Design notes
 
