@@ -246,19 +246,47 @@ function centerOn(x, y, s) {
 }
 function fit() { scale = Math.min(vp.clientWidth / MAPW, vp.clientHeight / MAPH);
   tx = (vp.clientWidth - MAPW * scale) / 2; ty = (vp.clientHeight - MAPH * scale) / 2; apply(); }
+// ---------- fly-to: pan/zoom to a point instead of cutting to it ----------
+let flyRaf = null;
+function cancelFly() { if (flyRaf !== null) { cancelAnimationFrame(flyRaf); flyRaf = null; } }
+const easeInOut = t => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+function fitScale() { return Math.min(vp.clientWidth / MAPW, vp.clientHeight / MAPH); }
+function flyTo(x, y, s, dur) {
+  cancelFly();
+  const S = Math.min(MAXS, s);
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) { centerOn(x, y, S); return; }
+  const cx0 = (vp.clientWidth / 2 - tx) / scale, cy0 = (vp.clientHeight / 2 - ty) / scale;
+  const d = Math.hypot(x - cx0, y - cy0);
+  const w0 = vp.clientWidth / scale, w1 = vp.clientWidth / S;
+  const wPeak = Math.max(w0, w1, d * 1.15);
+  const sPeak = Math.max(fitScale(), Math.min(scale, S, vp.clientWidth / wPeak));
+  const dip = Math.max(0, Math.log(Math.min(scale, S) / sPeak));
+  dur = dur || Math.min(950, Math.max(480, 480 + 300 * Math.min(1, d / w1)));
+  const l0 = Math.log(scale), l1 = Math.log(S), t0 = performance.now();
+  const step = now => {
+    const t = Math.min(1, (now - t0) / dur), e = easeInOut(t);
+    scale = Math.exp(l0 + (l1 - l0) * e - dip * Math.sin(Math.PI * e));
+    const cx = cx0 + (x - cx0) * e, cy = cy0 + (y - cy0) * e;
+    tx = vp.clientWidth / 2 - cx * scale; ty = vp.clientHeight / 2 - cy * scale;
+    apply();
+    if (t < 1) flyRaf = requestAnimationFrame(step);
+    else { flyRaf = null; centerOn(x, y, S); }
+  };
+  flyRaf = requestAnimationFrame(step);
+}
 let touched = false;
 if (window.ResizeObserver) {
   new ResizeObserver(() => { if (!touched) fit(); }).observe(vp);
 }
 window.addEventListener("resize", () => { if (!touched) fit(); });
 function markTouched(){ touched = true; }
-vp.addEventListener("wheel", e => { markTouched();
+vp.addEventListener("wheel", e => { markTouched(); detachPt(); cancelFly();
   e.preventDefault();
   const r = vp.getBoundingClientRect();
   zoomAt(e.clientX - r.left, e.clientY - r.top, scale * (e.deltaY < 0 ? 1.25 : 0.8));
 }, { passive: false });
 let drag = null, moved = 0;
-vp.addEventListener("mousedown", e => { markTouched(); drag = { x: e.clientX, y: e.clientY, tx, ty }; moved = 0; vp.classList.add("dragging"); });
+vp.addEventListener("mousedown", e => { markTouched(); detachPt(); cancelFly(); drag = { x: e.clientX, y: e.clientY, tx, ty }; moved = 0; vp.classList.add("dragging"); });
 window.addEventListener("mousemove", e => {
   if (!drag) return;
   const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
@@ -266,17 +294,27 @@ window.addEventListener("mousemove", e => {
   tx = drag.tx + dx; ty = drag.ty + dy; apply();
 });
 window.addEventListener("mouseup", () => { drag = null; vp.classList.remove("dragging"); });
-document.getElementById("zin").onclick = () => { markTouched(); zoomAt(vp.clientWidth / 2, vp.clientHeight / 2, scale * 1.4); };
-document.getElementById("zout").onclick = () => { markTouched(); zoomAt(vp.clientWidth / 2, vp.clientHeight / 2, scale / 1.4); };
-document.getElementById("zfit").onclick = () => { touched = false; fit(); };
+document.getElementById("zin").onclick = () => { markTouched(); detachPt(); cancelFly(); zoomAt(vp.clientWidth / 2, vp.clientHeight / 2, scale * 1.4); };
+document.getElementById("zout").onclick = () => { markTouched(); detachPt(); cancelFly(); zoomAt(vp.clientWidth / 2, vp.clientHeight / 2, scale / 1.4); };
+document.getElementById("zfit").onclick = () => { fitAll(); };
+const PT_ZOOM = 2.4;   // template zoom used for every path point
 const ptsel = document.getElementById("ptsel");
+// A real "fit" state: if pt 1 were pre-selected here, choosing pt 1 would fire
+// no change event and the map would never zoom to it.
+{
+  const o = document.createElement("option"); o.value = ""; o.textContent = "whole map (fit)";
+  ptsel.appendChild(o);
+}
 DATA.games.forEach((g, i) => {
-  const o = document.createElement("option"); o.value = i;
-  o.textContent = (i + 1) + ". " + g.name;
+  const o = document.createElement("option"); o.value = i; o.textContent = "pt " + (i + 1);
   ptsel.appendChild(o);
 });
-function goPt(i) { markTouched(); const g = DATA.games[i]; centerOn(g.x, g.y, 2.4); ptsel.value = i; }
-ptsel.onchange = () => goPt(+ptsel.value);
+ptsel.value = "";          // start fitted, with no path point selected
+function goPt(i) { markTouched(); const g = DATA.games[i]; flyTo(g.x, g.y, PT_ZOOM); ptsel.value = i; }
+// manual pan/zoom leaves the chosen point, so the dropdown must stop claiming it
+function detachPt() { if (ptsel.value !== "") ptsel.value = ""; }
+function fitAll() { markTouched(); ptsel.value = ""; flyTo(MAPW / 2, MAPH / 2, fitScale()); }
+ptsel.onchange = () => { if (ptsel.value === "") fitAll(); else goPt(+ptsel.value); };
 document.querySelectorAll(".pnode").forEach(el => {
   el.addEventListener("click", e => { if (moved > 5) { e.stopImmediatePropagation(); e.preventDefault(); } }, true);
 });
