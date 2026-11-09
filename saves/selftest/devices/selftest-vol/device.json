@@ -1,0 +1,14 @@
+{
+  "device": "selftest_vol",
+  "user": "selftest",
+  "model": "self-test card",
+  "os": "mixed layout",
+  "updated": "2026-11-09T16:20:52.826Z",
+  "folders": 3,
+  "counts": {
+    "added": 8,
+    "changed": 0,
+    "unchanged": 0
+  },
+  "note": "Written by the Retro Gaming Journey page. Archive only — nothing here is deleted."
+}
