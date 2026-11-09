@@ -184,6 +184,42 @@
           </div>
           <p class="usb-hint" id="fsa-hint"></p>
         </div>
+        <div class="sync-card usb-card" id="saves-card" style="grid-column: 1 / -1">
+          <h3>Save files &amp; states <span id="saves-pill" class="usb-pill">not set up</span></h3>
+          <p class="sync-note">
+            Pulls <code>.srm</code> / <code>.sav</code> battery saves and <code>.state</code> slots off a
+            linked volume and archives them in the repo — one folder per user, one subtree per device.
+            A pull only ever adds: it never writes to the card, never deletes from the archive, and
+            skips any file whose bytes the archive already holds. Restore copies the file it replaces
+            to <code>.before-&lt;timestamp&gt;</code> first.
+          </p>
+          <div class="lan-form">
+            <label>Archive repo
+              <input id="saves-repo" type="text" placeholder="owner/repo" spellcheck="false" autocomplete="off">
+            </label>
+            <label>Branch
+              <input id="saves-branch" type="text" placeholder="saves" spellcheck="false" autocomplete="off">
+            </label>
+            <label>User folder
+              <input id="saves-user" type="text" placeholder="peter" spellcheck="false" autocomplete="off">
+            </label>
+            <label>Device ID
+              <input id="saves-device" type="text" placeholder="from the card marker" spellcheck="false" autocomplete="off">
+            </label>
+            <label>GitHub token (contents: read &amp; write)
+              <input id="saves-token" type="password" autocomplete="off" spellcheck="false">
+            </label>
+          </div>
+          <div class="usb-actions">
+            <button id="btn-saves-save" class="btn btn-ghost btn-small">Save settings</button>
+            <button id="btn-saves-pull" class="btn btn-small">Pull saves from device</button>
+            <button id="btn-saves-preview" class="btn btn-ghost btn-small">Preview only</button>
+            <button id="btn-saves-list" class="btn btn-ghost btn-small">Show archive</button>
+          </div>
+          <p class="usb-hint" id="saves-hint"></p>
+          <ul id="saves-list" class="log"></ul>
+        </div>
+
         <div class="sync-card" id="ra-card">
           <h3>RetroAchievements progress</h3>
           <p class="sync-note" style="margin-bottom:.6rem">Reads your public RA progress directly —
@@ -290,6 +326,7 @@
   <script src="js/app.js?v=iter37"></script>
   <script src="js/sdcard.js?v=4"></script>
   <script src="js/httpsync.js?v=5"></script>
+  <script src="js/savesync.js?v=1"></script>
   <script type="module" src="js/mtp.js?v=1"></script>
   <script>
     // The MTP adapter is an ES module: file:// blocks module loading, and WebUSB needs a
