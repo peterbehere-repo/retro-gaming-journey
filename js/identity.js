@@ -109,10 +109,21 @@ const IDENT = (() => {
   function current() { return session; }
   function signedIn() { return !!(session && session.user && session.key); }
   function name() { return session ? session.user : ""; }
+  // RetroAchievements serves a user picture with `cache-control: max-age=31536000`
+  // under a filename that never changes when the player uploads a new one. Left alone,
+  // a browser that has seen an avatar keeps showing it for a year. Stamp the URL with
+  // the day, so the picture is at most a day old and a new avatar appears on its own.
+  function picFor(path) {
+    if (!path) return "";
+    const url = /^https?:/.test(path) ? path : PIC + path;
+    const d = new Date();
+    const stamp = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}`;
+    return `${url}${url.includes("?") ? "&" : "?"}v=${stamp}`;
+  }
+
   function pic() {
     if (!session) return "";
-    if (session.pic) return /^https?:/.test(session.pic) ? session.pic : PIC + session.pic;
-    return `${PIC}/UserPic/${encodeURIComponent(session.user)}.png`;
+    return picFor(session.pic || `${PIC}/UserPic/${encodeURIComponent(session.user)}.png`);
   }
 
   const GUEST_KEY = "rgj-state-v1";
@@ -147,7 +158,7 @@ const IDENT = (() => {
 
   return {
     verify, signIn, signOut, forgetAccount, accounts,
-    current, signedIn, name, pic, stateKey, scopedKey, revalidate, GUEST_KEY
+    current, signedIn, name, pic, picFor, stateKey, scopedKey, revalidate, GUEST_KEY
   };
 })();
 window.IDENT = IDENT;

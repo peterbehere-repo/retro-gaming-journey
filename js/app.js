@@ -796,7 +796,7 @@ function paintAccounts() {
     host.hidden = false;
     host.innerHTML = '<p class="modal-note">On this device before</p>' + list.map(a => `
       <button type="button" class="btn btn-ghost btn-small account-chip" data-account="${esc(a.user)}">
-        ${a.pic ? `<img src="${esc(/^https?:/.test(a.pic) ? a.pic : "https://retroachievements.org" + a.pic)}" alt="" onerror="this.remove()">` : ""}
+        ${a.pic && typeof IDENT !== "undefined" ? `<img src="${esc(IDENT.picFor(a.pic))}" alt="" onerror="this.remove()">` : ""}
         <span>${esc(a.user)}</span>
       </button>`).join("");
     host.querySelectorAll("[data-account]").forEach(b => b.addEventListener("click", async () => {
