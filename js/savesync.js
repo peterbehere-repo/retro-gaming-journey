@@ -615,8 +615,9 @@ to \`<name>.before-<timestamp>\` first.
     if (sum) {
       const set = !!(s.owner && s.repo);
       const repo = set ? `${s.owner}/${s.repo}` : `${D.owner}/${D.repo}`;
-      sum.textContent = `${set ? "" : "defaults · "}${repo} · ${s.branch || D.branch} · ${s.user || D.user}`;
-      sum.title = `${repo} · branch ${s.branch || D.branch} · user folder ${s.user || D.user}`;
+      const branch = s.branch || D.branch;
+      sum.textContent = `${repo.split("/").pop()}@${branch} · ${s.user || D.user}${set ? "" : " (defaults)"}`;
+      sum.title = `${repo} · branch ${branch} · user folder ${s.user || D.user}`;
     }
     const pill = $("#saves-pill");
     if (pill) {
