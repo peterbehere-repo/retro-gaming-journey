@@ -1,0 +1,153 @@
+{
+ "schema": 1,
+ "user": "selftest",
+ "generated": "2026-11-10T02:53:58.686Z",
+ "branch": "saves",
+ "counts": {
+  "games": 3,
+  "versions": 9,
+  "legacy": 8
+ },
+ "devices": {
+  "selftest-vol": {
+   "pulls": 0,
+   "lastPull": null
+  }
+ },
+ "games": [
+  {
+   "system": "gba",
+   "rom": "pokemon-emerald-usa",
+   "latest": {
+    "save": "saves/selftest/devices/selftest-vol/mgba/pokemon-emerald-usa/Pokemon Emerald (USA).sav",
+    "states": {
+     "selftest-vol": "saves/selftest/devices/selftest-vol/mgba/pokemon-emerald-usa/Pokemon Emerald (USA).state"
+    }
+   },
+   "versions": [
+    {
+     "at": null,
+     "device": "selftest-vol",
+     "sha": "12b64b565482",
+     "size": 131072,
+     "kind": "sram",
+     "slot": "0",
+     "name": "Pokemon Emerald (USA).sav",
+     "path": "saves/selftest/devices/selftest-vol/mgba/pokemon-emerald-usa/Pokemon Emerald (USA).sav",
+     "legacy": true
+    },
+    {
+     "at": null,
+     "device": "selftest-vol",
+     "sha": "3f371f1617fb",
+     "size": 1048576,
+     "kind": "state",
+     "slot": "0",
+     "name": "Pokemon Emerald (USA).state",
+     "path": "saves/selftest/devices/selftest-vol/mgba/pokemon-emerald-usa/Pokemon Emerald (USA).state",
+     "legacy": true
+    }
+   ]
+  },
+  {
+   "system": "nes",
+   "rom": "contra-usa",
+   "latest": {
+    "save": "saves/selftest/devices/selftest-vol/fceumm/contra-usa/Contra (USA).srm",
+    "states": {
+     "selftest-vol": "saves/selftest/devices/selftest-vol/fceumm/contra-usa/Contra (USA).state"
+    }
+   },
+   "versions": [
+    {
+     "at": null,
+     "device": "selftest-vol",
+     "sha": "ebcdc3d501c4",
+     "size": 8192,
+     "kind": "sram",
+     "slot": "0",
+     "name": "Contra (USA).srm",
+     "path": "saves/selftest/devices/selftest-vol/fceumm/contra-usa/Contra (USA).srm",
+     "legacy": true
+    },
+    {
+     "at": null,
+     "device": "selftest-vol",
+     "sha": "424c784be6e0",
+     "size": 262144,
+     "kind": "state",
+     "slot": "0",
+     "name": "Contra (USA).state",
+     "path": "saves/selftest/devices/selftest-vol/fceumm/contra-usa/Contra (USA).state",
+     "legacy": true
+    },
+    {
+     "at": null,
+     "device": "selftest-vol",
+     "sha": "424c784be6e0",
+     "size": 262144,
+     "kind": "state",
+     "slot": "auto",
+     "name": "Contra (USA).state.auto",
+     "path": "saves/selftest/devices/selftest-vol/fceumm/contra-usa/Contra (USA).state.auto",
+     "legacy": true
+    },
+    {
+     "at": null,
+     "device": "selftest-vol",
+     "sha": "424c784be6e0",
+     "size": 262144,
+     "kind": "state",
+     "slot": "1",
+     "name": "Contra (USA).state1",
+     "path": "saves/selftest/devices/selftest-vol/fceumm/contra-usa/Contra (USA).state1",
+     "legacy": true
+    }
+   ]
+  },
+  {
+   "system": "nes",
+   "rom": "super-mario-bros-3-usa",
+   "latest": {
+    "save": "saves/selftest/devices/selftest-vol/nes/super-mario-bros-3-usa/Super Mario Bros. 3 (USA).srm",
+    "states": {
+     "selftest-vol": "saves/selftest/devices/selftest-vol/nes/super-mario-bros-3-usa/Super Mario Bros. 3 (USA).state2"
+    }
+   },
+   "versions": [
+    {
+     "at": "2026-11-10T02-53-58Z",
+     "device": "selftest-vol",
+     "sha": "ebcdc3d501c4",
+     "size": 8192,
+     "kind": "sram",
+     "slot": "0",
+     "name": "Super Mario Bros. 3 (USA).srm",
+     "path": "saves/selftest/games/nes/super-mario-bros-3-usa/2026-11-10T02-53-58Z_selftest-vol_ebcdc3d501c4__Super Mario Bros. 3 (USA)_srm"
+    },
+    {
+     "at": null,
+     "device": "selftest-vol",
+     "sha": "826a224cb429",
+     "size": 8192,
+     "kind": "sram",
+     "slot": "0",
+     "name": "Super Mario Bros. 3 (USA).srm",
+     "path": "saves/selftest/devices/selftest-vol/nes/super-mario-bros-3-usa/Super Mario Bros. 3 (USA).srm",
+     "legacy": true
+    },
+    {
+     "at": null,
+     "device": "selftest-vol",
+     "sha": "340dd402e4a8",
+     "size": 196608,
+     "kind": "state",
+     "slot": "2",
+     "name": "Super Mario Bros. 3 (USA).state2",
+     "path": "saves/selftest/devices/selftest-vol/nes/super-mario-bros-3-usa/Super Mario Bros. 3 (USA).state2",
+     "legacy": true
+    }
+   ]
+  }
+ ]
+}
