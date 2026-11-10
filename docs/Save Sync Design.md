@@ -22,30 +22,51 @@ button, and it is safe to press with no thought at all.
 separate, deliberate action on a single game, and it always copies the file it is about to
 replace to `<name>.before-<timestamp>` first.
 
-## Layout: one subtree per device
+## Layout: game first, device second
 
 ```
-saves/<user>/devices/<device_id>/<system>/<rom>/<original file name>
-saves/<user>/devices/<device_id>/device.json
+saves/<user>/games/<system>/<rom>/<stamp>_<device>_<sha12>__<original name>
+saves/<user>/pulls/<device>/<stamp>.json     what one pull took + clock-skew flags
+saves/<user>/archive.json                    every game, newest first — one read for the view
+```
+
+Example, three handhelds each holding a Contra save:
+
+```
+saves/peter/games/nes/contra-usa/2026-11-08T14-02-11Z_a30-hw01_4f2a9b1c77de__Contra (USA).srm
+saves/peter/games/nes/contra-usa/2026-11-09T18-22-04Z_rgb30-hw01_9b31e0aa5219__Contra (USA).srm
+saves/peter/games/nes/contra-usa/2026-11-09T20-41-57Z_rgb10x-hw01_c02f4e71a3b8__Contra (USA).srm
 ```
 
 `peter/` is the user folder; a second person on the same repo gets `saves/<their-name>/` and never
-sees the first person's writes. `a30_hw01` is the `device_id` from the card marker
+sees the first person's writes. `a30-hw01` is the `device_id` from the card marker
 (`rgj-device.json`) when there is one, otherwise the volume name.
 
-Why per device and not one canonical file per game:
+Why the name carries three things:
 
-* two devices can never write the same path, so **a pull cannot conflict by construction**;
-* save states are tied to a core build. A `.state` from the RGB30 will not load on SpruceOS even
-  for the same game — archiving states per device keeps that honest instead of offering them as if
-  they were interchangeable;
-* battery saves (`.srm`, `.sav`, `.eep`, `.mpk`) *are* portable, and “which one is newest” is a
-  question for restore time, not for the archive. Nothing needs to be merged or renamed.
+* **stamp** — `pulled_at`, UTC, colon-free. Sorts as plain text, so "most recent" is a string
+  comparison and the newest file sits at the top of its game folder. Never the device clock:
+  two of this fleet's handhelds have been hours off.
+* **device** — provenance. You can see at a glance which handheld a save came from, and a state
+  is never mistaken for one that will load on different hardware.
+* **sha12** — the content hash, so a duplicate can be recognised without downloading anything.
 
-Git makes the duplication cheap: identical bytes from two devices are one blob on disk, deduped
-by content, so six devices holding the same Contra `.srm` cost one blob, not six.
+A file is **never rewritten**. A changed save is a new file, and the old one stays. That is what
+makes "most recent" meaningful — there is always a version to point at.
 
-## The diff costs nothing
+Why not one canonical file per game: a save is a binary blob with no mergeable structure, and
+picking a winner at pull time is where save syncs eat data. Keeping every version costs one tree
+entry per pull-touched file; identical bytes from several devices resolve to one git blob.
+
+Save states (`.state`, `.state1`, `.state.auto`) are tied to a core build — an RGB30 state will not
+load on SpruceOS even for the same game. `latest.states` is therefore per device;
+`latest.save` (the `.srm`/`.sav` family) is the portable one.
+
+System names are normalised. Onion/Spruce cards name the save folder after the **core**
+(`fceumm`), ArkOS after the **system** (`nes`). The same game pulled from both would otherwise
+land under two "systems" and never be recognised as one game — so a known core maps to its system.
+
+## The diff costs nothing## The diff costs nothing
 
 A git blob id is `sha1("blob <len>\0" + bytes)`, which is computable in the browser. So the page
 hashes a local save and compares it with the `sha` already in the branch's tree:
@@ -110,12 +131,18 @@ branch is a few hundred KB of saves rather than a copy of a 290 MB working repo.
 
 ## Verified
 
-Headless run (`tools/savesync-selftest.mjs`) against a synthetic card using every layout:
+Headless run (`tools/savesync-selftest.mjs --push`) against a synthetic card using every layout,
+against the real branch:
 
 * browser-side blob hash equals `git hash-object` — `ebcdc3d501c4…` both sides;
-* 8 files across Onion, ArkOS and Android layouts → 9 uploads (8 saves + `device.json`) in one commit;
-* second pull: 0 uploads, 8 unchanged, no commit;
-* change one `.srm`, third pull: exactly 1 upload, 7 unchanged.
+* pull 1: 7 files already archived from the older per-device layout (matched by hash, not path),
+  1 changed file added as a new version;
+* pull 2 (nothing touched): **0 added, 8 unchanged, no commit** — the watermark is this device's
+  own newest archived version per game/kind/slot;
+* pull 3 (one `.srm` rewritten): exactly 1 new version, the rest unchanged;
+* filenames sort newest-first; `archive.json` `latest.save` points at the same file as
+  `versions[0]`; legacy `devices/` entries parse, normalise to their system, and sort last
+  (undated) so a new version always wins.
 
 ## Still open
 
