@@ -1,0 +1,21 @@
+{
+  "device": "selftest-vol",
+  "user": "selftest",
+  "pulledAt": "2026-11-10T02-54-42Z",
+  "pulledFrom": [
+    "selftest_vol"
+  ],
+  "files": [
+    {
+      "name": "Super Mario Bros. 3 (USA).srm",
+      "kind": "sram",
+      "slot": "0",
+      "size": 8192,
+      "sha": "826a224cb429",
+      "source": "roms/saves/nes/Super Mario Bros. 3 (USA).srm",
+      "deviceModified": "2026-11-10T02:54:42.110Z",
+      "clockSkew": false
+    }
+  ],
+  "note": "Clock skew means the device's own date disagreed with the browser by more than a day; ordering in the archive always uses pulledAt."
+}
