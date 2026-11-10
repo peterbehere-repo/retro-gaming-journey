@@ -154,9 +154,8 @@
               </summary>
               <div class="chan-body">
                 <p class="sync-note">
-                  ArkOS, Spruce and Onion handhelds mount as an ordinary USB drive. Browsers can't
-                  list drives for security, but grant the card root once and this page reads the
-                  queue straight off it — and writes an ack back so the device can prune what was taken.
+                  ArkOS, Spruce and Onion handhelds mount as an ordinary USB drive. Grant the card
+                  root once and the page reads the queue straight off it.
                 </p>
                 <dl>
                   <dt>Device</dt><dd id="fsa-device">—</dd>
@@ -209,11 +208,10 @@
           <div class="sync-card" id="saves-card">
             <h3>Save files &amp; states <span id="saves-pill" class="usb-pill">not set up</span></h3>
             <p class="sync-note">
-              Pulls <code>.srm</code> / <code>.sav</code> battery saves and <code>.state</code> slots off a
-              linked volume and archives them in the repo — one folder per user, one subtree per device.
-              A pull only ever adds: it never writes to the card, never deletes from the archive, and
-              skips any file whose bytes the archive already holds. Restore copies the file it replaces
-              to <code>.before-&lt;timestamp&gt;</code> first.
+              Pulls <code>.srm</code> / <code>.sav</code> saves and <code>.state</code> slots off a linked
+              volume into the repo — one folder per user, one subtree per device. A pull only adds: it
+              never writes to the card, never deletes, and skips bytes the archive already holds.
+              Restore copies what it replaces to <code>.before-&lt;timestamp&gt;</code> first.
             </p>
             <div class="usb-actions">
               <button id="btn-saves-pull" class="btn btn-small">Pull saves</button>
@@ -301,8 +299,8 @@
           <div class="sync-card" id="ra-card">
             <h3>RetroAchievements progress</h3>
             <p class="sync-note">
-              Reads your public RA progress directly — no handset, card or proxy involved. The API
-              key is your own web key from
+              Reads your public RA progress directly — no handset or card involved. The API key is
+              your own web key from
               <a href="https://retroachievements.org/controlpanel.php" target="_blank" rel="noopener">your RA control panel</a>,
               kept in this browser only.
             </p>
