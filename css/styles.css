@@ -171,7 +171,7 @@ main.wide { max-width: 2400px; padding: .9rem 1rem 1.2rem; }
 .log li { border-left: 2px solid var(--border); padding-left: .6rem; }
 .log li.ok { border-color: var(--accent); color: var(--fg); }
 .log li.err { border-color: var(--danger); color: var(--danger); }
-.log:empty::after { content: "Nothing yet."; color: var(--muted); opacity: .6; border-left: 2px solid var(--border); padding-left: .6rem; }
+#sync-log:empty::after { content: "Nothing yet."; color: var(--muted); opacity: .6; border-left: 2px solid var(--border); padding-left: .6rem; }
 .sync-note code { color: #9ff5d4; }
 
 .btn {
