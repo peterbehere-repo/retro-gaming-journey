@@ -350,11 +350,17 @@
   /* ---------------------------------------------------------------- UI */
 
   function card(dev, index) {
-    const el = document.createElement("div");
-    el.className = "sync-card";
+    // A channel row inside the "Read the queue" card: summary always visible, controls on open.
+    const el = document.createElement("details");
+    el.className = "chan";
     el.dataset.device = dev.id;
     el.innerHTML = `
-      <h3>${dev.label} <span class="usb-pill lan-pill">not probed</span></h3>
+      <summary class="chan-head">
+        <span class="chan-name">${dev.label}</span>
+        <span class="chan-meta">LAN</span>
+        <span class="usb-pill lan-pill">not probed</span>
+      </summary>
+      <div class="chan-body">
       <p class="sync-note">
         Reads its own card over the LAN: no cable, no card reader. SFTPGo (SpruceOS on the
         A30) and File Browser (ArkOS on the G350, RGB30) are both understood — the backend
@@ -372,22 +378,25 @@
         <button class="btn btn-ghost btn-small lan-pull">Pull rows</button>
         <button class="btn btn-ghost btn-small lan-forget">Forget</button>
       </div>
-      <p class="usb-hint lan-hint"></p>`;
+      <p class="usb-hint lan-hint"></p>
+      </div>`;
     return el;
   }
 
   function mount() {
-    const grid = document.querySelector("#panel-sync .sync-grid");
-    if (!grid) return;
-    const anchor = grid.querySelector("#ra-card") || null;
+    const rows = document.querySelector("#lan-rows");
+    if (!rows) return;
+
+    let addBtn = null;
 
     const paint = () => {
-      grid.querySelectorAll(".sync-card[data-device]").forEach(n => n.remove());
+      rows.querySelectorAll("[data-device]").forEach(n => n.remove());
       cfg.devices.forEach((dev, i) => {
         const el = card(dev, i);
-        grid.insertBefore(el, anchor);
+        rows.appendChild(el);
         wire(el, dev);
       });
+      if (addBtn) rows.appendChild(addBtn); // always the last row
     };
 
     const wire = (el, dev) => {
@@ -458,8 +467,6 @@
       });
     };
 
-    paint();
-
     // A second ArkOS handheld is one button away: same shape, empty credentials.
     const add = document.createElement("button");
     add.className = "btn btn-ghost btn-small";
@@ -473,7 +480,8 @@
       });
       save(); paint();
     });
-    grid.insertBefore(add, anchor);
+    addBtn = add;
+    paint();
   }
 
   window.RGJLan = {

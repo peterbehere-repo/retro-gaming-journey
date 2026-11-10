@@ -611,6 +611,11 @@ to \`<name>.before-<timestamp>\` first.
     set("#saves-user", s.user || D.user);
     set("#saves-device", s.device || "");
     set("#saves-token", s.token || "");
+    const sum = $("#saves-summary");
+    if (sum) {
+      const who = (s.owner && s.repo) ? `${s.owner}/${s.repo}@${s.branch || D.branch}` : `not set — ${D.owner}/${D.repo}@${D.branch}`;
+      sum.textContent = `${who} · ${s.user || D.user}`;
+    }
     const pill = $("#saves-pill");
     if (pill) {
       const on = !!(s.token && s.user);
@@ -651,7 +656,13 @@ to \`<name>.before-<timestamp>\` first.
     }
   }
 
+  function openOutput() {
+    const d = $("#saves-output");
+    if (d && "open" in d) d.open = true;
+  }
+
   function renderPreview(res, cfg) {
+    openOutput();
     const ul = $("#saves-list");
     if (!ul) return;
     ul.innerHTML = "";
@@ -737,6 +748,7 @@ to \`<name>.before-<timestamp>\` first.
     settingsSave(cfg);
     try {
       const rows = await listing(cfg);
+      openOutput();
       const ul = $("#saves-list");
       if (ul) {
         ul.innerHTML = "";

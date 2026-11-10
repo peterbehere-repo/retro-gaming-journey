@@ -116,6 +116,44 @@ main.wide { max-width: 2400px; padding: .9rem 1rem 1.2rem; }
 
 
 .sync-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: .9rem; }
+.sync-grid-2 { grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); align-items: start; }
+.sync-stack { display: grid; gap: .9rem; min-width: 0; }
+.sync-card h4 { font-size: .78rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 1rem 0 .5rem; }
+.log-title { margin-top: 1rem; }
+
+/* channel rows: one card, hairlines instead of boxes */
+.chan { border-top: 1px solid var(--border); }
+.chan:first-of-type { border-top: none; }
+.chan > summary.chan-head {
+  display: flex; align-items: center; gap: .55rem; padding: .6rem .1rem;
+  cursor: pointer; list-style: none; font-size: .88rem; font-weight: 600;
+}
+.chan > summary.chan-head::-webkit-details-marker { display: none; }
+.chan > summary.chan-head::before {
+  content: "▸"; color: var(--muted); font-size: .72rem; transition: transform .12s ease; width: 1em;
+}
+.chan[open] > summary.chan-head::before { transform: rotate(90deg); color: var(--accent); }
+.chan-name { font-weight: 600; }
+.chan-meta { font-size: .7rem; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; }
+.chan-head .usb-pill { margin-left: auto; }
+.chan-body { padding: 0 0 .9rem .1rem; display: grid; gap: .6rem; }
+.chan-body > .sync-note { margin-bottom: 0; }
+.chan-body dl { margin-bottom: 0; }
+#lan-rows .chan-body { padding-left: .1rem; }
+.span-all { grid-column: 1 / -1; }
+
+/* session stat row */
+.stat-row { display: grid; grid-template-columns: 1fr 1fr auto; gap: .5rem; margin-bottom: .8rem; }
+.stat-row > div { display: grid; gap: .15rem; min-width: 0; }
+.stat-k { font-size: .62rem; letter-spacing: .09em; text-transform: uppercase; color: var(--muted); }
+.stat-v {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .76rem;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+@media (max-width: 900px) {
+  .sync-grid-2 { grid-template-columns: 1fr; }
+  .stat-row { grid-template-columns: 1fr 1fr; }
+}
 .sync-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.1rem; }
 .sync-card dl { display: grid; grid-template-columns: auto 1fr; gap: .3rem .8rem; font-size: .8rem; margin-bottom: .8rem; }
 .sync-card dt { color: var(--muted); }
@@ -233,6 +271,7 @@ body.journey-view main.wide { padding: .5rem .7rem .6rem; }
 
 /* USB device link */
 .usb-card { grid-column: 1 / -1; }
+.chan .usb-pill { flex: none; }
 .usb-card h3 { display: flex; align-items: center; gap: .6rem; flex-wrap: wrap; }
 .usb-pill {
   font-size: .62rem; letter-spacing: .1em; text-transform: uppercase; font-weight: 700;
