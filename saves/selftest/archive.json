@@ -1,7 +1,7 @@
 {
  "schema": 1,
  "user": "selftest",
- "generated": "2026-11-10T02:53:58.686Z",
+ "generated": "2026-11-10T02:54:01.717Z",
  "branch": "saves",
  "counts": {
   "games": 3,
@@ -10,8 +10,8 @@
  },
  "devices": {
   "selftest-vol": {
-   "pulls": 0,
-   "lastPull": null
+   "pulls": 1,
+   "lastPull": "2026-11-10T02-53-58Z"
   }
  },
  "games": [
@@ -116,14 +116,14 @@
    },
    "versions": [
     {
-     "at": "2026-11-10T02-53-58Z",
+     "at": "2026-11-10T02-54-01Z",
      "device": "selftest-vol",
      "sha": "ebcdc3d501c4",
      "size": 8192,
      "kind": "sram",
      "slot": "0",
      "name": "Super Mario Bros. 3 (USA).srm",
-     "path": "saves/selftest/games/nes/super-mario-bros-3-usa/2026-11-10T02-53-58Z_selftest-vol_ebcdc3d501c4__Super Mario Bros. 3 (USA)_srm"
+     "path": "saves/selftest/games/nes/super-mario-bros-3-usa/2026-11-10T02-54-01Z_selftest-vol_ebcdc3d501c4__Super Mario Bros. 3 (USA)_srm"
     },
     {
      "at": null,
