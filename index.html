@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Retro Gaming Journey</title>
   <meta name="description" content="Offline-first retro emulation progress dashboard. Sync your handheld achievements on demand." />
-  <link rel="stylesheet" href="css/styles.css?v=iter29" />
+  <link rel="stylesheet" href="css/css/styles.css?v=iter30" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎮</text></svg>" />
 </head>
 <body>
@@ -262,30 +262,6 @@
             </details>
           </div>
 
-          <div class="sync-card" id="ra-card">
-            <h3>RetroAchievements progress</h3>
-            <p class="sync-note">
-              Reads your public RA progress directly — no handset, card or proxy involved. The API
-              key is your own web key from
-              <a href="https://retroachievements.org/controlpanel.php" target="_blank" rel="noopener">your RA control panel</a>,
-              kept in this browser only.
-            </p>
-            <div class="ra-form">
-              <label>RA username
-                <input id="ra-user" type="text" autocomplete="username" spellcheck="false">
-              </label>
-              <label>Web API key
-                <input id="ra-key" type="password" autocomplete="off" spellcheck="false">
-              </label>
-            </div>
-            <div class="usb-actions">
-              <button id="btn-ra-save" class="btn btn-small">Save account</button>
-              <button id="btn-ra-pull" class="btn btn-ghost btn-small">Pull progress</button>
-              <button id="btn-ra-forget" class="btn btn-ghost btn-small">Forget account</button>
-            </div>
-            <p class="usb-hint" id="ra-hint"></p>
-            <ul id="ra-unmatched" class="log"></ul>
-          </div>
 
         </div>
 
@@ -320,6 +296,31 @@
             </details>
             <h4 class="log-title">Log</h4>
             <ul id="sync-log" class="log"><li>Ready. No sync performed this session.</li></ul>
+          </div>
+
+          <div class="sync-card" id="ra-card">
+            <h3>RetroAchievements progress</h3>
+            <p class="sync-note">
+              Reads your public RA progress directly — no handset, card or proxy involved. The API
+              key is your own web key from
+              <a href="https://retroachievements.org/controlpanel.php" target="_blank" rel="noopener">your RA control panel</a>,
+              kept in this browser only.
+            </p>
+            <div class="ra-form">
+              <label>RA username
+                <input id="ra-user" type="text" autocomplete="username" spellcheck="false">
+              </label>
+              <label>Web API key
+                <input id="ra-key" type="password" autocomplete="off" spellcheck="false">
+              </label>
+            </div>
+            <div class="usb-actions">
+              <button id="btn-ra-save" class="btn btn-small">Save account</button>
+              <button id="btn-ra-pull" class="btn btn-ghost btn-small">Pull progress</button>
+              <button id="btn-ra-forget" class="btn btn-ghost btn-small">Forget account</button>
+            </div>
+            <p class="usb-hint" id="ra-hint"></p>
+            <ul id="ra-unmatched" class="log"></ul>
           </div>
         </div>
       </div>
