@@ -1,17 +1,21 @@
 {
  "schema": 1,
  "user": "selftest",
- "generated": "2026-11-10T02:54:57.407Z",
+ "generated": "2026-11-10T03:54:23.538Z",
  "branch": "saves",
  "counts": {
   "games": 3,
-  "versions": 17,
+  "versions": 18,
   "legacy": 8
  },
  "devices": {
   "selftest-vol": {
-   "pulls": 8,
-   "lastPull": "2026-11-10T02-54-53Z"
+   "pulls": 9,
+   "lastPull": "2026-11-10T02-54-57Z"
+  },
+  "viewtest": {
+   "pulls": 0,
+   "lastPull": null
   }
  },
  "games": [
@@ -109,12 +113,22 @@
    "system": "nes",
    "rom": "super-mario-bros-3-usa",
    "latest": {
-    "save": "saves/selftest/games/nes/super-mario-bros-3-usa/2026-11-10T02-54-57Z_selftest-vol_826a224cb429__Super Mario Bros. 3 (USA).srm",
+    "save": "saves/selftest/games/nes/super-mario-bros-3-usa/2026-11-10T03-54-23Z_viewtest_bec1965bb2be__Super Mario Bros. 3 (USA).srm",
     "states": {
      "selftest-vol": "saves/selftest/devices/selftest-vol/nes/super-mario-bros-3-usa/Super Mario Bros. 3 (USA).state2"
     }
    },
    "versions": [
+    {
+     "at": "2026-11-10T03-54-23Z",
+     "device": "viewtest",
+     "sha": "bec1965bb2be",
+     "size": 8192,
+     "kind": "sram",
+     "slot": "0",
+     "name": "Super Mario Bros. 3 (USA).srm",
+     "path": "saves/selftest/games/nes/super-mario-bros-3-usa/2026-11-10T03-54-23Z_viewtest_bec1965bb2be__Super Mario Bros. 3 (USA).srm"
+    },
     {
      "at": "2026-11-10T02-54-57Z",
      "device": "selftest-vol",
