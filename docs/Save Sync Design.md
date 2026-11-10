@@ -144,6 +144,31 @@ against the real branch:
   `versions[0]`; legacy `devices/` entries parse, normalise to their system, and sort last
   (undated) so a new version always wins.
 
+## The browser panel (pass 2)
+
+The Save archive card in the Sync tab is the archive's only UI. One row per game, newest activity
+first, with the newest portable save and the newest state of each device resolved already — so the
+question "what is my most recent Contra save" is answered on the row, without opening anything.
+
+| Control | Does |
+|---|---|
+| Pull from device | the pass-1 pull: read linked volumes, archive only new bytes |
+| Refresh archive | re-reads the branch (ref → commit → tree, 3 calls, never the CDN) |
+| Filter box / All·Saves·States | narrows by title, system, rom or device |
+| Download (row) | the newest save of that game, by blob sha, straight to the download folder |
+| ▸ N | expands the history: one line per distinct version per device, `×N` when the same bytes were pulled more than once, capped at 8 with a count of the rest |
+| New game… | files a first save for a game the archive doesn't know yet |
+
+All uploads are explicit and additive. A file dropped in becomes `<stamp>_<device>_<sha12>__<name>`
+under the game's folder and a new commit; bytes already in the archive (same content hash, from any
+device) return "already archived" instead of a duplicate. The panel refuses a save in the state
+picker and vice versa, so a `.state` can't be filed as a `.srm`.
+
+Verified against the real branch (`tools/savesync-view-test.mjs`): view → download → hash-check →
+upload-same-bytes (reported duplicate) → upload-one-byte-changed (new version, commit `d258289`,
+lands on top and becomes `latest.save`). Rendered in a headless browser at 1360px and 420px with
+live data, no console errors.
+
 ## Still open
 
 * **A token for the browser.** The page cannot mint one; paste it once per browser.

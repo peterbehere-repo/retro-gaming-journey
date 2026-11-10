@@ -756,6 +756,157 @@ core build; battery saves go anywhere.
     return out;
   }
 
+  /* ---------------- ARCHIVE VIEW: read, download, upload ---------------- */
+  // Everything below serves the browser panel. No file is ever replaced: an upload is a new
+  // version next to the old one, and a download is a read of one blob by its sha.
+  const MIN_MS = 0;
+  function fmtWhen(at) {
+    const ms = stampMs(at);
+    if (!ms) return "undated";
+    const d = new Date(ms);
+    const M = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const hh = String(d.getUTCHours()).padStart(2, "0");
+    const mm = String(d.getUTCMinutes()).padStart(2, "0");
+    return `${d.getUTCDate()} ${M[d.getUTCMonth()]} ${hh}:${mm} UTC`;
+  }
+  function relWhen(at) {
+    const ms = stampMs(at);
+    if (!ms) return "";
+    const d = Date.now() - ms;
+    if (d < 0) return "in the future";
+    if (d < 90e3) return "just now";
+    if (d < 36e5) return `${Math.round(d / 6e4)} min ago`;
+    if (d < 864e5) return `${Math.round(d / 36e5)} h ago`;
+    if (d < 2592e6) return `${Math.round(d / 864e5)} d ago`;
+    return "";
+  }
+  const titleOf = (v, rom) => {
+    if (!v) return rom.replace(/-/g, " ").replace(/\b[a-z]/g, (c) => c.toUpperCase());
+    const base = String(v.name || "").replace(/\.[^./]+$/, "");
+    return base || rom;
+  };
+  const kb = (n) => (n == null ? "?" : n < 1024 * 1024 ? `${Math.max(1, Math.round(n / 1024))} KB` : `${(n / 1048576).toFixed(1)} MB`);
+
+  // The archive as the panel needs it: one row per game, newest first, with the newest portable
+  // save and the newest state per device already resolved.
+  async function view(opts) {
+    const cfg = { ...D, ...opts };
+    if (!cfg.token) throw new Error("No GitHub token — open Archive settings and paste one.");
+    const gh = new Gh(cfg);
+    const remote = await gh.map();
+    const model = archiveModel(remote, cfg);
+    const rows = [];
+    for (const g of model.games.values()) {
+      const newest = g.versions[0] || null;
+      const states = Object.entries(g.latest.states)
+        .map(([device, v]) => ({ device, ...v }))
+        .sort((a, b) => (a.at < b.at ? 1 : a.at > b.at ? -1 : 0));
+      rows.push({
+        key: `${g.system}/${g.rom}`,
+        system: g.system,
+        rom: g.rom,
+        title: titleOf(g.latest.save || newest, g.rom),
+        latestSave: g.latest.save || null,
+        states,
+        newest,
+        versions: g.versions,
+        devices: [...new Set(g.versions.map((v) => v.device))]
+      });
+    }
+    // newest activity first; games with nothing dated (legacy tree) sink to the bottom
+    rows.sort((a, b) => {
+      const ax = stampMs(a.newest && a.newest.at) || 0;
+      const bx = stampMs(b.newest && b.newest.at) || 0;
+      if (ax !== bx) return bx - ax;
+      return (a.system + a.rom).localeCompare(b.system + b.rom);
+    });
+    return {
+      games: rows,
+      devices: [...model.devices.values()],
+      counts: {
+        games: rows.length,
+        versions: rows.reduce((n, r) => n + r.versions.length, 0),
+        saves: rows.filter((r) => r.latestSave).length,
+        states: rows.reduce((n, r) => n + r.states.length, 0),
+        legacy: rows.reduce((n, r) => n + r.versions.filter((v) => v.legacy).length, 0)
+      },
+      newest: rows.reduce((best, r) => {
+        const at = (r.newest && r.newest.at) || "";
+        return at > best ? at : best;
+      }, ""),
+      remote,
+      model
+    };
+  }
+
+  async function download(opts) {
+    const cfg = { ...D, ...opts };
+    if (!opts.path) throw new Error("No archive path given.");
+    const gh = new Gh(cfg);
+    let sha = opts.sha;
+    if (!sha) {
+      const remote = await gh.map();
+      const hit = remote.get(opts.path);
+      if (!hit) throw new Error("That file is not on branch " + cfg.branch + " any more.");
+      sha = hit.sha;
+    }
+    const bytes = await gh.blob(sha);
+    return { bytes, name: opts.name || opts.path.split("/").pop() };
+  }
+
+  // Upload one file as a NEW version of a game. Never overwrites: the path is stamped, and bytes
+  // already in the archive (same content hash, any device) are reported instead of duplicated.
+  async function upload(opts) {
+    const log = opts.onLog || (() => {});
+    const cfg = { ...D, ...opts };
+    if (!cfg.token) throw new Error("No GitHub token — open Archive settings and paste one.");
+    const bytes = opts.bytes instanceof Uint8Array ? opts.bytes : new Uint8Array(opts.bytes);
+    if (!bytes.length) throw new Error("That file is empty.");
+    if (bytes.length > 50 * 1048576) throw new Error(`${kb(bytes.length)} is over GitHub's 50 MB per-file warning — not uploading.`);
+    const system = normSystem(slug(opts.system || "unsorted"));
+    const rom = slug(opts.rom || String(opts.name || "").replace(/\.[^./]+$/, ""));
+    if (!rom) throw new Error("No game name — cannot file an upload without one.");
+
+    const gh = new Gh(cfg);
+    log("Reading the branch tree…");
+    const remote = await gh.map();
+    const model = archiveModel(remote, cfg);
+    const sha = await gitBlobSha(bytes);
+    const sha12 = sha.slice(0, 12);
+
+    const existing = model.games.get(`${system}/${rom}`);
+    const dup = existing && existing.versions.find((v) => v.sha === sha12);
+    if (dup) {
+      log("Those exact bytes are already archived — new version not needed.");
+      return { duplicate: true, path: dup.path, sha: sha12 };
+    }
+
+    const p = parseSaveName(opts.name || "") || { kind: "file", slot: "0" };
+    const dev = slug(opts.device || "manual");
+    const stamp = stampOf(Date.now());
+    const name = `${stamp}_${dev}_${sha12}__${fsSafe(opts.name || rom)}`;
+    const path = `${gameRoot(cfg)}/${system}/${rom}/${name}`;
+    model.add({
+      at: stamp, device: dev, sha: sha12, size: bytes.length, kind: p.kind, slot: p.slot,
+      name: opts.name || rom, path, system, rom
+    });
+    const files = [
+      { path, bytes },
+      { path: `${userRoot(cfg)}/archive.json`, bytes: enc(JSON.stringify(model.toJSON(), null, 1) + "\n") }
+    ];
+    const msg = `saves: upload ${opts.name || rom} → ${system}/${rom} (${dev})`;
+    log(`Uploading ${kb(bytes.length)} in one commit…`);
+    let commit;
+    try {
+      commit = await gh.commit(files, msg);
+    } catch (e) {
+      if (e.status === 409 || e.status === 422) commit = await gh.commit(files, msg);
+      else throw e;
+    }
+    log(`Committed ${commit.slice(0, 7)}.`);
+    return { path, sha: sha12, commit, kind: p.kind, slot: p.slot, system, rom };
+  }
+
   /* ---------------- File System Access reader ---------------- */
   function fsaReader(handle, label) {
     const dirs = new Map([["", handle]]);
@@ -986,6 +1137,7 @@ core build; battery saves go anywhere.
   async function uiList() {
     const cfg = settingsFromForm();
     if (!cfg.token) { uiLog("Paste a GitHub token first.", "err"); return; }
+    if (!VIEW.data) { await uiRefresh(); return; }
     settingsSave(cfg);
     try {
       const rows = await listing(cfg);
@@ -1041,6 +1193,244 @@ core build; battery saves go anywhere.
     }
   }
 
+  /* ---------------- the panel ---------------- */
+  const VIEW = { data: null, filter: "all", q: "", open: new Set(), busy: false };
+  const el = (tag, cls, text) => {
+    const n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  };
+  function saveBytes(bytes, name) {
+    const blob = new Blob([bytes], { type: "application/octet-stream" });
+    const url = URL.createObjectURL(blob);
+    const a = el("a");
+    a.href = url;
+    a.download = name || "save.bin";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 30000);
+  }
+
+  function renderArchive() {
+    const box = $("#saves-games");
+    if (!box) return;
+    box.innerHTML = "";
+    const d = VIEW.data;
+    const count = $("#saves-count");
+    if (!d) {
+      if (count) count.textContent = "Not read yet — press Refresh archive.";
+      return;
+    }
+    if (count) {
+      const bits = [
+        `${d.counts.games} game${d.counts.games === 1 ? "" : "s"}`,
+        `${d.counts.versions} version${d.counts.versions === 1 ? "" : "s"}`,
+        `${d.counts.states} state${d.counts.states === 1 ? "" : "s"}`
+      ];
+      if (d.newest) bits.push(`newest ${fmtWhen(d.newest)} (${relWhen(d.newest)})`);
+      if (d.counts.legacy) bits.push(`${d.counts.legacy} from the older layout`);
+      count.textContent = bits.join(" · ");
+    }
+
+    const q = VIEW.q.trim().toLowerCase();
+    const rows = d.games.filter((g) => {
+      if (VIEW.filter === "save" && !g.latestSave) return false;
+      if (VIEW.filter === "state" && !g.states.length) return false;
+      if (!q) return true;
+      return (g.title + " " + g.system + " " + g.rom + " " + g.devices.join(" ")).toLowerCase().includes(q);
+    });
+    if (!rows.length) {
+      box.appendChild(el("p", "sa-empty", d.games.length ? "No game matches that filter." : "The archive has no saves yet — pull one off a device."));
+      return;
+    }
+
+    for (const g of rows) {
+      const card = el("div", "sa-game");
+      const row = el("div", "sa-row");
+      const t = el("div", "sa-name");
+      const strong = el("span", "sa-title", g.title);
+      strong.title = g.rom;
+      t.appendChild(strong);
+      t.appendChild(el("span", "sa-sys", g.system));
+      row.appendChild(t);
+
+      const newest = el("div", "sa-newest");
+      if (g.latestSave) {
+        const l = g.latestSave;
+        newest.appendChild(el("span", "sa-when", fmtWhen(l.at)));
+        newest.appendChild(el("span", "sa-meta", `${l.device} · ${kb(l.size)}`));
+        if (relWhen(l.at)) newest.appendChild(el("span", "sa-rel", relWhen(l.at)));
+      } else {
+        newest.appendChild(el("span", "sa-meta", "no battery save · states only"));
+      }
+      if (g.states.length) {
+        const newestState = g.states[0];
+        newest.appendChild(el("span", "sa-meta",
+          `${g.states.length} state${g.states.length === 1 ? "" : "s"}${newestState.at ? ` · newest ${fmtWhen(newestState.at)}` : ""}`));
+      }
+      if (g.devices.length > 1) newest.appendChild(el("span", "sa-meta", `${g.devices.length} devices`));
+      row.appendChild(newest);
+
+      const act = el("div", "sa-actions");
+      const mk = (label, cls, fn, title) => {
+        const b = el("button", cls || "btn btn-ghost btn-small", label);
+        b.type = "button";
+        if (title) b.title = title;
+        b.addEventListener("click", fn);
+        return b;
+      };
+      const target = g.latestSave || g.newest;
+      act.appendChild(mk("Download", "btn btn-small btn-tight", () => uiDownload(target, g), `Download the newest ${g.latestSave ? "save" : "version"}`));
+      const n = g.versions.length;
+      act.appendChild(mk(`${VIEW.open.has(g.key) ? "▾" : "▸"} ${n}`, "btn btn-ghost btn-small sa-histbtn" + (VIEW.open.has(g.key) ? " on" : ""), () => {
+        if (VIEW.open.has(g.key)) VIEW.open.delete(g.key); else VIEW.open.add(g.key);
+        renderArchive();
+      }, `${n} version${n === 1 ? "" : "s"} in this game — click to ${VIEW.open.has(g.key) ? "hide" : "show"}`));
+      row.appendChild(act);
+      card.appendChild(row);
+
+      if (VIEW.open.has(g.key)) {
+        const hist = el("div", "sa-hist");
+        const grouped = new Map(); // device -> versions
+        for (const v of g.versions) {
+          if (!grouped.has(v.device)) grouped.set(v.device, []);
+          grouped.get(v.device).push(v);
+        }
+        for (const [dev, list] of grouped) {
+          hist.appendChild(el("div", "sa-hdev", dev));
+          // the same bytes pulled more than once are one line, not six — the count says how
+          // many copies the branch holds, and a download picks the newest of them
+          const uniq = new Map();
+          for (const v of list) {
+            const k = `${v.sha}|${v.kind}|${v.slot}`;
+            const hit = uniq.get(k);
+            if (hit) hit.count++;
+            else uniq.set(k, { ...v, count: 1 });
+          }
+          const all = [...uniq.values()];
+          const cap = 8;
+          for (const v of all.slice(0, cap)) {
+            const line = el("div", "sa-hline");
+            line.appendChild(el("span", "sa-when", v.at ? fmtWhen(v.at) : "undated"));
+            line.appendChild(el("span", "sa-meta",
+              `${v.legacy ? "older layout · " : ""}${v.slot && v.slot !== "0" ? v.kind + " " + v.slot : v.kind}` +
+              ` · ${kb(v.size)} · ${String(v.sha).slice(0, 8)}` +
+              (v.count > 1 ? ` · ×${v.count}` : "")));
+            const dl = el("button", "btn btn-ghost btn-small", "Download");
+            dl.type = "button";
+            dl.addEventListener("click", () => uiDownload(v, g));
+            line.appendChild(dl);
+            hist.appendChild(line);
+          }
+          if (all.length > cap) hist.appendChild(el("div", "sa-more", `+${all.length - cap} older version(s) on this device`));
+        }
+        card.appendChild(hist);
+      }
+
+      const addRow = el("div", "sa-add");
+      const addTitle = el("span", "sa-meta", "Add a version by hand");
+      addRow.appendChild(addTitle);
+      const mkBtn = (label, kind) => {
+        const b = el("button", "btn btn-ghost btn-small", label);
+        b.type = "button";
+        b.addEventListener("click", () => pickFiles(g, kind));
+        return b;
+      };
+      addRow.appendChild(mkBtn("Upload save…", "save"));
+      addRow.appendChild(mkBtn("Upload state…", "state"));
+      if (VIEW.open.has(g.key)) card.appendChild(addRow);
+
+      box.appendChild(card);
+    }
+  }
+
+  async function uiRefresh(opts) {
+    const cfg = settingsFromForm();
+    if (!cfg.token) {
+      const count = $("#saves-count");
+      if (count) count.textContent = "Paste a GitHub token in Archive settings to read the archive.";
+      return;
+    }
+    if (VIEW.busy) return;
+    VIEW.busy = true;
+    const btn = $("#btn-saves-refresh");
+    if (btn) { btn.disabled = true; btn.textContent = "Reading…"; }
+    try {
+      VIEW.data = await view(cfg);
+      renderArchive();
+      uiLog(`Archive: ${VIEW.data.counts.games} game(s), ${VIEW.data.counts.versions} version(s).`, "ok");
+    } catch (e) {
+      uiLog(`Archive read failed: ${e.message}`, "err");
+      const count = $("#saves-count");
+      if (count) count.textContent = `Could not read the archive: ${e.message}`;
+    } finally {
+      VIEW.busy = false;
+      if (btn) { btn.disabled = false; btn.textContent = "Refresh archive"; }
+    }
+  }
+
+  async function uiDownload(v, g) {
+    const cfg = settingsFromForm();
+    if (!cfg.token) { uiLog("Paste a GitHub token first.", "err"); return; }
+    try {
+      const res = await download({ ...cfg, path: v.path, sha: v.sha && v.sha.length > 12 ? v.sha : null });
+      saveBytes(res.bytes, v.name || `${g.rom}.bin`);
+      uiLog(`Downloaded ${v.name} (${kb(res.bytes.length)}) from ${v.device}.`, "ok");
+    } catch (e) {
+      uiLog(`Download failed: ${e.message}`, "err");
+    }
+  }
+
+  let PENDING = null; // { game, kind }
+  function pickFiles(game, kind) {
+    const input = $("#saves-file");
+    if (!input) return;
+    PENDING = { game, kind };
+    input.value = "";
+    input.click();
+  }
+  async function uiUploadTo(game, kind) {
+    if (!game || !game.key) return;
+    const cfg = settingsFromForm();
+    if (!cfg.token) { uiLog("Paste a GitHub token first.", "err"); return; }
+    const input = $("#saves-file");
+    const files = [...(input.files || [])];
+    if (!files.length) { uiLog("No file chosen.", "err"); return; }
+    const [system, rom] = game.key.split("/");
+    for (const f of files) {
+      const name = f.name;
+      if (kind === "save" && !isSave((parseSaveName(name) || {}).kind)) {
+        uiLog(`${name} does not look like a save — upload it as a state or rename it.`, "err");
+        continue;
+      }
+      if (kind === "state" && !isState((parseSaveName(name) || {}).kind)) {
+        uiLog(`${name} does not look like a state (.state, .state1 …).`, "err");
+        continue;
+      }
+      try {
+        const bytes = new Uint8Array(await f.arrayBuffer());
+        const out = await upload({
+          ...cfg, bytes, name, system, rom,
+          device: slug(cfg.device || "manual"), onLog: (m) => uiLog(m)
+        });
+        uiLog(out.duplicate
+          ? `${name}: those exact bytes were already archived (${out.path.split("/").pop()}).`
+          : `${name}: new version added to ${system}/${rom}.`, out.duplicate ? "" : "ok");
+      } catch (e) {
+        uiLog(`Upload of ${name} failed: ${e.message}`, "err");
+      }
+    }
+    await uiRefresh();
+  }
+  async function onFilePicked() {
+    if (!PENDING) return;
+    const { game, kind } = PENDING;
+    PENDING = null;
+    await uiUploadTo(game, kind);
+  }
+
   function initUI() {
     if (typeof document === "undefined") return;
     const s = settingsLoad();
@@ -1050,12 +1440,41 @@ core build; battery saves go anywhere.
       const cfg = settingsFromForm();
       settingsSave(cfg);
       settingsToForm(cfg);
-      uiLog(`Save archive set to ${cfg.owner}/${cfg.repo} @ ${cfg.branch} · user ${cfg.user}.`, "ok");
+      uiLog(`Archive set to ${cfg.owner}/${cfg.repo} @ ${cfg.branch} · user ${cfg.user}.`, "ok");
+      VIEW.data = null;
+      uiRefresh();
     });
     on("#btn-saves-pull", uiPull);
     on("#btn-saves-preview", uiPreview);
-    on("#btn-saves-list", uiList);
-    if (s.token) settingsToForm(s);
+    on("#btn-saves-refresh", () => uiRefresh());
+    on("#btn-saves-list", () => uiRefresh());
+
+    const search = $("#saves-search");
+    if (search) search.addEventListener("input", () => { VIEW.q = search.value; renderArchive(); });
+    document.querySelectorAll(".sa-tab").forEach((b) => {
+      b.addEventListener("click", () => {
+        VIEW.filter = b.dataset.filter || "all";
+        document.querySelectorAll(".sa-tab").forEach((x) => x.classList.toggle("on", x === b));
+        renderArchive();
+      });
+    });
+    const file = $("#saves-file");
+    if (file) file.addEventListener("change", onFilePicked);
+    const upNew = $("#btn-saves-upload");
+    if (upNew) {
+      upNew.addEventListener("click", async () => {
+        const cfg = settingsFromForm();
+        if (!cfg.token) { uiLog("Paste a GitHub token first.", "err"); return; }
+        const system = (global.prompt("System folder (nes, snes, gba, psx …)", "") || "").trim();
+        if (!system) return;
+        const rom = (global.prompt("Game folder name (e.g. contra-usa)", "") || "").trim();
+        if (!rom) return;
+        const game = { key: `${normSystem(slug(system))}/${slug(rom)}`, system: normSystem(slug(system)), rom: slug(rom), title: rom };
+        VIEW.open.add(game.key);
+        pickFiles(game, "any");
+      });
+    }
+    if (s.token) uiRefresh();
   }
 
   if (typeof document !== "undefined") {
@@ -1066,7 +1485,11 @@ core build; battery saves go anywhere.
   const api = {
     DEFAULTS: D, scan, pull, restore, listing, archiveModel, stampOf, stampMs, Gh, fsaReader,
     parseSaveName, gitBlobSha, sha256Hex, pathFor,
-    ui: { init: initUI, pull: uiPull, preview: uiPreview, list: uiList, restore: uiRestore }
+    view, download, upload, fmtWhen, relWhen,
+    ui: {
+      init: initUI, pull: uiPull, preview: uiPreview, list: uiList, restore: uiRestore,
+      refresh: uiRefresh, download: uiDownload, uploadTo: uiUploadTo
+    }
   };
   global.SavesSync = api;
   if (typeof module !== "undefined" && module.exports) module.exports = api;

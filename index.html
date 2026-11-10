@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Retro Gaming Journey</title>
   <meta name="description" content="Offline-first retro emulation progress dashboard. Sync your handheld achievements on demand." />
-  <link rel="stylesheet" href="css/styles.css?v=iter31" />
+  <link rel="stylesheet" href="css/styles.css?v=iter35" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎮</text></svg>" />
 </head>
 <body>
@@ -241,19 +241,30 @@
           </div>
 
           <div class="sync-card" id="saves-card">
-            <h3>Save files &amp; states <span id="saves-pill" class="usb-pill">not set up</span></h3>
+            <h3>Save archive <span id="saves-pill" class="usb-pill">not set up</span></h3>
             <p class="sync-note">
-              Pulls <code>.srm</code> / <code>.sav</code> saves and <code>.state</code> slots off a linked
-              volume into the repo — one folder per user, one subtree per device. A pull only adds: it
-              never writes to the card, never deletes, and skips bytes the archive already holds.
-              Restore copies what it replaces to <code>.before-&lt;timestamp&gt;</code> first.
+              Every pull adds a timestamped version — nothing is overwritten. Browse, download or
+              upload a version here; the newest is at the top of each game.
             </p>
             <div class="usb-actions">
-              <button id="btn-saves-pull" class="btn btn-small">Pull saves</button>
+              <button id="btn-saves-pull" class="btn btn-small">Pull from device</button>
+              <button id="btn-saves-refresh" class="btn btn-ghost btn-small">Refresh archive</button>
               <button id="btn-saves-preview" class="btn btn-ghost btn-small">Preview only</button>
-              <button id="btn-saves-list" class="btn btn-ghost btn-small">Show archive</button>
+              <button id="btn-saves-upload" class="btn btn-ghost btn-small">New game…</button>
             </div>
             <p class="usb-hint" id="saves-hint"></p>
+
+            <div class="sa-toolbar">
+              <input id="saves-search" type="search" placeholder="Filter by game, system or device" spellcheck="false" autocomplete="off">
+              <div class="sa-tabs">
+                <button type="button" class="sa-tab on" data-filter="all">All</button>
+                <button type="button" class="sa-tab" data-filter="save">Saves</button>
+                <button type="button" class="sa-tab" data-filter="state">States</button>
+              </div>
+            </div>
+            <p class="sa-count" id="saves-count">Not read yet — press Refresh archive.</p>
+            <div id="saves-games" class="sa-games"></div>
+            <input id="saves-file" type="file" multiple hidden>
 
             <details class="chan" id="saves-settings">
               <summary class="chan-head">
@@ -379,7 +390,7 @@
   <script src="js/app.js?v=iter43"></script>
   <script src="js/sdcard.js?v=4"></script>
   <script src="js/httpsync.js?v=6"></script>
-  <script src="js/savesync.js?v=6"></script>
+  <script src="js/savesync.js?v=9"></script>
   <script type="module" src="js/mtp.js?v=1"></script>
   <script>
     // The MTP adapter is an ES module: file:// blocks module loading, and WebUSB needs a
