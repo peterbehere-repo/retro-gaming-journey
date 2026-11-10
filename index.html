@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Retro Gaming Journey</title>
   <meta name="description" content="Offline-first retro emulation progress dashboard. Sync your handheld achievements on demand." />
-  <link rel="stylesheet" href="css/styles.css?v=iter30" />
+  <link rel="stylesheet" href="css/styles.css?v=iter31" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎮</text></svg>" />
 </head>
 <body>
@@ -205,6 +205,41 @@
             <div id="lan-rows"></div>
           </div>
 
+        </div>
+
+        <div class="sync-stack">
+          <div class="sync-card">
+            <h3>This session <span class="usb-pill" id="session-pill">local</span></h3>
+            <div class="stat-row">
+              <div><span class="stat-k">Device</span><span class="stat-v" id="sync-device">—</span></div>
+              <div><span class="stat-k">Last sync</span><span class="stat-v" id="sync-last">never</span></div>
+              <div><span class="stat-k">Queued</span><span class="stat-v" id="sync-queued">0</span></div>
+            </div>
+            <div class="usb-actions">
+              <button id="btn-sync" class="btn btn-small">Sync now</button>
+              <button id="btn-pull" class="btn btn-ghost btn-small">Pull remote progress</button>
+            </div>
+            <details class="chan">
+              <summary class="chan-head">
+                <span class="chan-name">Queue format</span>
+                <span class="chan-meta">SQLite</span>
+              </summary>
+              <div class="chan-body">
+                <pre class="code">CREATE TABLE achievement_queue (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    game_hash TEXT NOT NULL,
+    achievement_id TEXT NOT NULL,
+    unlocked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    sync_status TEXT DEFAULT 'PENDING',
+    hardcore_mode INTEGER DEFAULT 1,
+    security_nonce TEXT NOT NULL
+);</pre>
+              </div>
+            </details>
+            <h4 class="log-title">Log</h4>
+            <ul id="sync-log" class="log"><li>Ready. No sync performed this session.</li></ul>
+          </div>
+
           <div class="sync-card" id="saves-card">
             <h3>Save files &amp; states <span id="saves-pill" class="usb-pill">not set up</span></h3>
             <p class="sync-note">
@@ -260,41 +295,6 @@
             </details>
           </div>
 
-
-        </div>
-
-        <div class="sync-stack">
-          <div class="sync-card">
-            <h3>This session <span class="usb-pill" id="session-pill">local</span></h3>
-            <div class="stat-row">
-              <div><span class="stat-k">Device</span><span class="stat-v" id="sync-device">—</span></div>
-              <div><span class="stat-k">Last sync</span><span class="stat-v" id="sync-last">never</span></div>
-              <div><span class="stat-k">Queued</span><span class="stat-v" id="sync-queued">0</span></div>
-            </div>
-            <div class="usb-actions">
-              <button id="btn-sync" class="btn btn-small">Sync now</button>
-              <button id="btn-pull" class="btn btn-ghost btn-small">Pull remote progress</button>
-            </div>
-            <details class="chan">
-              <summary class="chan-head">
-                <span class="chan-name">Queue format</span>
-                <span class="chan-meta">SQLite</span>
-              </summary>
-              <div class="chan-body">
-                <pre class="code">CREATE TABLE achievement_queue (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    game_hash TEXT NOT NULL,
-    achievement_id TEXT NOT NULL,
-    unlocked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    sync_status TEXT DEFAULT 'PENDING',
-    hardcore_mode INTEGER DEFAULT 1,
-    security_nonce TEXT NOT NULL
-);</pre>
-              </div>
-            </details>
-            <h4 class="log-title">Log</h4>
-            <ul id="sync-log" class="log"><li>Ready. No sync performed this session.</li></ul>
-          </div>
 
           <div class="sync-card" id="ra-card">
             <h3>RetroAchievements progress</h3>
