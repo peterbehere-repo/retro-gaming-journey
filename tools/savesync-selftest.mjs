@@ -66,20 +66,24 @@ const cfg = {
   onLog: (m) => console.log("  ·", m)
 };
 
-// 1. scan only
+// 1. scan only, and the version name each file would get
 const res = await SavesSync.scan(reader, cfg.onLog);
 console.log("\nroots:", res.roots);
 for (const f of res.files) {
-  const p = SavesSync.pathFor(cfg, f);
-  console.log(`  ${p}   (${Math.round(f.size / 1024)} KB, ${f.kind}/${f.slot})`);
+  console.log(`  ${f.system}/${f.rom}  ${f.kind}/${f.slot}  ${f.name}  (${Math.round(f.size / 1024)} KB)`);
 }
-console.log("skipped:", res.skipped);
+console.log("skipped:", res.skipped.length, res.skipped.map((s) => s.reason).join("; "));
 
 // 2. blob sha must match git's own object id
 const sample = fs.readFileSync(path.join(ROOT, "Saves/CurrentProfile/saves/FCEUmm/Contra (USA).srm"));
 const mine = await SavesSync.gitBlobSha(new Uint8Array(sample));
 const theirs = execSync(`git hash-object ${JSON.stringify(path.join(ROOT, "Saves/CurrentProfile/saves/FCEUmm/Contra (USA).srm"))}`).toString().trim();
 console.log("\nblob sha  mine:", mine, "\n          git :", theirs, mine === theirs ? "✔ match" : "✘ MISMATCH");
+
+const before = await SavesSync.listing(cfg);
+console.log("\narchive before: " + before.length + " file(s)");
+const model0 = SavesSync.archiveModel(new Map([...before.map((e) => [e.path, { sha: e.sha, size: e.size }])]), cfg);
+console.log("  games:", model0.games.size, " devices:", [...model0.devices.keys()].join(", ") || "(none)");
 
 if (!push) {
   console.log("\n(dry run — pass --push to upload)");
@@ -89,21 +93,26 @@ if (!push) {
 // 3. first pull
 console.log("\n— pull 1 —");
 let r = await SavesSync.pull({ ...cfg, readers: [reader] });
-console.log(`added ${r.added.length}, changed ${r.changed.length}, unchanged ${r.unchanged}, commit ${r.commit?.slice(0, 7)}`);
+console.log(`added ${r.added.length}, unchanged ${r.unchanged}, deduped ${r.deduped}, commit ${r.commit?.slice(0, 7)}`);
+for (const a of r.added) console.log("   +", a.path);
 
 // 4. second pull must be a no-op
 console.log("\n— pull 2 (idempotent?) —");
 r = await SavesSync.pull({ ...cfg, readers: [reader] });
-console.log(`added ${r.added.length}, changed ${r.changed.length}, unchanged ${r.unchanged}, commit ${r.commit || "none"}`);
+console.log(`added ${r.added.length} (expect 0), unchanged ${r.unchanged}, commit ${r.commit || "none (correct)"}`);
 
 // 5. change one save, pull again
 console.log("\n— pull 3 (one file changed) —");
 fs.writeFileSync(path.join(ROOT, "roms/saves/nes/Super Mario Bros. 3 (USA).srm"), Buffer.alloc(8192, 0x5a));
 r = await SavesSync.pull({ ...cfg, readers: [reader] });
-console.log(`added ${r.added.length}, changed ${r.changed.length}, unchanged ${r.unchanged}, commit ${r.commit?.slice(0, 7)}`);
-console.log("  changed:", r.changed.map((c) => c.path));
+console.log(`added ${r.added.length} (expect 1), unchanged ${r.unchanged}, commit ${r.commit?.slice(0, 7)}`);
+console.log("  added:", r.added.map((c) => c.path));
 
-// 6. archive listing
-const list = await SavesSync.listing(cfg);
-console.log("\narchive holds", list.length, "save files");
-for (const e of list.slice(0, 12)) console.log(`  ${e.system}/${e.rom}/${e.file}  ${Math.round(e.size / 1024)} KB`);
+// 6. the archive, as the browser view will read it
+const after = await SavesSync.listing(cfg);
+console.log("\narchive after: " + after.length + " file(s)");
+const rows = after.filter((e) => e.system === "nes" || e.system === "snes" || e.system === "gba" || e.system === "gb");
+for (const e of after) {
+  console.log(`  ${e.latest ? "★" : " "} ${e.at || "undated "}  ${e.device.padEnd(14)} ${e.system}/${e.rom}  ->  ${e.file}`);
+}
+console.log("\n★ = newest save of its game");

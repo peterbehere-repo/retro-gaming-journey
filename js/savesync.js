@@ -122,10 +122,53 @@
     "rgj", "sd", "mnt", "roms", "easyroms"
   ]);
 
+  // Onion/Spruce cards keep saves in a folder named after the CORE (fceumm), ArkOS after the
+  // SYSTEM (nes). If we used the folder name, the same game pulled from two handhelds would land
+  // under two "systems" and never be recognised as the same game. So a known core wins.
+  const CORE_SYSTEM = {
+    fceumm: "nes", nestopia: "nes", quicknes: "nes", mesen: "nes",
+    snes9x: "snes", snes9x2002: "snes", snes9x2005: "snes", snes9x2010: "snes", bsnes: "snes",
+    gambatte: "gb", sameboy: "gb", gearboy: "gb", tgbdual: "gb",
+    mgba: "gba", vba_next: "gba", gpsp: "gba",
+    "genesis_plus_gx": "genesis", genesisplusgx: "genesis", picodrive: "genesis",
+    "pcsx_rearmed": "psx", mednafen_psx: "psx", mednafen_psx_hw: "psx", duckstation: "psx",
+    swanstation: "psx", "beetle_psx": "psx", "beetle_psx_hw": "psx",
+    mupen64plus: "n64", mupen64plus_next: "n64", parallel_n64: "n64", rice: "n64",
+    "handy": "lynx", prosystem: "atari7800", stella: "atari2600", stella2014: "atari2600",
+    "mednafen_pce": "pce", "mednafen_pce_fast": "pce", "beetle_pce": "pce",
+    "mednafen_wswan": "ws", "mednafen_vb": "virtualboy",
+    "mednafen_supergrafx": "pce", gearsystem: "sms",
+    "mednafen_ngp": "ngp", race: "ngp",
+    "yabause": "saturn", "mednafen_saturn": "saturn",
+    "flycast": "dreamcast", "reicast": "dreamcast",
+    "ppsspp": "psp", "dolphin": "gc", "citra": "3ds", "melonds": "nds", "desmume": "nds"
+  };
+  // folder names that mean the same system, normalised so a game groups with itself
+  const SYSTEM_ALIAS = {
+    md: "genesis", megadrive: "genesis", genesis: "genesis",
+    ps1: "psx", playstation: "psx", psx: "psx",
+    gb: "gb", gameboy: "gb", gbc: "gbc", gameboycolor: "gbc",
+    gba: "gba", gameboyadvance: "gba",
+    nes: "nes", famicom: "nes", fds: "nes",
+    snes: "snes", superfamicom: "snes", sfc: "snes",
+    n64: "n64", nintendo64: "n64",
+    sms: "sms", mastersystem: "sms", gg: "gamegear", gamegear: "gamegear",
+    pce: "pce", pcengine: "pce", tg16: "pce", turbografx16: "pce",
+    lynx: "lynx", atarilynx: "lynx", ws: "ws", wonderswan: "ws",
+    ngp: "ngp", neogeopocket: "ngp",
+    virtualboy: "virtualboy", atari2600: "atari2600", atari7800: "atari7800",
+    psp: "psp", nds: "nds", dreamcast: "dreamcast", saturn: "saturn"
+  };
+
+  const normSystem = (s) => CORE_SYSTEM[String(s).toLowerCase()] || SYSTEM_ALIAS[String(s).toLowerCase()] || s;
+
   function systemOf(relDir) {
     const parts = relDir.split("/").filter(Boolean);
     for (let i = parts.length - 1; i >= 0; i--) {
-      if (!ROOT_NAMES.has(parts[i].toLowerCase())) return slug(parts[i]);
+      const name = parts[i].toLowerCase();
+      if (ROOT_NAMES.has(name)) continue;
+      if (CORE_SYSTEM[name]) return CORE_SYSTEM[name];
+      return SYSTEM_ALIAS[name] || slug(name);
     }
     return "unsorted";
   }
@@ -234,16 +277,21 @@
 
 Battery saves and save states pulled off the handhelds by the Retro Gaming Journey page.
 
-    ${cfg.prefix || D.prefix}/<user>/devices/<device_id>/<system>/<rom>/<file>
+    ${cfg.prefix || D.prefix}/<user>/games/<system>/<rom>/<stamp>_<device>_<hash>__<original name>
+    ${cfg.prefix || D.prefix}/<user>/pulls/<device>/<stamp>.json
+    ${cfg.prefix || D.prefix}/<user>/archive.json
 
-* one subtree per device — a device only ever writes to its own folder, so two devices cannot
-  overwrite each other;
-* save states stay with the device that made them (a state is tied to a core build);
+* one file per version, never rewritten — the newest sorts to the top of its game folder;
+* the file name carries the timestamp, the device and a short content hash, so the folder listing
+  is the version history: no index to get out of step;
+* the timestamp is when the page pulled it, not the device clock, because handheld clocks lie;
+* the same game from several devices sits side by side, and identical bytes cost one blob;
 * nothing is deleted here. A missing file locally means "not pulled yet", never "removed";
-* every pull is one commit, and a file whose bytes are already in the branch is not re-uploaded.
+* every pull is one commit.
 
 Restoring is done from the Sync tab of the page, which copies the file it is about to replace
-to \`<name>.before-<timestamp>\` first.
+to \`<name>.before-<timestamp>\` first. Save states only go back to hardware running the same
+core build; battery saves go anywhere.
 `;
   class Gh {
     constructor(cfg) {
@@ -370,11 +418,177 @@ to \`<name>.before-<timestamp>\` first.
     });
   }
 
+  // Legacy layout (kept so old archive entries stay restorable): devices/<dev>/<system>/<rom>/<file>
   const pathFor = (cfg, f) =>
     `${cfg.prefix || D.prefix}/${slug(cfg.user)}/devices/${slug(cfg.device)}/${f.system}/${f.rom}/${fsSafe(f.name)}`;
 
+  /* ---------------- time ---------------- */
+  // Pulled-at is the only clock we trust: handhelds boot with wrong dates all the time, and two of
+  // this fleet's have been hours off. Stamps are UTC, colon-free (Windows/git safe) and sort as
+  // plain text, so "most recent" is a string comparison and nothing else.
+  //   2026-11-09T18-22-04Z
+  const stampOf = (t) => new Date(t).toISOString().replace(/:/g, "-").replace(/\.\d+Z$/, "Z");
+  const stampMs = (s) => {
+    const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2})-(\d{2})-(\d{2})Z$/.exec(String(s || ""));
+    if (!m) return 0;
+    return Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6]);
+  };
+
+  /* ---------------- archive layout (game first, device second) ---------------- */
+  //   <prefix>/<user>/games/<system>/<rom>/<stamp>_<device>_<sha12>__<original name>
+  //   <prefix>/<user>/pulls/<device>/<stamp>.json        what one pull took, and whether the
+  //                                                      device clock disagreed with the browser
+  //   <prefix>/<user>/archive.json                       every game, newest first — one fetch
+  //
+  // Why the name carries stamp, device and hash:
+  //   * the version list is the file listing, so there is no index file that can drift;
+  //   * a file is never rewritten, so "most recent" can name any version forever;
+  //   * the same game from six devices sits side by side and the newest sorts to the top;
+  //   * the original name is preserved, so restore writes back exactly what the emulator expects.
+  const gameRoot = (cfg) => `${cfg.prefix || D.prefix}/${slug(cfg.user)}/games`;
+  const userRoot = (cfg) => `${cfg.prefix || D.prefix}/${slug(cfg.user)}`;
+  const isState = (kind) => kind === "state";
+  const SAVE_KINDS = new Set(Object.values(SRAM_EXT));
+  const isSave = (kind) => SAVE_KINDS.has(kind);
+
+  function versionMeta(name, size, path) {
+    const m = /^(\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}Z)_([a-z0-9][a-z0-9-]*)_([0-9a-f]{6,40})__(.+)$/.exec(name);
+    if (!m) return null;
+    const p = parseSaveName(m[4]);
+    return {
+      at: m[1], device: m[2], sha: m[3], name: m[4], path, size,
+      kind: p ? p.kind : "file", slot: p ? p.slot : "0"
+    };
+  }
+
+  // Parses a branch tree into games -> versions. Pure: no network beyond the map it is given.
+  function archiveModel(remote, cfgIn) {
+    const cfg = { ...D, ...cfgIn };
+    const root = `${userRoot(cfg)}/`;
+    const games = new Map();
+    const devices = new Map();
+    const bySha = new Map();
+    const pulls = new Map(); // device -> newest pull stamp
+
+    const game = (system, rom) => {
+      const k = `${system}/${rom}`;
+      if (!games.has(k)) games.set(k, { system, rom, versions: [] });
+      return games.get(k);
+    };
+    const touch = (dev) => {
+      if (!devices.has(dev)) devices.set(dev, { id: dev, pulls: 0, last: null });
+      return devices.get(dev);
+    };
+
+    for (const [path, meta] of remote) {
+      if (!path.startsWith(root)) continue;
+      const parts = path.slice(root.length).split("/");
+      if (parts[0] === "games" && parts.length === 4) {
+        const v = versionMeta(parts[3], meta.size, path);
+        if (!v) continue;
+        game(normSystem(parts[1]), parts[2]).versions.push(v);
+        touch(v.device);
+        if (!bySha.has(v.sha)) bySha.set(v.sha, v);
+      } else if (parts[0] === "devices" && parts.length >= 5) {
+        // legacy per-device tree: no timestamp in the path, so it always sorts oldest
+        const name = parts.slice(4).join("/");
+        const p = parseSaveName(parts[parts.length - 1]);
+        if (!p) continue;
+        const v = {
+          at: "", device: parts[1], sha: String(meta.sha || "").slice(0, 12), name: parts[parts.length - 1],
+          path, size: meta.size, kind: p.kind, slot: p.slot, legacy: true
+        };
+        game(normSystem(parts[2]), parts[3]).versions.push(v);
+        touch(parts[1]);
+        if (!bySha.has(v.sha)) bySha.set(v.sha, v);
+      } else if (parts[0] === "pulls" && parts.length === 3 && parts[2].endsWith(".json")) {
+        const dev = parts[1];
+        const at = parts[2].slice(0, -5);
+        const d = touch(dev);
+        d.pulls++;
+        if (!pulls.has(dev) || at > pulls.get(dev)) { pulls.set(dev, at); d.last = at; }
+      }
+    }
+
+    // newest first; ties broken by path so the order never depends on insertion order
+    function finalize(g) {
+      g.versions.sort((a, b) => (a.at === b.at ? String(a.path).localeCompare(String(b.path)) : a.at < b.at ? 1 : -1));
+      g.latest = { save: null, states: {} };
+      for (const v of g.versions) {
+        if (isState(v.kind)) {
+          if (!g.latest.states[v.device]) g.latest.states[v.device] = v;
+        } else if (isSave(v.kind) && !g.latest.save) {
+          g.latest.save = v;
+        }
+      }
+      return g;
+    }
+    for (const g of games.values()) finalize(g);
+
+    return {
+      games,
+      devices,
+      bySha,
+      // what this device already has archived, keyed system|rom|kind|slot — the watermark that
+      // stops a pull re-uploading the same bytes every time
+      watermark(dev) {
+        const m = new Map();
+        for (const g of games.values()) {
+          for (const v of g.versions) {
+            if (v.device !== dev) continue;
+            const k = `${g.system}|${g.rom}|${v.kind}|${v.slot}`;
+            if (!m.has(k)) m.set(k, v);
+          }
+        }
+        return m;
+      },
+      add(v) {
+        const g = game(v.system, v.rom);
+        g.versions.push(v);
+        touch(v.device);
+        if (!bySha.has(v.sha)) bySha.set(v.sha, v);
+        return finalize(g);
+      },
+      toJSON() {
+        const out = {
+          schema: 1,
+          user: slug(cfg.user),
+          generated: new Date().toISOString(),
+          branch: cfg.branch,
+          counts: { games: 0, versions: 0, legacy: 0 },
+          devices: {},
+          games: []
+        };
+        for (const d of [...devices.values()].sort((a, b) => a.id.localeCompare(b.id))) {
+          out.devices[d.id] = { pulls: d.pulls, lastPull: d.last };
+        }
+        const list = [...games.values()].sort((a, b) => (a.system + a.rom).localeCompare(b.system + b.rom));
+        for (const g of list) {
+          const versions = g.versions.map((v) => ({
+            at: v.at || null, device: v.device, sha: v.sha, size: v.size,
+            kind: v.kind, slot: v.slot, name: v.name, path: v.path,
+            legacy: v.legacy ? true : undefined
+          }));
+          out.games.push({
+            system: g.system,
+            rom: g.rom,
+            latest: {
+              save: g.latest.save ? g.latest.save.path : null,
+              states: Object.fromEntries(Object.entries(g.latest.states).map(([k, v]) => [k, v.path]))
+            },
+            versions
+          });
+          out.counts.games++;
+          out.counts.versions += versions.length;
+          out.counts.legacy += versions.filter((v) => v.legacy).length;
+        }
+        return out;
+      }
+    };
+  }
+
   /* ---------------- PULL: device -> archive ---------------- */
-  // Reads every linked volume, hashes, uploads only what the branch does not already hold.
+  // Reads every linked volume, hashes, uploads only what this device has not already archived.
   // Never writes a game file to the device. Never deletes anything from the archive.
   async function pull(opts) {
     const log = opts.onLog || (() => {});
@@ -386,61 +600,80 @@ to \`<name>.before-<timestamp>\` first.
     const gh = new Gh(cfg);
     log("Reading the branch tree…");
     const remote = await gh.map();
-    const store = await storeGet(cfg.device);
-    const queued = new Map();
-    const report = { scanned: 0, unchanged: 0, added: [], changed: [], skipped: [], bytes: 0, volumes: [] };
+    const model = archiveModel(remote, cfg);
+
+    const stamp = stampOf(Date.now());
+    const report = { stamp, scanned: 0, unchanged: 0, deduped: 0, added: [], skipped: [], bytes: 0, volumes: [], games: [] };
+    const queued = new Map(); // "<device>/<key>" -> candidate
 
     for (const reader of readers) {
+      const marker = reader.deviceMarker || {};
+      const dev = slug(marker.device_id || cfg.device || reader.label || "device");
       const res = await scan(reader, log);
-      report.volumes.push({ id: reader.id || reader.label || "volume", roots: res.roots, files: res.files.length });
-      report.skipped.push(...res.skipped.map((s) => ({ ...s, volume: reader.id || reader.label })));
+      report.volumes.push({ id: dev, label: reader.label || dev, roots: res.roots, files: res.files.length });
+      report.skipped.push(...res.skipped.map((s) => ({ ...s, volume: dev })));
+      report.scanned += res.files.length;
+      const mark = model.watermark(dev);
       for (const f of res.files) {
+        const key = `${f.system}|${f.rom}|${f.kind}|${f.slot}`;
         const bytes = await reader.read(f.rel);
         const sha = await gitBlobSha(bytes);
-        const path = pathFor(cfg, f);
-        const known = remote.get(path);
-        if (known && known.sha === sha) {
+        const sha12 = sha.slice(0, 12);
+        const prior = mark.get(key);
+        if (prior && prior.sha === sha12) {
           report.unchanged++;
-          store[path] = sha;
           continue;
         }
-        const prior = queued.get(path);
-        if (prior && prior.sha !== sha) {
-          // two cards on the same device holding different bytes for one file
-          const newer = (f.lastModified || 0) >= (prior.meta.lastModified || 0) ? f : prior.meta;
-          log(`Two versions of ${f.name} on this device — keeping the newer (${newer.rel}).`);
-        }
-        if (prior && prior.sha === sha) continue;
-        queued.set(path, {
-          path, bytes, sha, size: bytes.length,
-          meta: { ...f, volume: reader.id || reader.label }
+        const slotKey = dev + "/" + key;
+        const held = queued.get(slotKey);
+        if (held && held.sha12 === sha12) continue;
+        if (held) log(`Two cards on ${dev} hold different ${f.name} — keeping the newer one.`);
+        if (model.bySha.has(sha12)) report.deduped++;
+        queued.set(slotKey, {
+          dev, bytes, sha12, size: bytes.length, system: f.system, rom: f.rom,
+          base: f.base, name: f.name, ext: f.name.slice(f.base.length),
+          kind: f.kind, slot: f.slot, mtime: f.lastModified || 0, rel: f.rel
         });
       }
-      report.scanned += res.files.length;
     }
 
-    const files = [...queued.values()];
-    for (const f of files) {
-      (store[f.path] ? report.changed : report.added).push({ path: f.path, size: f.size, kind: f.meta.kind, rom: f.meta.base });
+    // every queued file becomes one immutable version file, plus one pull record per device
+    const files = [];
+    const byDev = new Map();
+    const pulledMs = stampMs(stamp);
+    for (const q of queued.values()) {
+      const name = `${stamp}_${q.dev}_${q.sha12}__${fsSafe(q.base + q.ext)}`;
+      const path = `${gameRoot(cfg)}/${q.system}/${q.rom}/${name}`;
+      files.push({ path, bytes: q.bytes });
+      const entry = {
+        at: stamp, device: q.dev, sha: q.sha12, size: q.size, kind: q.kind, slot: q.slot,
+        name: q.name, path, system: q.system, rom: q.rom
+      };
+      report.added.push(entry);
+      model.add(entry);
+      if (!byDev.has(q.dev)) byDev.set(q.dev, []);
+      byDev.get(q.dev).push({
+        name: q.name, kind: q.kind, slot: q.slot, size: q.size, sha: q.sha12,
+        source: q.rel, deviceModified: q.mtime ? new Date(q.mtime).toISOString() : null,
+        clockSkew: !!q.mtime && Math.abs(pulledMs - q.mtime) > 864e5
+      });
+      report.bytes += q.size;
+    }
+    for (const [dev, list] of byDev) {
+      const record = {
+        device: dev, user: slug(cfg.user), pulledAt: stamp,
+        pulledFrom: [...readers].map((r) => r.label || dev),
+        files: list,
+        note: "Clock skew means the device's own date disagreed with the browser by more than a day; " +
+          "ordering in the archive always uses pulledAt."
+      };
+      files.push({ path: `${userRoot(cfg)}/pulls/${dev}/${stamp}.json`, bytes: enc(JSON.stringify(record, null, 2) + "\n") });
     }
 
     if (files.length) {
-      // keep a per-device note so the branch is readable on github.com without opening files
-      const manifest = {
-        device: cfg.device,
-        user: cfg.user,
-        model: cfg.model || null,
-        os: cfg.os || null,
-        updated: new Date().toISOString(),
-        folders: [...new Set(files.map((f) => f.path.split("/")[4]))].length,
-        counts: { added: report.added.length, changed: report.changed.length, unchanged: report.unchanged },
-        note: "Written by the Retro Gaming Journey page. Archive only — nothing here is deleted."
-      };
-      files.push({
-        path: `${cfg.prefix}/${slug(cfg.user)}/devices/${slug(cfg.device)}/device.json`,
-        bytes: enc(JSON.stringify(manifest, null, 2) + "\n")
-      });
-      const msg = `saves: ${cfg.device} +${report.added.length} new, ~${report.changed.length} updated`;
+      files.push({ path: `${userRoot(cfg)}/archive.json`, bytes: enc(JSON.stringify(model.toJSON(), null, 1) + "\n") });
+      const byGame = new Set(report.added.map((a) => `${a.system}/${a.rom}`));
+      const msg = `saves: ${[...byDev.keys()].join(", ")} +${report.added.length} save file(s) across ${byGame.size} game(s)`;
       log(`Uploading ${files.length} file${files.length === 1 ? "" : "s"} in one commit…`);
       try {
         report.commit = await gh.commit(files, msg);
@@ -452,13 +685,16 @@ to \`<name>.before-<timestamp>\` first.
       }
       log(`Committed ${report.commit.slice(0, 7)} to ${cfg.branch}.`);
     } else {
-      log("Archive already has these exact bytes — nothing to commit.");
+      log("Every file on this device is already archived at these exact bytes — nothing to commit.");
     }
 
-    for (const f of files) if (f.sha) store[f.path] = f.sha;
-    store["_last"] = { at: new Date().toISOString(), device: cfg.device, files: report.added.length + report.changed.length };
-    await storeSet(cfg.device, store);
-    report.total = report.added.length + report.changed.length;
+    const store = await storeGet(cfg.device || "default");
+    for (const a of report.added) store[a.path] = a.sha;
+    store._last = { at: new Date().toISOString(), files: report.added.length, stamp };
+    await storeSet(cfg.device || "default", store);
+
+    report.total = report.added.length;
+    report.games = [...new Set(report.added.map((a) => `${a.system}/${a.rom}`))];
     return report;
   }
 
@@ -499,24 +735,24 @@ to \`<name>.before-<timestamp>\` first.
   }
 
   /* ---------------- archive listing for the UI ---------------- */
+  // Flat rows, newest first, one flag for "this is the newest save of its game".
   async function listing(opts) {
     const cfg = { ...D, ...opts };
     const gh = new Gh(cfg);
     const remote = await gh.map();
-    const root = `${cfg.prefix}/${slug(cfg.user)}/`;
+    const model = archiveModel(remote, cfg);
     const out = [];
-    for (const [path, meta] of remote) {
-      if (!path.startsWith(root) || !path.includes("/devices/")) continue;
-      const rest = path.slice(root.length).split("/"); // devices, <dev>, <system>, <rom>, <file>
-      if (rest.length < 5) continue;
-      const p = parseSaveName(rest[rest.length - 1]);
-      out.push({
-        path, sha: meta.sha, size: meta.size,
-        device: rest[1], system: rest[2], rom: rest[3],
-        file: rest[rest.length - 1],
-        kind: p ? p.kind : "meta", slot: p ? p.slot : null
-      });
+    for (const g of model.games.values()) {
+      for (const v of g.versions) {
+        out.push({
+          path: v.path, sha: v.sha, size: v.size, device: v.device,
+          system: g.system, rom: g.rom, file: v.name,
+          kind: v.kind, slot: v.slot, at: v.at || null, legacy: !!v.legacy,
+          latest: g.latest.save === v || Object.values(g.latest.states).includes(v)
+        });
+      }
     }
+    out.sort((a, b) => (a.system + a.rom).localeCompare(b.system + b.rom) || (a.at < b.at ? 1 : a.at > b.at ? -1 : 0));
     return out;
   }
 
@@ -726,8 +962,10 @@ to \`<name>.before-<timestamp>\` first.
     if (btn) { btn.disabled = true; btn.textContent = "Pulling…"; }
     try {
       const report = await pull({ ...cfg, readers, onLog: (m) => uiLog(m) });
-      const msg = `${report.total} file(s) archived (${report.added.length} new, ${report.changed.length} updated), ` +
-        `${report.unchanged} already in the archive.`;
+      const msg = report.total
+        ? `${report.total} save file(s) archived across ${report.games.length} game(s), ` +
+          `${report.unchanged} already current${report.deduped ? `, ${report.deduped} byte-identical elsewhere` : ""}.`
+        : `Nothing new — all ${report.scanned} file(s) on the device are already archived at these exact bytes.`;
       uiLog(msg, "ok");
       const hint = $("#saves-hint");
       if (hint) {
@@ -764,9 +1002,11 @@ to \`<name>.before-<timestamp>\` first.
           a.href = `https://github.com/${cfg.owner}/${cfg.repo}/blob/${cfg.branch}/${r.path}`;
           a.target = "_blank";
           a.rel = "noopener";
-          a.textContent = `${r.device} · ${r.system}/${r.rom} · ${r.file}`;
+          a.textContent = `${r.latest ? "★ " : ""}${r.device} · ${r.system}/${r.rom} · ${r.file}`;
           li.appendChild(a);
-          li.append(` · ${Math.round((r.size || 0) / 1024)} KB`);
+          const when = r.at ? r.at.replace("T", " ").replace("Z", " UTC") : "undated (older layout)";
+          li.append(` · ${when} · ${Math.round((r.size || 0) / 1024)} KB`);
+          a.title = r.path;
           const b = document.createElement("button");
           b.className = "btn btn-ghost btn-small";
           b.textContent = "Restore";
@@ -824,7 +1064,7 @@ to \`<name>.before-<timestamp>\` first.
   }
 
   const api = {
-    DEFAULTS: D, scan, pull, restore, listing, Gh, fsaReader,
+    DEFAULTS: D, scan, pull, restore, listing, archiveModel, stampOf, stampMs, Gh, fsaReader,
     parseSaveName, gitBlobSha, sha256Hex, pathFor,
     ui: { init: initUI, pull: uiPull, preview: uiPreview, list: uiList, restore: uiRestore }
   };
