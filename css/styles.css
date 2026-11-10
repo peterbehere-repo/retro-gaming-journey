@@ -135,6 +135,10 @@ main.wide { max-width: 2400px; padding: .9rem 1rem 1.2rem; }
 .chan[open] > summary.chan-head::before { transform: rotate(90deg); color: var(--accent); }
 .chan-name { font-weight: 600; }
 .chan-meta { font-size: .7rem; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; }
+.chan-meta.plain {
+  text-transform: none; letter-spacing: 0; font-size: .72rem; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 55%;
+}
 .chan-head .usb-pill { margin-left: auto; }
 .chan-body { padding: 0 0 .9rem .1rem; display: grid; gap: .6rem; }
 .chan-body > .sync-note { margin-bottom: 0; }
@@ -308,6 +312,17 @@ body.journey-view main.wide { padding: .5rem .7rem .6rem; }
   border: 1px solid var(--border); background: #0a0c16; color: var(--fg, #e6ecf5);
 }
 .lan-form input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+/* inline credential forms (LAN channel rows, RA account) — same skin as .lan-form */
+.ra-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: .6rem; margin: .55rem 0; }
+.ra-form label { display: grid; gap: .25rem; font-size: .68rem; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; min-width: 0; }
+.ra-form input {
+  font: inherit; font-size: .8rem; padding: .42rem .5rem; border-radius: 6px; min-width: 0;
+  border: 1px solid var(--border); background: #0a0c16; color: var(--fg, #e6ecf5);
+}
+.ra-form input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+/* a LAN row leads with the address on its own line, user/password beneath */
+#lan-rows .ra-form label:first-child { grid-column: 1 / -1; }
 
 /* ---------------------------------------------------------------- */
 /* Achievements (replaces the old badge case)                        */
