@@ -117,7 +117,7 @@
     // A page served over https can never reach a plain-http LAN host by itself: the browser
     // blocks it as mixed content and (Chrome) never settles the promise. Fail here instead.
     if (location.protocol === "https:") {
-      return { ok: false, status: 0, noRelay: true, text: "no relay — this page is https, a direct LAN request would be blocked" };
+      return { ok: false, status: 0, noRelay: true, text: "no relay available — an https page cannot call a plain http address on your network" };
     }
     return viaDirectFetch(req);
   }
@@ -125,7 +125,7 @@
   /* ---------------------------------------------------------------- backends */
 
   const enc = p => String(p).split("/").map(encodeURIComponent).join("/");
-  const badRoute = res => `no route to the device${res.noRelay ? " and no extension relay" : ""}`;
+  const badRoute = res => `could not reach the handheld${res.noRelay ? " — this page is served over https, so the browser extension has to relay the request" : ""}`;
 
   /* SFTPGo — SpruceOS */
   const sftpgo = {
@@ -350,33 +350,32 @@
   /* ---------------------------------------------------------------- UI */
 
   function card(dev, index) {
-    // A channel row inside the "Read the queue" card: summary always visible, controls on open.
+    // A channel row inside the "Achievements from your handheld" card: summary always visible, controls on open.
     const el = document.createElement("details");
     el.className = "chan";
     el.dataset.device = dev.id;
     el.innerHTML = `
       <summary class="chan-head">
         <span class="chan-name">${dev.label}</span>
-        <span class="chan-meta">LAN</span>
-        <span class="usb-pill lan-pill">not probed</span>
+        <span class="chan-meta">Wi-Fi</span>
+        <span class="usb-pill lan-pill">not tried yet</span>
       </summary>
       <div class="chan-body">
       <p class="sync-note">
-        Reads its own card over the LAN: no cable, no card reader. SFTPGo (SpruceOS on the
-        A30) and File Browser (ArkOS on the G350, RGB30) are both understood — the backend
-        is detected from the address.
+        Reads the handheld over your Wi-Fi — no cable, no card reader. SpruceOS and ArkOS both work,
+        and the page works out which kind of server answers, so there is nothing to choose.
       </p>
       <div class="ra-form">
-        <label>Address <input class="lan-base" type="text" value="${dev.base}" spellcheck="false"></label>
-        <label>User <input class="lan-user" type="text" value="${dev.user}" spellcheck="false"></label>
+        <label>Address <input class="lan-base" type="text" value="${dev.base}" spellcheck="false" placeholder="http://192.168.1.68:8080"></label>
+        <label>Username <input class="lan-user" type="text" value="${dev.user}" spellcheck="false"></label>
         <label>Password <input class="lan-pass" type="password" value="${dev.pass || ""}" autocomplete="off"></label>
       </div>
       <div class="usb-actions">
-        <button class="btn btn-small lan-remember">Save</button>
-        <button class="btn btn-ghost btn-small lan-probe">Probe</button>
-        <button class="btn btn-ghost btn-small lan-init">Prepare card</button>
-        <button class="btn btn-ghost btn-small lan-pull">Pull rows</button>
-        <button class="btn btn-ghost btn-small lan-forget">Forget</button>
+        <button class="btn btn-small lan-remember">Save details</button>
+        <button class="btn btn-ghost btn-small lan-probe">Test connection</button>
+        <button class="btn btn-ghost btn-small lan-init">Set up this card</button>
+        <button class="btn btn-ghost btn-small lan-pull">Read achievements</button>
+        <button class="btn btn-ghost btn-small lan-forget">Remove</button>
       </div>
       <p class="usb-hint lan-hint"></p>
       </div>`;
@@ -423,28 +422,27 @@
       };
 
       el.querySelector(".lan-remember").addEventListener("click", () => {
-        read(); save(); hint("Address and password kept in this browser only.", "ok");
+        read(); save(); hint("Address and password are kept in this browser only.", "ok");
       });
 
-      el.querySelector(".lan-probe").addEventListener("click", () => guard("probing…", async () => {
+      el.querySelector(".lan-probe").addEventListener("click", () => guard("testing…", async () => {
         read();
         const p = await probe(dev);
-        pill(p.folder ? "queue ready" : "no rgj folder", p.folder ? "ok" : "");
-        hint(`${p.label} · ${p.backend} reachable. ${p.folder ? "rgj/ present." : "Press Prepare card to create rgj/."}` +
-             (relaySeen ? " Relay: extension." : " Relay: none — direct fetch."), "ok");
+        pill(p.folder ? "ready" : "not set up", p.folder ? "ok" : "");
+        hint(`${p.label} answered. ${p.folder ? "Progress folder found." : "Press “Set up this card” to create it."}`, "ok");
       }));
 
-      el.querySelector(".lan-init").addEventListener("click", () => guard("preparing…", async () => {
+      el.querySelector(".lan-init").addEventListener("click", () => guard("setting up…", async () => {
         read();
         const r = await initialise(dev);
-        pill("card ready", "ok");
-        hint(`${r.backend}: rgj/ present, ${r.wrote ? "device marker written" : "device marker already there"}.`, "ok");
+        pill("ready", "ok");
+        hint(`Progress folder ready, ${r.wrote ? "device details written" : "device details already there"}.`, "ok");
       }));
 
-      el.querySelector(".lan-pull").addEventListener("click", () => guard("pulling…", async () => {
+      el.querySelector(".lan-pull").addEventListener("click", () => guard("reading…", async () => {
         read();
         const { text, missing, backend } = await pull(dev);
-        if (missing) { pill("no queue file", ""); hint(`${backend}: no ${dev.queue} on the card yet — play a session, or press Prepare card.`, ""); return; }
+        if (missing) { pill("nothing yet", ""); hint(`${backend}: no progress file on the handheld yet — play a session, or press “Set up this card”.`, ""); return; }
         const before = state.queued.length;
         const added = typeof importRows === "function" ? importRows(text, `${dev.label} over LAN`) : 0;
         const fresh = state.queued.slice(before);
@@ -453,8 +451,8 @@
           markEarned(fresh);
           try { acked = await ack(dev, fresh); } catch (e) { logSync?.(`Ack not written: ${e.message}`, "err"); }
         }
-        pill(`${added} new row${added === 1 ? "" : "s"}`, added ? "ok" : "");
-        hint(`${backend}: ${added} row(s) imported${acked ? `, ${acked} acked back to the device` : ""}.`, added ? "ok" : "");
+        pill(`${added} new achievement${added === 1 ? "" : "s"}`, added ? "ok" : "");
+        hint(`${backend}: ${added} achievement${added === 1 ? "" : "s"} read${acked ? ", receipt left on the handheld" : ""}.`, added ? "ok" : "");
       }));
 
       el.querySelector(".lan-forget").addEventListener("click", () => {
@@ -470,12 +468,12 @@
     // A second ArkOS handheld is one button away: same shape, empty credentials.
     const add = document.createElement("button");
     add.className = "btn btn-ghost btn-small";
-    add.textContent = "+ Add LAN device";
+    add.textContent = "+ Add handheld on Wi-Fi";
     add.style.margin = "8px 0 16px";
     add.addEventListener("click", () => {
       const n = cfg.devices.length + 1;
       cfg.devices.push({
-        id: `lan${n}_hw`, label: `LAN device ${n}`, base: "", user: "", pass: "",
+        id: `lan${n}_hw`, label: `Handheld ${n}`, base: "", user: "", pass: "",
         backend: "auto", queue: "rgj/rgj-queue.jsonl", marker: "rgj-device.json"
       });
       save(); paint();

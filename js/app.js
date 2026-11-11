@@ -302,7 +302,7 @@ function renderSync() {
   $("#sync-queued").textContent = state.queued.length;
   // The linked volume owns the identity; the config value is only a fallback for the
   // cloud-push label when no card is linked (sdcard.js overwrites this once a marker loads).
-  $("#sync-device").textContent = linkedDeviceId() || "no card linked";
+  $("#sync-device").textContent = linkedDeviceId() || "none linked yet";
   renderAuth();
   renderRA();
 }
@@ -713,12 +713,12 @@ async function pullProfile(opts) {
     // Which of the three picks are earned can only come from RA's per-game detail, so
     // it is fetched here for the games this account has actually played (and cached).
     await markEarnedForPlayed({ force: !!o.force });
-    logSync(`RA pull: ${res.applied} game${res.applied === 1 ? "" : "s"} updated ` +
-      `(${res.matched} matched of ${ACTIVE_GAMES.length} in scope, ${res.scanned} rows scanned).`,
+    logSync(`RetroAchievements: ${res.applied} game${res.applied === 1 ? "" : "s"} updated ` +
+      `(${res.matched} of ${ACTIVE_GAMES.length} titles found on RA).`,
       res.applied ? "ok" : undefined);
     return res;
   } catch (err) {
-    logSync(`RA pull failed: ${err.message}`, "err");
+    logSync(`Could not read RetroAchievements: ${err.message}`, "err");
     return null;
   }
 }
@@ -842,9 +842,9 @@ $("#auth-form").addEventListener("submit", async (e) => {
 });
 
 async function pushQueue() {
-  if (!state.queued.length) { logSync("Queue empty — nothing to push."); return; }
+  if (!state.queued.length) { logSync("Nothing waiting to upload."); return; }
   if (!sb || !user) {
-    logSync(`No connection: ${state.queued.length} row(s) stay queued locally (offline-first).`, "err");
+    logSync(`No online account: ${state.queued.length} achievement(s) stay saved in this browser.`, "err");
     return;
   }
   const rows = state.queued.map(r => ({
@@ -857,17 +857,17 @@ async function pushQueue() {
   }));
   const { error } = await sb.from("achievement_queue").insert(rows);
   if (error) { logSync(`Push failed: ${error.message}`, "err"); return; }
-  logSync(`Pushed ${rows.length} row(s) to achievement_queue.`, "ok");
+  logSync(`Uploaded ${rows.length} achievement(s).`, "ok");
   state.queued = [];
   state.lastSync = new Date().toISOString();
   saveState(); render();
 }
 
 async function pullRemote() {
-  if (!sb || !user) { logSync("Pull requires sign-in and a configured backend.", "err"); return; }
+  if (!sb || !user) { logSync("Downloading from the cloud needs an online account.", "err"); return; }
   const { data, error } = await sb.from("achievement_queue")
     .select("game_hash, achievement_id, timestamp, hardcore").eq("user_id", user.id);
-  if (error) { logSync(`Pull failed: ${error.message}`, "err"); return; }
+  if (error) { logSync(`Download failed: ${error.message}`, "err"); return; }
   for (const r of data || []) {
     const key = r.game_hash;
     const u = state.unlocks[key] || { count: 0, last: 0, hardcore: false };
@@ -877,7 +877,7 @@ async function pullRemote() {
   }
   state.lastSync = new Date().toISOString();
   saveState(); render();
-  logSync(`Pulled ${data?.length || 0} unlock record(s) from the cloud.`, "ok");
+  logSync(`Downloaded ${data?.length || 0} achievement(s) from the cloud.`, "ok");
 }
 
 $("#btn-sync").addEventListener("click", pushQueue);
@@ -933,9 +933,9 @@ function importRows(raw, source) {
   }
   if (added) {
     saveState(); render();
-    logSync(`${added} queued row${added === 1 ? "" : "s"} imported from ${source}.`, "ok");
+    logSync(`${added} achievement${added === 1 ? "" : "s"} read from ${source}.`, "ok");
   } else {
-    logSync(`No new rows in ${source} (already queued or unreadable).`);
+    logSync(`No new achievements in ${source} (already read, or the file could not be read).`);
   }
   return added;
 }
@@ -991,7 +991,7 @@ function renderRA() {
     $("#ra-key").placeholder = on ? "managed by your session" : "saved — leave blank to keep";
     const when = s.lastPull ? new Date(s.lastPull).toLocaleString() : "never";
     const scope = on ? `${s.user} · signed in on this device` : `${s.user} · saved for this browser`;
-    raHint(`${scope} · ${s.tracked} game${s.tracked === 1 ? "" : "s"} tracked · pulled ${when}`);
+    raHint(`${scope} · ${s.tracked} game${s.tracked === 1 ? "" : "s"} tracked · refreshed ${when}`);
     const box = $("#ra-unmatched");
     const list = (RA._state().unmatched || []);
     box.innerHTML = list.length
@@ -1010,8 +1010,8 @@ $("#btn-ra-save").addEventListener("click", async () => {
   const u = $("#ra-user").value.trim();
   const saved = RA.summary().configured ? RA._state().key : "";
   const k = $("#ra-key").value.trim() || saved;
-  if (!u) return raHint("Enter your RA username.", "err");
-  if (!k) return raHint("Enter your web API key.", "err");
+  if (!u) return raHint("Enter your RetroAchievements username.", "err");
+  if (!k) return raHint("Enter your API key.", "err");
   // Saving manually is the same act as signing in: verify, then adopt the identity.
   const ok = await doSignIn(u, k);
   if (!ok) raHint($("#auth-error").textContent || "Could not sign in with that account.", "err");
@@ -1037,7 +1037,7 @@ $("#btn-ra-pull").addEventListener("click", async () => {
   raHint("Contacting RetroAchievements…");
   try {
     const res = await pullProfile({ quiet: true });
-    if (!res) return raHint("Pull failed — see the sync log.", "err");
+    if (!res) return raHint("Could not refresh — see the activity log.", "err");
     if (res.applied === 0 && res.matched === 0)
       raHint("Nothing matched. Check the username — that account may have no progress.", "warn");
     else renderRA();

@@ -59,7 +59,7 @@ async function mtpAdopt(fs) {
     if (handle.kind === "directory") storages.push({ name, handle });
   }
   if (!storages.length) {
-    logSync(`${mtpSummary(fs)}: connected, but it exposes no storage. Unlock the device and choose “File transfer / MTP” on its USB prompt.`, "err");
+    logSync(`${mtpSummary(fs)}: connected, but no storage is visible. Unlock the handheld and pick “File transfer” on its USB prompt.`, "err");
     mtpPill("no storage", "warn");
     return 0;
   }
@@ -70,15 +70,15 @@ async function mtpAdopt(fs) {
     FSA.volumes.push(vol);
     await fsaLoadMarker(vol);          // marker + queue discovery, same code path as a card
     if (vol.hasQueue) withQueue++;
-    logSync(`${mtpSummary(fs)}/${s.name}: ${vol.device ? `${vol.device.model} · ${vol.device.device_id}` : "no marker"}` +
-      `, ${vol.hasQueue ? `queue at ${vol.queuePath}` : "no queue found"}.`, vol.hasQueue ? "ok" : "");
+    logSync(`${mtpSummary(fs)}/${s.name}: ${vol.device ? `${vol.device.model} · ${vol.device.device_id}` : "unidentified"}` +
+      `, ${vol.hasQueue ? `progress file at ${vol.queuePath}` : "no progress file found"}.`, vol.hasQueue ? "ok" : "");
   }
 
-  mtpPill(`${storages.length} storage(s)`, "live");
+  mtpPill(storages.length === 1 ? "1 storage" : `${storages.length} storages`, "live");
   mtpSet("#mtp-device", mtpSummary(fs));
   mtpHint(storages.length === 1
-    ? "One storage found. If saves live on a second SD card, the device may expose it only when that card is inserted."
-    : `${storages.length} storages found — pull reads all of them and writes an ack to each.`);
+    ? "One storage found. If saves live on a second SD card, the handheld may only show it while that card is in."
+    : `${storages.length} storages found — reading covers all of them and leaves a receipt on each.`);
   mtpRenderStorages();
   await fsaLoadAll();
   return storages.length;
@@ -88,7 +88,7 @@ async function mtpConnect(manual = true) {
   if (MTP.connecting) return;
   if (!("usb" in navigator)) {
     mtpPill("unsupported", "warn");
-    mtpHint("<strong>This browser has no WebUSB.</strong> Use Chrome or Edge on desktop over HTTPS.");
+    mtpHint("<strong>This browser cannot read a handheld over its cable.</strong> Chrome or Edge on a computer can.");
     return;
   }
   MTP.connecting = true;
@@ -100,22 +100,22 @@ async function mtpConnect(manual = true) {
     }
     const fs = await requestMtpFileSystem({ wasmUrl: MTP_WASM });
     await mtpAdopt(fs);
-    if (manual) logSync(`MTP link live: ${mtpSummary(fs)} (${fs.session?.storages?.length || 0} storage(s)).`, "ok");
+    if (manual) logSync(`Handheld connected: ${mtpSummary(fs)} (${fs.session?.storages?.length || 0} storage${(fs.session?.storages?.length || 0) === 1 ? "" : "s"}).`, "ok");
   } catch (e) {
     const name = e?.name || "";
     if (name === "NotFoundError" || name === "AbortError") { mtpPill("no device", ""); return; }
     if (name === "MtpDeviceNotFoundError") {
       mtpPill("not paired", "warn");
-      mtpHint("<strong>No paired MTP device.</strong> Press <em>Connect MTP device</em> and pick the handheld from the browser list.");
+      mtpHint("<strong>No handheld paired with this browser yet.</strong> Press <em>Connect handheld</em> and pick it from the list.");
       return;
     }
     if (name === "MtpOpenError") {
       mtpPill("blocked", "err");
-      mtpHint("<strong>The device refused to open.</strong> On Windows this usually means another program (Explorer, a phone-sync app) already holds the MTP session — close those windows and unplug/replug. On some builds the MTP interface is claimed by a driver the browser cannot use.");
-      logSync(`MTP open failed: ${e.message}. Close Explorer windows pointed at the device and replug.`, "err");
+      mtpHint("<strong>The handheld refused to open.</strong> On Windows this usually means another program (File Explorer, a phone-sync app) is already holding the connection — close those windows and plug it in again. Some builds use a driver the browser cannot talk to.");
+      logSync(`Could not open the handheld: ${e.message}. Close any Explorer windows pointed at it and plug it back in.`, "err");
       return;
     }
-    logSync(`MTP link failed: ${e.message}`, "err");
+    logSync(`Connecting the handheld failed: ${e.message}`, "err");
     mtpPill("failed", "err");
   } finally {
     MTP.connecting = false;
@@ -134,7 +134,7 @@ async function mtpRestore() {
     await mtpAdopt(fs);
   } catch (e) {
     mtpPill("paired, not open", "warn");
-    mtpHint("A device is paired but not open — plug it in, unlock it, and press <em>Connect MTP device</em>.");
+    mtpHint("A handheld is paired but not open — plug it in, unlock it, and press <em>Connect handheld</em>.");
   }
 }
 
@@ -146,7 +146,7 @@ async function mtpDetach() {
   mtpSet("#mtp-device", "—"); mtpSet("#mtp-storage", "—");
   mtpHint("");
   await fsaLoadAll();
-  logSync("MTP device released.");
+  logSync("Handheld disconnected.");
 }
 
 function mtpInit() {
@@ -155,19 +155,19 @@ function mtpInit() {
 
   if (!("usb" in navigator)) {
     mtpPill("unsupported", "warn");
-    mtpHint("<strong>This browser has no WebUSB.</strong> Chrome or Edge on desktop, over HTTPS.");
+    mtpHint("<strong>This browser cannot read a handheld over its cable.</strong> Chrome or Edge on a computer can.");
     return;
   }
   navigator.usb.addEventListener("disconnect", e => {
     if (!MTP.fs) return;
-    logSync(`MTP device unplugged (${e.device.productName || "device"}) — its volumes left the list.`, "err");
+    logSync(`Handheld unplugged (${e.device.productName || "device"}) — its storage left the list.`, "err");
     MTP.fs = null;
     mtpDropVolumes();
     mtpPill("unplugged", "warn");
     fsaLoadAll();
   });
   navigator.usb.addEventListener("connect", () => {
-    if (!MTP.fs) { mtpPill("device present", "live"); mtpHint("Device seen. Press <em>Connect MTP device</em> to open its storage."); }
+    if (!MTP.fs) { mtpPill("device present", "live"); mtpHint("Handheld seen. Press <em>Connect handheld</em> to open its storage."); }
   });
   mtpRestore();
 }

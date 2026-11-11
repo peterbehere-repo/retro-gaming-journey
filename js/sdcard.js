@@ -107,7 +107,7 @@ function fsaRenderVolumes() {
     ? [...new Set(FSA.volumes.map(v => v.device?.os).filter(Boolean))].join(", ") || "—"
     : "—");
   fsaSet("#fsa-queue", FSA.volumes.filter(v => v.hasQueue).map(v => v.queuePath).join(", ")
-    || (FSA.volumes.length ? "no queue on any volume" : "—"));
+    || (FSA.volumes.length ? "no progress file on this card" : "—"));
 }
 
 /* ---------- per-volume file helpers ---------- */
@@ -172,15 +172,15 @@ async function fsaLoadAll() {
   for (const vol of FSA.volumes) await fsaLoadMarker(vol);
   const ready = FSA.volumes.filter(v => v.hasQueue && v.permitted);
   fsaPullEnabled(ready.length > 0);
-  if (!FSA.volumes.length) { fsaPill("not linked"); fsaHint(""); return; }
+  if (!FSA.volumes.length) { fsaPill("no card chosen"); fsaHint(""); return; }
 
   const missing = FSA.volumes.filter(v => !v.device);
-  fsaPill(ready.length ? `${FSA.volumes.length} volume(s) linked` : "linked", ready.length ? "live" : "warn");
+  fsaPill(ready.length ? `${FSA.volumes.length} card${FSA.volumes.length === 1 ? "" : "s"} ready` : "card chosen", ready.length ? "live" : "warn");
   const bits = [];
-  if (ready.length) bits.push(`Pull reads ${ready.length} queue${ready.length > 1 ? "s" : ""} and writes an ack to each volume it takes rows from.`);
-  if (missing.length) bits.push(`${missing.length} volume(s) have no <code>${FSA.markerPath}</code> — run <code>rgj-sync init</code> on the device, or press <em>Prepare card</em>. A card holding only saves is fine to leave unidentified.`);
+  if (ready.length) bits.push(`Reading copies new achievements from ${ready.length} card${ready.length > 1 ? "s" : ""} and leaves a receipt on each, so the handheld can clear what was taken.`);
+  if (missing.length) bits.push(`${missing.length} card${missing.length > 1 ? "s have" : " has"} no device info file yet — press <em>Set up this card</em> to add one. A card that only holds saves can stay as it is.`);
   const reconfirm = FSA.volumes.filter(v => !v.permitted);
-  if (reconfirm.length) bits.push(`${reconfirm.length} volume(s) need a one-time permission click — press <em>Pull from card</em> and allow when the browser asks.`);
+  if (reconfirm.length) bits.push(`${reconfirm.length} card${reconfirm.length > 1 ? "s need" : " needs"} a one-time permission click — press <em>Read achievements</em> and allow access when the browser asks.`);
   fsaHint(bits.join(" "));
 
   // The dashboard's Device ID should be whatever the linked volume says, not a stale default.
@@ -194,7 +194,7 @@ async function fsaLoadAll() {
 async function fsaLink() {
   if (!("showDirectoryPicker" in window)) {
     fsaPill("unsupported", "warn");
-    fsaHint("<strong>This browser cannot open folders.</strong> Use Chrome or Edge on desktop over HTTPS.");
+    fsaHint("<strong>This browser cannot open folders.</strong> Chrome or Edge on a computer can — the phone version usually cannot.");
     return;
   }
   try {
@@ -202,10 +202,10 @@ async function fsaLink() {
     const dup = FSA.volumes.find(v => v.handle.name === handle.name);
     if (dup) {
       dup.handle = handle;
-      logSync(`Volume ${handle.name} re-linked (replaced the remembered handle).`, "ok");
+      logSync(`Card reconnected: ${handle.name}.`, "ok");
     } else {
       FSA.volumes.push({ key: handle.name, handle, permitted: true, device: null, hasQueue: false });
-      logSync(`Volume linked: ${handle.name}.`, "ok");
+      logSync(`Card chosen: ${handle.name}.`, "ok");
     }
     await fsaLoadMarker(FSA.volumes.find(v => v.handle.name === handle.name));
     await fsaPersist();
@@ -226,8 +226,8 @@ async function fsaForget() {
   fsaRenderVolumes();
   fsaPullEnabled(false);
   window.dispatchEvent(new CustomEvent("rgj:volumes"));
-  fsaHint("Volumes forgotten by this browser. Nothing on any card was touched.");
-  logSync("All volumes unlinked from this browser (no files changed).");
+  fsaHint("Cards forgotten by this browser. Nothing on the cards themselves was changed.");
+  logSync("All cards removed from this browser (no files on them changed).");
 }
 
 async function fsaPersist() {
@@ -261,7 +261,7 @@ async function fsaPrepare() {
   }
   if (!(await fsaExistsAt(vol, FSA.defaults.queuePath))) {
     await fsaWriteAt(vol, FSA.defaults.queuePath, "");
-    logSync(`Created empty queue at ${FSA.defaults.queuePath} on ${name}.`, "ok");
+    logSync(`Created an empty progress file at ${FSA.defaults.queuePath} on ${name}.`, "ok");
   }
   await fsaLoadMarker(vol);
   await fsaLoadAll();
@@ -275,27 +275,27 @@ async function fsaEnsurePermission(vol) {
     if ((await vol.handle.requestPermission(opts)) === "granted") { vol.permitted = true; return true; }
   } catch (e) { /* fall through */ }
   vol.permitted = false;
-  logSync(`${vol.handle.name}: permission denied — that volume stays read-blocked until you allow it.`, "err");
+  logSync(`${vol.handle.name}: access denied — this card stays unreadable until you allow it.`, "err");
   return false;
 }
 
 async function fsaPullFromVolume(vol) {
   if (!vol.hasQueue) {
-    logSync(`${vol.handle.name}: no queue file found — nothing to pull.`, "");
+    logSync(`${vol.handle.name}: no progress file on this card — nothing to read.`, "");
     return 0;
   }
   let raw = "";
   try {
     raw = await fsaReadAt(vol, vol.queuePath);
   } catch (e) {
-    logSync(`${vol.handle.name}: queue read failed (${e.message}).`, "err");
+    logSync(`${vol.handle.name}: could not read the progress file (${e.message}).`, "err");
     return 0;
   }
-  if (!raw.trim()) { logSync(`${vol.handle.name}: queue is empty.`, ""); return 0; }
+  if (!raw.trim()) { logSync(`${vol.handle.name}: no achievements recorded yet.`, ""); return 0; }
 
   const before = state.queued.length;
   const added = importRows(raw, `${vol.handle.name}/${vol.queuePath}`);
-  if (!added) { logSync(`${vol.handle.name}: ${vol.queuePath} — no new rows.`, ""); return 0; }
+  if (!added) { logSync(`${vol.handle.name}: no new achievements.`, ""); return 0; }
 
   const rows = state.queued.slice(before);
   const ack = {
@@ -315,17 +315,17 @@ async function fsaPullFromVolume(vol) {
     const fresh = new Set(priorKeys.split("\n").map(l => l.trim()).filter(Boolean));
     for (const r of ack.rows) fresh.add(`${r.game_hash}|${r.achievement_id}|${r.timestamp}`);
     await fsaWriteAt(vol, vol.ackKeysPath, [...fresh].join("\n") + "\n");
-    logSync(`${vol.handle.name}: pulled ${added} row(s); ack + key file written so the device can prune.`, "ok");
+    logSync(`${vol.handle.name}: read ${added} achievement${added === 1 ? "" : "s"}; receipt written so the handheld can clear them.`, "ok");
     const el = document.querySelector("#fsa-last-ack");
-    if (el) el.textContent = `${new Date(ack.acked_at).toLocaleString()} · ${added} row(s) from ${vol.handle.name}`;
+    if (el) el.textContent = `${new Date(ack.acked_at).toLocaleString()} · ${added} achievement${added === 1 ? "" : "s"} from ${vol.handle.name}`;
   } catch (e) {
-    logSync(`${vol.handle.name}: ack write failed (${e.message}). Rows are queued here, so nothing is lost.`, "err");
+    logSync(`${vol.handle.name}: could not write the receipt (${e.message}). The achievements are saved here, so nothing is lost.`, "err");
   }
   return added;
 }
 
 async function fsaPull() {
-  if (!FSA.volumes.length) { logSync("No volume linked — press “Link another volume” first.", "err"); return; }
+  if (!FSA.volumes.length) { logSync("No card chosen yet — press “Choose a card” first.", "err"); return; }
   let total = 0, scanned = 0, needsClick = 0;
   for (const vol of FSA.volumes) {
     if (!(await fsaEnsurePermission(vol))) { needsClick++; continue; }
@@ -334,9 +334,9 @@ async function fsaPull() {
     total += await fsaPullFromVolume(vol);
   }
   logSync(scanned
-    ? `Sync complete: ${total} new row(s) from ${scanned} volume(s).`
-    : "No volume could be read.", scanned ? "ok" : "err");
-  if (needsClick) logSync(`${needsClick} volume(s) still need permission — press Pull again and allow the browser prompt.`, "err");
+    ? `Done: ${total} new achievement${total === 1 ? "" : "s"} read from ${scanned} card${scanned === 1 ? "" : "s"}.`
+    : "No card could be read.", scanned ? "ok" : "err");
+  if (needsClick) logSync(`${needsClick} card${needsClick > 1 ? "s still need" : " still needs"} permission — press Read achievements again and allow the browser prompt.`, "err");
   await fsaLoadAll();
 }
 
@@ -354,8 +354,8 @@ async function fsaInit() {
     return;
   }
   if (!window.isSecureContext) {
-    fsaPill("needs HTTPS", "warn");
-    fsaHint("<strong>Folder access needs a secure page.</strong> Serve over HTTPS or localhost.");
+    fsaPill("needs the live site", "warn");
+    fsaHint("<strong>Folders only open on a proper web address.</strong> Use the live site or a local one, not the file on your computer.");
     return;
   }
 

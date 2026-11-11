@@ -267,7 +267,7 @@
         system: systemOf(dir), rom: slug(p.base), base: p.base
       });
     }
-    if (log) log(`Scanned ${roots.length} save folder${roots.length === 1 ? "" : "s"}, found ${files.length} file${files.length === 1 ? "" : "s"} worth archiving.`);
+    if (log) log(`Scanned ${roots.length} save folder${roots.length === 1 ? "" : "s"}, found ${files.length} file${files.length === 1 ? "" : "s"} worth backing up.`);
     return { roots, files, skipped };
   }
 
@@ -593,12 +593,12 @@ core build; battery saves go anywhere.
   async function pull(opts) {
     const log = opts.onLog || (() => {});
     const cfg = { ...D, ...opts };
-    if (!cfg.token) throw new Error("No GitHub token — open Save archive settings and paste one.");
+    if (!cfg.token) throw new Error("No GitHub key yet — open “Where backups are kept” and add one.");
     const readers = cfg.readers || (cfg.reader ? [cfg.reader] : []);
     if (!readers.length) throw new Error("No volume linked.");
 
     const gh = new Gh(cfg);
-    log("Reading the branch tree…");
+    log("Reading the backup list…");
     const remote = await gh.map();
     const model = archiveModel(remote, cfg);
 
@@ -674,7 +674,7 @@ core build; battery saves go anywhere.
       files.push({ path: `${userRoot(cfg)}/archive.json`, bytes: enc(JSON.stringify(model.toJSON(), null, 1) + "\n") });
       const byGame = new Set(report.added.map((a) => `${a.system}/${a.rom}`));
       const msg = `saves: ${[...byDev.keys()].join(", ")} +${report.added.length} save file(s) across ${byGame.size} game(s)`;
-      log(`Uploading ${files.length} file${files.length === 1 ? "" : "s"} in one commit…`);
+      log(`Sending ${files.length} file${files.length === 1 ? "" : "s"} to GitHub…`);
       try {
         report.commit = await gh.commit(files, msg);
       } catch (e) {
@@ -683,9 +683,9 @@ core build; battery saves go anywhere.
           report.commit = await gh.commit(files, msg);
         } else throw e;
       }
-      log(`Committed ${report.commit.slice(0, 7)} to ${cfg.branch}.`);
+      log("Backup saved to GitHub.");
     } else {
-      log("Every file on this device is already archived at these exact bytes — nothing to commit.");
+      log("Every file on this device is already backed up exactly as it is — nothing to upload.");
     }
 
     const store = await storeGet(cfg.device || "default");
@@ -791,7 +791,7 @@ core build; battery saves go anywhere.
   // save and the newest state per device already resolved.
   async function view(opts) {
     const cfg = { ...D, ...opts };
-    if (!cfg.token) throw new Error("No GitHub token — open Archive settings and paste one.");
+    if (!cfg.token) throw new Error("No GitHub key yet — open “Where backups are kept” and add one.");
     const gh = new Gh(cfg);
     const remote = await gh.map();
     const model = archiveModel(remote, cfg);
@@ -859,7 +859,7 @@ core build; battery saves go anywhere.
   async function upload(opts) {
     const log = opts.onLog || (() => {});
     const cfg = { ...D, ...opts };
-    if (!cfg.token) throw new Error("No GitHub token — open Archive settings and paste one.");
+    if (!cfg.token) throw new Error("No GitHub key yet — open “Where backups are kept” and add one.");
     const bytes = opts.bytes instanceof Uint8Array ? opts.bytes : new Uint8Array(opts.bytes);
     if (!bytes.length) throw new Error("That file is empty.");
     if (bytes.length > 50 * 1048576) throw new Error(`${kb(bytes.length)} is over GitHub's 50 MB per-file warning — not uploading.`);
@@ -868,7 +868,7 @@ core build; battery saves go anywhere.
     if (!rom) throw new Error("No game name — cannot file an upload without one.");
 
     const gh = new Gh(cfg);
-    log("Reading the branch tree…");
+    log("Reading the backup list…");
     const remote = await gh.map();
     const model = archiveModel(remote, cfg);
     const sha = await gitBlobSha(bytes);
@@ -877,7 +877,7 @@ core build; battery saves go anywhere.
     const existing = model.games.get(`${system}/${rom}`);
     const dup = existing && existing.versions.find((v) => v.sha === sha12);
     if (dup) {
-      log("Those exact bytes are already archived — new version not needed.");
+      log("This exact file is already backed up — no new version needed.");
       return { duplicate: true, path: dup.path, sha: sha12 };
     }
 
@@ -895,7 +895,7 @@ core build; battery saves go anywhere.
       { path: `${userRoot(cfg)}/archive.json`, bytes: enc(JSON.stringify(model.toJSON(), null, 1) + "\n") }
     ];
     const msg = `saves: upload ${opts.name || rom} → ${system}/${rom} (${dev})`;
-    log(`Uploading ${kb(bytes.length)} in one commit…`);
+    log(`Sending ${kb(bytes.length)} to GitHub…`);
     let commit;
     try {
       commit = await gh.commit(files, msg);
@@ -903,7 +903,7 @@ core build; battery saves go anywhere.
       if (e.status === 409 || e.status === 422) commit = await gh.commit(files, msg);
       else throw e;
     }
-    log(`Committed ${commit.slice(0, 7)}.`);
+    log("Saved to GitHub.");
     return { path, sha: sha12, commit, kind: p.kind, slot: p.slot, system, rom };
   }
 
@@ -1003,13 +1003,13 @@ core build; battery saves go anywhere.
       const set = !!(s.owner && s.repo);
       const repo = set ? `${s.owner}/${s.repo}` : `${D.owner}/${D.repo}`;
       const branch = s.branch || D.branch;
-      sum.textContent = `${repo.split("/").pop()}@${branch} · ${s.user || D.user}${set ? "" : " (defaults)"}`;
+      sum.textContent = set ? `${s.user || D.user} · GitHub` : "not connected";
       sum.title = `${repo} · branch ${branch} · user folder ${s.user || D.user}`;
     }
     const pill = $("#saves-pill");
     if (pill) {
       const on = !!(s.token && s.user);
-      pill.textContent = on ? "ready" : "needs a token";
+      pill.textContent = on ? "connected" : "not connected";
       pill.className = `usb-pill ${on ? "live" : "warn"}`.trim();
     }
   }
@@ -1035,7 +1035,7 @@ core build; battery saves go anywhere.
 
   async function chooseReader() {
     if (typeof global.showDirectoryPicker !== "function") {
-      uiLog("This browser has no folder picker — link a volume first (Link another volume).", "err");
+      uiLog("This browser cannot open folders — choose a card first.", "err");
       return null;
     }
     try {
@@ -1081,7 +1081,7 @@ core build; battery saves go anywhere.
     let picker = null;
     if (!readers.length) {
       picker = await chooseReader();
-      if (!picker) { uiLog("No volume to read. Link a card or pick its folder.", "err"); return; }
+      if (!picker) { uiLog("No card to read. Choose a card first.", "err"); return; }
       readers = [picker];
     }
     try {
@@ -1091,52 +1091,52 @@ core build; battery saves go anywhere.
         uiLog(`${r.label}: ${res.files.length} file(s) in ${res.roots.length} folder(s).`);
       }
     } catch (e) {
-      uiLog(`Preview failed: ${e.message}`, "err");
+      uiLog(`Could not check the device: ${e.message}`, "err");
     }
   }
 
   async function uiPull() {
     const cfg = settingsFromForm();
-    if (!cfg.token) { uiLog("Paste a GitHub token (contents: read & write) first.", "err"); return; }
+    if (!cfg.token) { uiLog("Add a GitHub key under “Where backups are kept” first.", "err"); return; }
     settingsSave(cfg);
     let readers = linkedReaders();
     let picker = null;
     if (!readers.length) {
       picker = await chooseReader();
-      if (!picker) { uiLog("No volume to read.", "err"); return; }
+      if (!picker) { uiLog("No card chosen — nothing to read.", "err"); return; }
       readers = [picker];
     }
     cfg.device = deviceFromReaders(readers, cfg.device);
     const devEl = $("#saves-device");
     if (devEl && !devEl.value) devEl.value = cfg.device;
     const btn = $("#btn-saves-pull");
-    if (btn) { btn.disabled = true; btn.textContent = "Pulling…"; }
+    if (btn) { btn.disabled = true; btn.textContent = "Backing up…"; }
     try {
       const report = await pull({ ...cfg, readers, onLog: (m) => uiLog(m) });
       const msg = report.total
-        ? `${report.total} save file(s) archived across ${report.games.length} game(s), ` +
+        ? `${report.total} save file(s) backed up across ${report.games.length} game(s), ` +
           `${report.unchanged} already current${report.deduped ? `, ${report.deduped} byte-identical elsewhere` : ""}.`
-        : `Nothing new — all ${report.scanned} file(s) on the device are already archived at these exact bytes.`;
+        : `Nothing new — all ${report.scanned} file(s) on the device are already backed up exactly as they are.`;
       uiLog(msg, "ok");
       const hint = $("#saves-hint");
       if (hint) {
         hint.innerHTML = report.commit
           ? `Branch <strong>${cfg.branch}</strong> · commit <code>${report.commit.slice(0, 7)}</code> · ` +
-            `<a href="https://github.com/${cfg.owner}/${cfg.repo}/tree/${cfg.branch}/saves/${slug(cfg.user)}" target="_blank" rel="noopener">browse the archive</a>`
-          : `Nothing to commit — the archive already holds these exact bytes.`;
+            `<a href="https://github.com/${cfg.owner}/${cfg.repo}/tree/${cfg.branch}/saves/${slug(cfg.user)}" target="_blank" rel="noopener">browse the backups</a>`
+          : `Nothing to upload — these exact files are already backed up.`;
       }
     } catch (e) {
-      uiLog(`Pull failed: ${e.message}`, "err");
+      uiLog(`Backup failed: ${e.message}`, "err");
       const hint = $("#saves-hint");
       if (hint) hint.textContent = `${e.message}`;
     } finally {
-      if (btn) { btn.disabled = false; btn.textContent = "Pull saves from device"; }
+      if (btn) { btn.disabled = false; btn.textContent = "Back up now"; }
     }
   }
 
   async function uiList() {
     const cfg = settingsFromForm();
-    if (!cfg.token) { uiLog("Paste a GitHub token first.", "err"); return; }
+    if (!cfg.token) { uiLog("Add a GitHub key first, under “Where backups are kept”.", "err"); return; }
     if (!VIEW.data) { await uiRefresh(); return; }
     settingsSave(cfg);
     try {
@@ -1147,7 +1147,7 @@ core build; battery saves go anywhere.
         ul.innerHTML = "";
         ul.style.maxHeight = "22rem";
         ul.style.overflow = "auto";
-        if (!rows.length) ul.innerHTML = "<li>The archive branch has no saves yet.</li>";
+        if (!rows.length) ul.innerHTML = "<li>No backups yet.</li>";
         for (const r of rows) {
           const li = document.createElement("li");
           const a = document.createElement("a");
@@ -1168,9 +1168,9 @@ core build; battery saves go anywhere.
           ul.appendChild(li);
         }
       }
-      uiLog(`Archive holds ${rows.length} save file(s).`);
+      uiLog(`Backups hold ${rows.length} save file(s).`);
     } catch (e) {
-      uiLog(`Archive read failed: ${e.message}`, "err");
+      uiLog(`Could not read the backups: ${e.message}`, "err");
     }
   }
 
@@ -1178,7 +1178,7 @@ core build; battery saves go anywhere.
   async function uiRestore(entry) {
     const cfg = settingsFromForm();
     const readers = linkedReaders();
-    if (!readers.length) { uiLog("Link the device's volume first, then restore.", "err"); return; }
+    if (!readers.length) { uiLog("Choose the card first, then restore.", "err"); return; }
     const reader = readers[0];
     try {
       const res = await scan(reader);
@@ -1220,7 +1220,7 @@ core build; battery saves go anywhere.
     const d = VIEW.data;
     const count = $("#saves-count");
     if (!d) {
-      if (count) count.textContent = "Not read yet — press Refresh archive.";
+      if (count) count.textContent = "Not read yet — press Refresh list.";
       return;
     }
     if (count) {
@@ -1350,7 +1350,7 @@ core build; battery saves go anywhere.
     const cfg = settingsFromForm();
     if (!cfg.token) {
       const count = $("#saves-count");
-      if (count) count.textContent = "Paste a GitHub token in Archive settings to read the archive.";
+      if (count) count.textContent = "Add a GitHub key under “Where backups are kept” to list your backups.";
       return;
     }
     if (VIEW.busy) return;
@@ -1360,20 +1360,20 @@ core build; battery saves go anywhere.
     try {
       VIEW.data = await view(cfg);
       renderArchive();
-      uiLog(`Archive: ${VIEW.data.counts.games} game(s), ${VIEW.data.counts.versions} version(s).`, "ok");
+      uiLog(`Backups: ${VIEW.data.counts.games} game(s), ${VIEW.data.counts.versions} version(s).`, "ok");
     } catch (e) {
-      uiLog(`Archive read failed: ${e.message}`, "err");
+      uiLog(`Could not read the backups: ${e.message}`, "err");
       const count = $("#saves-count");
-      if (count) count.textContent = `Could not read the archive: ${e.message}`;
+      if (count) count.textContent = `Could not read the backups: ${e.message}`;
     } finally {
       VIEW.busy = false;
-      if (btn) { btn.disabled = false; btn.textContent = "Refresh archive"; }
+      if (btn) { btn.disabled = false; btn.textContent = "Refresh list"; }
     }
   }
 
   async function uiDownload(v, g) {
     const cfg = settingsFromForm();
-    if (!cfg.token) { uiLog("Paste a GitHub token first.", "err"); return; }
+    if (!cfg.token) { uiLog("Add a GitHub key first, under “Where backups are kept”.", "err"); return; }
     try {
       const res = await download({ ...cfg, path: v.path, sha: v.sha && v.sha.length > 12 ? v.sha : null });
       saveBytes(res.bytes, v.name || `${g.rom}.bin`);
@@ -1394,7 +1394,7 @@ core build; battery saves go anywhere.
   async function uiUploadTo(game, kind) {
     if (!game || !game.key) return;
     const cfg = settingsFromForm();
-    if (!cfg.token) { uiLog("Paste a GitHub token first.", "err"); return; }
+    if (!cfg.token) { uiLog("Add a GitHub key first, under “Where backups are kept”.", "err"); return; }
     const input = $("#saves-file");
     const files = [...(input.files || [])];
     if (!files.length) { uiLog("No file chosen.", "err"); return; }
@@ -1416,7 +1416,7 @@ core build; battery saves go anywhere.
           device: slug(cfg.device || "manual"), onLog: (m) => uiLog(m)
         });
         uiLog(out.duplicate
-          ? `${name}: those exact bytes were already archived (${out.path.split("/").pop()}).`
+          ? `${name}: that exact file was already backed up (${out.path.split("/").pop()}).`
           : `${name}: new version added to ${system}/${rom}.`, out.duplicate ? "" : "ok");
       } catch (e) {
         uiLog(`Upload of ${name} failed: ${e.message}`, "err");
@@ -1440,7 +1440,7 @@ core build; battery saves go anywhere.
       const cfg = settingsFromForm();
       settingsSave(cfg);
       settingsToForm(cfg);
-      uiLog(`Archive set to ${cfg.owner}/${cfg.repo} @ ${cfg.branch} · user ${cfg.user}.`, "ok");
+      uiLog(`Backups set to ${cfg.owner}/${cfg.repo}, branch ${cfg.branch}, folder ${cfg.user}.`, "ok");
       VIEW.data = null;
       uiRefresh();
     });
@@ -1464,7 +1464,7 @@ core build; battery saves go anywhere.
     if (upNew) {
       upNew.addEventListener("click", async () => {
         const cfg = settingsFromForm();
-        if (!cfg.token) { uiLog("Paste a GitHub token first.", "err"); return; }
+        if (!cfg.token) { uiLog("Add a GitHub key first, under “Where backups are kept”.", "err"); return; }
         const system = (global.prompt("System folder (nes, snes, gba, psx …)", "") || "").trim();
         if (!system) return;
         const rom = (global.prompt("Game folder name (e.g. contra-usa)", "") || "").trim();

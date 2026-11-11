@@ -133,44 +133,46 @@
     <!-- SYNC -->
     <section id="panel-sync" class="panel">
       <h2>Sync</h2>
-      <p class="sync-note">Everything that talks to the hardware lives here: read achievement rows off a handheld, archive its save files, and pull RetroAchievements progress.</p>
+      <p class="sync-note">Your handhelds work without a connection, so their progress rides along on the memory
+      card. Bring the card here — or plug the handheld in — and this page copies it across: achievements, a
+      safety copy of your saves, and what your RetroAchievements account has unlocked.</p>
+
       <div class="sync-grid sync-grid-2">
         <div class="sync-stack">
 
           <div class="sync-card">
-            <h3>Read the queue</h3>
+            <h3>1 · Collect achievements</h3>
             <p class="sync-note">
-              Handhelds run offline and write unlock rows to a queue on their card. Each row is one
-              way in — <strong>MTP over a cable</strong>, <strong>the card in a reader</strong>, or
-              <strong>the device's own address on the LAN</strong>. Every channel writes an ack back
-              so the device can prune what was taken.
+              Every game keeps a note of the achievements you unlock. Connect the handheld whichever way suits
+              you and the page reads what is new, lights up the matching stars, then tells the handheld it can
+              clear the space.
             </p>
 
             <details class="chan" id="fsa-card" open>
               <summary class="chan-head">
-                <span class="chan-name">SD card / handheld volume</span>
-                <span class="chan-meta">USB drive</span>
-                <span id="fsa-pill" class="usb-pill">not linked</span>
+                <span class="chan-name">Memory card or USB drive</span>
+                <span class="chan-meta">card reader</span>
+                <span id="fsa-pill" class="usb-pill">no card chosen</span>
               </summary>
               <div class="chan-body">
                 <p class="sync-note">
-                  ArkOS, Spruce and Onion handhelds mount as an ordinary USB drive. Grant the card
-                  root once and the page reads the queue straight off it.
+                  Most handhelds look like an ordinary drive when you plug them in, or when you take the card
+                  out and put it in a reader. Choose the card once and this browser remembers it.
                 </p>
                 <dl>
-                  <dt>Device</dt><dd id="fsa-device">—</dd>
-                  <dt>OS / schema</dt><dd id="fsa-os">—</dd>
-                  <dt>Volume</dt><dd id="fsa-volume">—</dd>
-                  <dt>Queue</dt><dd id="fsa-queue">—</dd>
-                  <dt>Last ack</dt><dd id="fsa-last-ack">—</dd>
+                  <dt>Handheld</dt><dd id="fsa-device">—</dd>
+                  <dt>System</dt><dd id="fsa-os">—</dd>
+                  <dt>Card</dt><dd id="fsa-volume">—</dd>
+                  <dt>Progress file</dt><dd id="fsa-queue">—</dd>
+                  <dt>Last read</dt><dd id="fsa-last-ack">—</dd>
                 </dl>
                 <ul class="usb-volumes" id="fsa-volumes"></ul>
                 <div class="usb-actions">
-                  <button id="btn-fsa-link" class="btn btn-small">Link another volume</button>
-                  <button id="btn-fsa-pull" class="btn btn-ghost btn-small" disabled>Pull from card</button>
-                  <button id="btn-fsa-prepare" class="btn btn-ghost btn-small">Prepare card</button>
-                  <button id="btn-fsa-forget" class="btn btn-ghost btn-small">Forget all</button>
-                  <button id="btn-import-queue" class="btn btn-ghost btn-small">Import queue file…</button>
+                  <button id="btn-fsa-link" class="btn btn-small">Choose a card</button>
+                  <button id="btn-fsa-pull" class="btn btn-ghost btn-small" disabled>Read achievements</button>
+                  <button id="btn-fsa-prepare" class="btn btn-ghost btn-small">Set up this card</button>
+                  <button id="btn-fsa-forget" class="btn btn-ghost btn-small">Forget cards</button>
+                  <button id="btn-import-queue" class="btn btn-ghost btn-small">Add a progress file…</button>
                 </div>
                 <p class="usb-hint" id="fsa-hint"></p>
               </div>
@@ -178,127 +180,138 @@
 
             <details class="chan" id="mtp-card">
               <summary class="chan-head">
-                <span class="chan-name">MTP device</span>
-                <span class="chan-meta">USB cable</span>
+                <span class="chan-name">Handheld on its cable</span>
+                <span class="chan-meta">Android</span>
                 <span id="mtp-pill" class="usb-pill">checking</span>
               </summary>
               <div class="chan-body">
                 <p class="sync-note">
-                  A handheld that presents itself as MTP — any Android-based unit, or a Linux build
-                  set to MTP mode — is readable straight from the page over WebUSB. Each storage the
-                  device exposes (<em>Internal Storage</em>, <em>SD Card</em>) becomes its own volume,
-                  so saves on either card are picked up in one connection.
+                  If your handheld runs Android, or can be set to file transfer, the page can read it over
+                  the cable without taking the card out. Plug in, unlock the screen, and allow file access
+                  when it asks.
                 </p>
                 <dl>
-                  <dt>Device</dt><dd id="mtp-device">—</dd>
-                  <dt>Storage(s)</dt><dd id="mtp-storage">—</dd>
+                  <dt>Handheld</dt><dd id="mtp-device">—</dd>
+                  <dt>Storage</dt><dd id="mtp-storage">—</dd>
                 </dl>
                 <ul class="usb-volumes" id="mtp-storages"></ul>
                 <div class="usb-actions">
-                  <button id="btn-mtp-connect" class="btn btn-small">Connect MTP device</button>
-                  <button id="btn-mtp-detach" class="btn btn-ghost btn-small">Release</button>
+                  <button id="btn-mtp-connect" class="btn btn-small">Connect handheld</button>
+                  <button id="btn-mtp-detach" class="btn btn-ghost btn-small">Disconnect</button>
                 </div>
                 <p class="usb-hint" id="mtp-hint"></p>
               </div>
             </details>
 
             <div id="lan-rows"></div>
+
+            <h4 class="log-title">Recent activity</h4>
+            <div class="stat-row">
+              <div><span class="stat-k">Handheld</span><span class="stat-v" id="sync-device">—</span></div>
+              <div><span class="stat-k">Waiting to upload</span><span class="stat-v" id="sync-queued">0</span></div>
+            </div>
+            <ul id="sync-log" class="log"><li>Nothing yet — read a card to start.</li></ul>
+            <p class="sync-note" style="margin-top:.7rem">
+              Reading a card keeps the achievements in this browser straight away. “Waiting to upload” only
+              counts progress held for an online account.
+            </p>
+
+            <details class="chan">
+              <summary class="chan-head">
+                <span class="chan-name">Technical details</span>
+                <span class="chan-meta plain">for the curious</span>
+              </summary>
+              <div class="chan-body">
+                <p class="sync-note">
+                  On the card, progress is one achievement per line in <code>rgj/rgj-queue.jsonl</code>.
+                  After each read the page writes <code>rgj/rgj-ack.json</code> back — that receipt is how the
+                  handheld knows which achievements it can clear.
+                </p>
+              </div>
+            </details>
           </div>
 
         </div>
 
         <div class="sync-stack">
-          <div class="sync-card">
-            <h3>This session <span class="usb-pill" id="session-pill">local</span></h3>
-            <div class="stat-row">
-              <div><span class="stat-k">Device</span><span class="stat-v" id="sync-device">—</span></div>
-              <div><span class="stat-k">Last sync</span><span class="stat-v" id="sync-last">never</span></div>
-              <div><span class="stat-k">Queued</span><span class="stat-v" id="sync-queued">0</span></div>
-            </div>
-            <div class="usb-actions">
-              <button id="btn-sync" class="btn btn-small">Sync now</button>
-              <button id="btn-pull" class="btn btn-ghost btn-small">Pull remote progress</button>
-            </div>
-            <details class="chan">
-              <summary class="chan-head">
-                <span class="chan-name">Queue format</span>
-                <span class="chan-meta">SQLite</span>
-              </summary>
-              <div class="chan-body">
-                <pre class="code">CREATE TABLE achievement_queue (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    game_hash TEXT NOT NULL,
-    achievement_id TEXT NOT NULL,
-    unlocked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    sync_status TEXT DEFAULT 'PENDING',
-    hardcore_mode INTEGER DEFAULT 1,
-    security_nonce TEXT NOT NULL
-);</pre>
-              </div>
-            </details>
-            <h4 class="log-title">Log</h4>
-            <ul id="sync-log" class="log"><li>Ready. No sync performed this session.</li></ul>
-          </div>
-
           <div class="sync-card" id="saves-card">
-            <h3>Save archive <span id="saves-pill" class="usb-pill">not set up</span></h3>
+            <h3>2 · Back up your save files <span id="saves-pill" class="usb-pill">not connected</span></h3>
             <p class="sync-note">
-              Every pull adds a timestamped version — nothing is overwritten. Browse, download or
-              upload a version here; the newest is at the top of each game.
+              Copies your saves and save states off the handheld into dated backups. Nothing is overwritten —
+              every version is kept, and you can put any of them back or download it.
             </p>
             <div class="usb-actions">
-              <button id="btn-saves-pull" class="btn btn-small">Pull from device</button>
-              <button id="btn-saves-refresh" class="btn btn-ghost btn-small">Refresh archive</button>
-              <button id="btn-saves-preview" class="btn btn-ghost btn-small">Preview only</button>
-              <button id="btn-saves-upload" class="btn btn-ghost btn-small">New game…</button>
+              <button id="btn-saves-pull" class="btn btn-small">Back up now</button>
+              <button id="btn-saves-refresh" class="btn btn-ghost btn-small">Refresh list</button>
+              <button id="btn-saves-preview" class="btn btn-ghost btn-small">See what would be backed up</button>
+              <button id="btn-saves-upload" class="btn btn-ghost btn-small">Add a save file…</button>
             </div>
             <p class="usb-hint" id="saves-hint"></p>
 
             <div class="sa-toolbar">
-              <input id="saves-search" type="search" placeholder="Filter by game, system or device" spellcheck="false" autocomplete="off">
+              <input id="saves-search" type="search" placeholder="Search game, system or handheld" spellcheck="false" autocomplete="off">
               <div class="sa-tabs">
                 <button type="button" class="sa-tab on" data-filter="all">All</button>
                 <button type="button" class="sa-tab" data-filter="save">Saves</button>
                 <button type="button" class="sa-tab" data-filter="state">States</button>
               </div>
             </div>
-            <p class="sa-count" id="saves-count">Not read yet — press Refresh archive.</p>
+            <p class="sa-count" id="saves-count">Not read yet — press Refresh list.</p>
             <div id="saves-games" class="sa-games"></div>
             <input id="saves-file" type="file" multiple hidden>
 
             <details class="chan" id="saves-settings">
               <summary class="chan-head">
-                <span class="chan-name">Archive settings</span>
-                <span class="chan-meta plain" id="saves-summary">defaults</span>
+                <span class="chan-name">Where backups are kept</span>
+                <span class="chan-meta plain" id="saves-summary">not connected</span>
               </summary>
               <div class="chan-body">
+                <p class="sync-note">
+                  Backups are kept in a free private folder on GitHub, which also gives you the full history.
+                  Add a GitHub key once and this page can write to it. Your own folder is the only place
+                  anything goes.
+                </p>
                 <div class="lan-form">
-                  <label>Archive repo
-                    <input id="saves-repo" type="text" placeholder="peterbehere-repo/retro-gaming-journey" spellcheck="false" autocomplete="off">
-                  </label>
-                  <label>Branch
-                    <input id="saves-branch" type="text" placeholder="saves" spellcheck="false" autocomplete="off">
-                  </label>
-                  <label>User folder
-                    <input id="saves-user" type="text" placeholder="peter" spellcheck="false" autocomplete="off">
-                  </label>
-                  <label>Device ID
-                    <input id="saves-device" type="text" placeholder="from the card marker" spellcheck="false" autocomplete="off">
-                  </label>
-                  <label class="span-all">GitHub token · contents R/W
+                  <label class="span-all">GitHub key — read and write
                     <input id="saves-token" type="password" autocomplete="off" spellcheck="false">
                   </label>
+                  <label>Your folder
+                    <input id="saves-user" type="text" placeholder="your name" spellcheck="false" autocomplete="off">
+                  </label>
                 </div>
-                <div class="usb-actions">
-                  <button id="btn-saves-save" class="btn btn-ghost btn-small">Save settings</button>
+                <p class="sync-note" style="margin-top:.2rem">
+                  Find the key on GitHub under <strong>Settings → Developer settings → Personal access
+                  tokens</strong>. It stays in this browser and is only sent to GitHub.
+                </p>
+                <details class="chan">
+                  <summary class="chan-head">
+                    <span class="chan-name">Advanced</span>
+                    <span class="chan-meta plain">folder names and handheld ID</span>
+                  </summary>
+                  <div class="chan-body">
+                    <div class="lan-form">
+                      <label>Repository
+                        <input id="saves-repo" type="text" placeholder="peterbehere-repo/retro-gaming-journey" spellcheck="false" autocomplete="off">
+                      </label>
+                      <label>Branch
+                        <input id="saves-branch" type="text" placeholder="saves" spellcheck="false" autocomplete="off">
+                      </label>
+                      <label>Handheld ID
+                        <input id="saves-device" type="text" placeholder="read from the card" spellcheck="false" autocomplete="off">
+                      </label>
+                    </div>
+                  </div>
+                </details>
+                <div class="usb-actions" style="margin-top:.7rem">
+                  <button id="btn-saves-save" class="btn btn-ghost btn-small">Save these settings</button>
                 </div>
               </div>
             </details>
 
             <details class="chan" id="saves-output">
               <summary class="chan-head">
-                <span class="chan-name">Output</span>
-                <span class="chan-meta">preview, archive, restore</span>
+                <span class="chan-name">What was copied</span>
+                <span class="chan-meta">last backup run</span>
               </summary>
               <div class="chan-body">
                 <ul id="saves-list" class="log"></ul>
@@ -306,31 +319,52 @@
             </details>
           </div>
 
-
           <div class="sync-card" id="ra-card">
-            <h3>RetroAchievements progress</h3>
+            <h3>3 · Your RetroAchievements account</h3>
             <p class="sync-note">
-              Reads your public RA progress directly — no handset or card involved. The API key is
-              your own web key from
-              <a href="https://retroachievements.org/controlpanel.php" target="_blank" rel="noopener">your RA control panel</a>,
-              kept in this browser only.
+              Shows what your account has already unlocked, read straight from RetroAchievements — no card or
+              cable involved. Use your own account; the details stay in this browser and go only to
+              retroachievements.org.
             </p>
             <div class="ra-form">
-              <label>RA username
+              <label>Username
                 <input id="ra-user" type="text" autocomplete="username" spellcheck="false">
               </label>
-              <label>Web API key
+              <label>Your key
                 <input id="ra-key" type="password" autocomplete="off" spellcheck="false">
               </label>
             </div>
             <div class="usb-actions">
               <button id="btn-ra-save" class="btn btn-small">Save account</button>
-              <button id="btn-ra-pull" class="btn btn-ghost btn-small">Pull progress</button>
-              <button id="btn-ra-forget" class="btn btn-ghost btn-small">Forget account</button>
+              <button id="btn-ra-pull" class="btn btn-ghost btn-small">Update progress</button>
+              <button id="btn-ra-forget" class="btn btn-ghost btn-small">Remove account</button>
             </div>
             <p class="usb-hint" id="ra-hint"></p>
             <ul id="ra-unmatched" class="log"></ul>
           </div>
+
+          <div class="sync-card">
+              <details class="chan">
+                <summary class="chan-head">
+                  <span class="chan-name">Sending progress online</span>
+                  <span class="chan-meta plain">optional</span>
+                </summary>
+                <div class="chan-body">
+                  <p class="sync-note">
+                    Only needed if this site is connected to an online database: it sends the progress waiting
+                    here and brings back what another device has sent. Reading from a card works without it.
+                  </p>
+                  <div class="usb-actions">
+                    <button id="btn-sync" class="btn btn-small">Upload waiting progress</button>
+                    <button id="btn-pull" class="btn btn-ghost btn-small">Download from the cloud</button>
+                  </div>
+                  <dl>
+                    <dt>Last cloud sync</dt><dd id="sync-last">never</dd>
+                  </dl>
+                </div>
+              </details>
+          </div>
+
         </div>
       </div>
     </section>
@@ -399,10 +433,10 @@
       if (window.__rgjMtpLoaded) return;
       var pill = document.querySelector("#mtp-pill");
       var hint = document.querySelector("#mtp-hint");
-      if (pill) { pill.textContent = "needs http://"; pill.className = "usb-pill warn"; }
-      if (hint) hint.innerHTML = "<strong>The MTP module did not load.</strong> Open this page over " +
-        "<code>http://localhost</code> (or an https address) rather than by double-clicking the file — " +
-        "browsers refuse to load ES modules from <code>file://</code>.";
+      if (pill) { pill.textContent = "needs a web address"; pill.className = "usb-pill warn"; }
+      if (hint) hint.innerHTML = "<strong>The cable reader could not start.</strong> Open this page from a " +
+        "local web address or the live site rather than by double-clicking the file — browsers block " +
+        "this kind of script on pages opened straight from disk.";
     }, 3000);
   </script>
 </body>
