@@ -27,25 +27,48 @@ h1 { font-size: 1.25rem; letter-spacing: .06em; }
 h2 { font-size: .95rem; text-transform: uppercase; letter-spacing: .14em; color: var(--muted); margin: 1.6rem 0 .7rem; }
 h3 { font-size: .85rem; text-transform: uppercase; letter-spacing: .1em; color: var(--accent); margin-bottom: .6rem; }
 
+/* Brand left, tabs dead centre, sign-in right. The tab row is lifted out of the flow and
+   centred on the header itself, so it stays centred on the page no matter how long the
+   title or the sign-in chip gets. */
 .topbar {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 1rem 1.4rem; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between; gap: .6rem 1rem;
+  padding: .8rem 1.4rem; border-bottom: 1px solid var(--border);
   background: rgba(13,15,26,.8); position: sticky; top: 0; z-index: 5; backdrop-filter: blur(6px);
 }
-.brand { display: flex; gap: .8rem; align-items: center; }
-.brand-logo { font-size: 1.8rem; filter: drop-shadow(0 0 8px var(--accent)); }
-.tagline { font-size: .72rem; color: var(--muted); letter-spacing: .08em; }
+.tabs { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); }
+/* Not enough room for one line: title and sign-in keep the top row, the tabs drop below
+   and centre themselves on the full width. */
+@media (max-width: 1390px) {
+  .topbar { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: .5rem 1rem; }
+  .topbar .brand { grid-area: 1 / 1; }
+  .topbar .auth-box { grid-area: 1 / 2; justify-self: end; }
+  .tabs { position: static; transform: none; grid-area: 2 / 1 / 2 / -1; justify-self: center; max-width: 100%; }
+}
+.brand { display: flex; gap: .7rem; align-items: center; }
+.brand-logo { font-size: 1.6rem; filter: drop-shadow(0 0 8px var(--accent)); }
+/* Title and the iteration badge share a line; the strapline sits under it. Kept tight so a
+   centred tab row has room to breathe beside it. */
+.brand-text { min-width: 0; }
+.brand-line { display: flex; align-items: center; gap: .5rem; }
+.brand h1 { font-size: 1.15rem; letter-spacing: .04em; white-space: nowrap; }
+.tagline { font-size: .68rem; color: var(--muted); letter-spacing: .06em; white-space: nowrap; }
 .auth-box { display: flex; gap: .6rem; align-items: center; }
 .auth-status { font-size: .72rem; padding: .3rem .6rem; border-radius: 999px; border: 1px solid var(--border); color: var(--muted); }
 .auth-status.online { color: var(--accent); border-color: var(--accent); }
 .auth-status.offline { color: #ffb86b; border-color: #ffb86b; }
 
-.tabs { display: flex; gap: .3rem; padding: .7rem 1.4rem 0; border-bottom: 1px solid var(--border); }
-.tab {
-  background: none; border: 1px solid transparent; border-bottom: none;
-  color: var(--muted); font: inherit; padding: .55rem 1rem; cursor: pointer;
-  border-radius: var(--radius) var(--radius) 0 0; letter-spacing: .05em;
+/* In the header a tab is a pill in a rounded trough, not a tab glued to a page edge. */
+.tabs {
+  display: flex; gap: .15rem; padding: 3px; min-width: 0;
+  border: 1px solid var(--border); border-radius: 999px;
+  background: rgba(12,14,24,.92); backdrop-filter: blur(6px);
 }
+.tab {
+  background: none; border: 1px solid transparent;
+  color: var(--muted); font: inherit; font-size: .8rem; padding: .4rem .8rem; cursor: pointer;
+  border-radius: 999px; letter-spacing: .05em; white-space: nowrap;
+}
+.tab:hover { color: var(--fg); }
 .tab.active { color: var(--fg); background: var(--surface); border-color: var(--border); }
 
 main { flex: 1; padding: 1.4rem; max-width: 1200px; width: 100%; margin: 0 auto; }
@@ -96,7 +119,7 @@ main.wide { max-width: 2400px; padding: .9rem 1rem 1.2rem; }
   font: inherit; padding: .6rem .9rem; border-radius: var(--radius); max-width: 420px; width: 100%;
 }
 #search:focus { outline: none; border-color: var(--accent); }
-.iter-chip { color: var(--accent); border: 1px solid var(--accent); border-radius: 999px; padding: .1rem .5rem; }
+.iter-chip { color: var(--accent); border: 1px solid var(--accent); border-radius: 999px; padding: 1px .45rem; font-size: .6rem; letter-spacing: .06em; white-space: nowrap; }
 .scope-note { font-size: .72rem; color: var(--muted); margin-bottom: .7rem; line-height: 1.5; max-width: 70ch; }
 .library-count { font-size: .75rem; color: var(--muted); margin-bottom: .35rem; letter-spacing: .06em; }
 
@@ -203,7 +226,6 @@ footer { padding: 1.2rem; text-align: center; font-size: .7rem; color: var(--mut
 
 @media (max-width: 640px) {
   .bar-row { grid-template-columns: 110px 1fr 70px; }
-  .topbar { flex-direction: column; gap: .6rem; align-items: flex-start; }
 }
 
 /* Journey map */
@@ -214,8 +236,8 @@ footer { padding: 1.2rem; text-align: center; font-size: .7rem; color: var(--mut
 body.journey-view { overflow: hidden; }
 body.journey-view .topbar { position: static; padding: .5rem 1.1rem; }
 body.journey-view .brand h1 { font-size: .95rem; }
-body.journey-view .tabs { padding: .2rem 1.1rem .45rem; }
-body.journey-view .tab { padding: .32rem .7rem; }
+body.journey-view .tabs { padding: 2px; }
+body.journey-view .tab { padding: .3rem .7rem; }
 body.journey-view footer { display: none; }
 body.journey-view main.wide { padding: .5rem .7rem .6rem; }
 
@@ -440,12 +462,22 @@ pre { overflow-x: auto; }
   .brand-logo { font-size: 1.4rem; }
   .brand h1 { font-size: 1rem; }
   .tagline { font-size: .62rem; line-height: 1.4; }
-  .auth-box { width: 100%; justify-content: flex-end; gap: .5rem; }
+  .auth-box { justify-content: flex-end; gap: .5rem; }
 
-  /* Five tabs do not fit a phone; let the row scroll instead of squashing them. */
-  .tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; padding: .5rem .9rem 0; }
+  /* Two rows again, but as flex: the header is narrower than the tab row, and a grid track
+     would grow to fit its content and push the page sideways. */
+  .topbar { display: flex; flex-wrap: wrap; }
+  .topbar .brand { flex: 1 1 auto; min-width: 0; }
+  /* The iteration badge and the strapline are the first things to go: the title and the
+     sign-in button are what a phone header has to hold. */
+  .brand-line .iter-chip { display: none; }
+  .tagline { overflow: hidden; text-overflow: ellipsis; }
+  .topbar .auth-box { flex: 0 0 auto; margin-left: auto; order: 2; }
+  /* Five tabs do not fit a phone; let the row scroll instead of squashing them.
+     "safe" centring keeps the first tab reachable once the row is wider than the screen. */
+  .tabs { flex: 0 0 100%; order: 3; width: 100%; min-width: 0; justify-content: safe center; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
   .tabs::-webkit-scrollbar { display: none; }
-  .tab { flex: 0 0 auto; white-space: nowrap; padding: .5rem .8rem; font-size: .8rem; }
+  .tab { flex: 0 0 auto; white-space: nowrap; padding: .45rem .8rem; font-size: .8rem; }
 
   main, main.wide { padding: .8rem .85rem 1rem; }
   body.journey-view main.wide { padding: .35rem .4rem .4rem; }
@@ -480,7 +512,9 @@ pre { overflow-x: auto; }
 }
 
 @media (max-width: 380px) {
-  .tagline .iter-chip { display: none; }
+  .tagline { display: none; }
+  .brand h1 { font-size: .92rem; }
+  .topbar { padding: .6rem .75rem; }
 }
 
 /* ---------- Save archive panel ---------- */

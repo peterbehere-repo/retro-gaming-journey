@@ -5,31 +5,34 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Retro Gaming Journey</title>
   <meta name="description" content="Offline-first retro emulation progress dashboard. Sync your handheld achievements on demand." />
-  <link rel="stylesheet" href="css/styles.css?v=iter35" />
+  <link rel="stylesheet" href="css/styles.css?v=iter36" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎮</text></svg>" />
 </head>
 <body>
   <header class="topbar">
     <div class="brand">
       <span class="brand-logo">🎮</span>
-      <div>
-        <h1>Retro Gaming Journey</h1>
-        <p class="tagline">Handheld library · on-demand sync · <span class="iter-chip">Iteration 1: NES</span></p>
+      <div class="brand-text">
+        <div class="brand-line">
+          <h1>Retro Gaming Journey</h1>
+          <span class="iter-chip">Iteration 1: NES</span>
+        </div>
+        <p class="tagline">Handheld library · on-demand sync</p>
       </div>
     </div>
+    <nav class="tabs" role="tablist" id="tabs">
+      <button class="tab active" data-tab="dashboard" role="tab">Dashboard</button>
+      <button class="tab" data-tab="journey" role="tab">Journey</button>
+      <button class="tab" data-tab="library" role="tab">Library</button>
+      <button class="tab" data-tab="achievements" role="tab">Achievements</button>
+      <button class="tab" data-tab="sync" role="tab">Sync</button>
+    </nav>
+
     <div class="auth-box" id="auth-box">
       <span id="auth-status" class="auth-status" hidden></span>
       <button id="btn-signin" class="btn btn-small">Sign in</button>
     </div>
   </header>
-
-  <nav class="tabs" role="tablist" id="tabs">
-    <button class="tab active" data-tab="dashboard" role="tab">Dashboard</button>
-    <button class="tab" data-tab="journey" role="tab">Journey</button>
-    <button class="tab" data-tab="library" role="tab">Library</button>
-    <button class="tab" data-tab="achievements" role="tab">Achievements</button>
-    <button class="tab" data-tab="sync" role="tab">Sync</button>
-  </nav>
 
   <main>
     <!-- THE GATE: nothing is yours until we know who you are -->
