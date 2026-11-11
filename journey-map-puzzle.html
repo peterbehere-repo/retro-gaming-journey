@@ -316,7 +316,7 @@ fit();
    floor at "whole map fits", which on a small screen is well under 1x. */
 function minScale(){ return Math.min(1, Math.min(vp.clientWidth / MAPW, vp.clientHeight / MAPH)); }
 const coarsePointer = !!(window.matchMedia && window.matchMedia("(pointer:coarse)").matches);
-let lastTouchAt = 0, pinchState = null, tapInfo = null;
+let lastTouchAt = 0, pinchState = null, tapInfo = null, lastTap = { at:0, x:0, y:0 };
 function tDist(t){ return Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY); }
 function tMid(t){ const r = vp.getBoundingClientRect();
   return { x:(t[0].clientX + t[1].clientX)/2 - r.left, y:(t[0].clientY + t[1].clientY)/2 - r.top }; }

@@ -40,7 +40,7 @@ svg.overlay { position:absolute; inset:0; width:1280px; height:720px; }
 .pnode { cursor:pointer; }
 .pnode .ph { fill:#101430cc; stroke:var(--gold); stroke-width:1.5; r:4px; transition:r .15s ease, stroke-width .15s ease, fill .15s ease; }
 .pnode:hover .ph { fill:#1c2250dd; stroke:#ffe28a; stroke-width:2.5; r:13px; filter:drop-shadow(0 0 4px rgba(255,204,77,.4)); }
-.hover-s { animation: hbob 1.6s ease-in-out infinite; }
+.pnode.awake .hover-s { animation: hbob 1.6s ease-in-out infinite; }
 @keyframes hbob { 0%,100%{ transform: translateY(0);} 50%{ transform: translateY(-6px);} }
 .pnode .pnum { fill:var(--gold); font-weight:bold; font-size:12px; text-anchor:middle; font-family:inherit; opacity:0; transition:opacity .15s ease; }
 .pnode:hover .pnum { opacity:1; }
@@ -232,17 +232,65 @@ function openCard(g){
     <div class="hint">click anywhere to close</div></div></div>`;
   pop.classList.add("open");
 }
+/* ---- sprites rest until you look at them ----
+   Every earned sprite is a looping walk-cycle GIF, so a fully played map is two
+dozen characters marching on the spot at once - art you cannot read as art.
+   Each sprite keeps its GIF but holds its own first frame while the map is still;
+   the stop you point at (or tap) is the one that walks. */
+const stillP = new Map();
+function stillOf(src){
+  if(stillP.has(src)) return stillP.get(src);
+  const p = new Promise(res=>{
+    const im = new Image();
+    im.onload = ()=>{
+      try{
+        const c = document.createElement("canvas");
+        c.width = im.naturalWidth || im.width; c.height = im.naturalHeight || im.height;
+        c.getContext("2d").drawImage(im, 0, 0);
+        res(c.toDataURL("image/png"));
+      }catch(e){ res(src); }
+    };
+    im.onerror = ()=>res(src);
+    im.src = src;
+  });
+  stillP.set(src, p); return p;
+}
+function restSprites(el){
+  if(!el) return;
+  el.classList.remove("awake");
+  el.querySelectorAll("image.sprite").forEach(img=>{
+    const now = img.getAttribute("href") || "";
+    if(!img.dataset.gif && now.indexOf("image/gif") > -1) img.dataset.gif = now;
+    if(!img.dataset.gif) return;
+    img.dataset.live = "0";
+    stillOf(img.dataset.gif).then(png=>{ if(img.dataset.live !== "1") img.setAttribute("href", png); });
+  });
+}
+function wakeSprites(el){
+  if(!el) return;
+  el.classList.add("awake");
+  el.querySelectorAll("image.sprite").forEach(img=>{
+    if(!img.dataset.gif) return;
+    img.dataset.live = "1";
+    img.setAttribute("href", img.dataset.gif);
+  });
+}
+function restAll(){ document.querySelectorAll(".pnode").forEach(restSprites); }
+function wakeOnly(el){ restAll(); wakeSprites(el); }
 function wireNodes(){
   document.querySelectorAll(".pnode").forEach(el=>{
+    el.addEventListener("pointerenter", ()=>wakeSprites(el));
+    el.addEventListener("pointerleave", ()=>restSprites(el));
     el.addEventListener("click", e=>{
       e.stopPropagation();
+      wakeOnly(el);
       openCard(DATA.games[+el.dataset.i]);
     });
     // a drag that ends on a point must not open its card
     el.addEventListener("click", e => { if (moved > 5) { e.stopImmediatePropagation(); e.preventDefault(); } }, true);
   });
 }
-function drawNodes(){ ov.innerHTML = nodeMarkup(); wireNodes(); }
+function drawNodes(){ ov.innerHTML = nodeMarkup(); wireNodes(); restAll(); }
 // Repaint when achievements arrive: the stars on a card, and the sprites on the map.
 window.addEventListener("message", e=>{
   if(!e.data || e.data.type!=="rgj-ach") return;
@@ -254,8 +302,8 @@ window.addEventListener("storage", e=>{
   if(e.key && e.key.indexOf("rgj-ach-earned-v1")===0 || e.key==="rgj-ach-v1"){ drawNodes();
     if(currentGame && pop.classList.contains("open")) openCard(currentGame); }
 });
-pop.addEventListener("click", ()=>pop.classList.remove("open"));
-document.addEventListener("keydown", e=>{ if(e.key==="Escape") pop.classList.remove("open"); });
+pop.addEventListener("click", ()=>{ pop.classList.remove("open"); restAll(); });
+document.addEventListener("keydown", e=>{ if(e.key==="Escape"){ pop.classList.remove("open"); restAll(); } });
 
 // ---------- zoom & pan ----------
 const vp = document.getElementById("viewport"), inner = document.getElementById("inner"), zl = document.getElementById("zl");
@@ -372,7 +420,7 @@ if (window.ResizeObserver) new ResizeObserver(fitted).observe(vp);
    floor at "whole map fits", which on a small screen is well under 1x. */
 function minScale(){ return Math.min(1, Math.min(vp.clientWidth / MAPW, vp.clientHeight / MAPH)); }
 const coarsePointer = !!(window.matchMedia && window.matchMedia("(pointer:coarse)").matches);
-let lastTouchAt = 0, pinchState = null, tapInfo = null;
+let lastTouchAt = 0, pinchState = null, tapInfo = null, lastTap = { at:0, x:0, y:0 };
 function tDist(t){ return Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY); }
 function tMid(t){ const r = vp.getBoundingClientRect();
   return { x:(t[0].clientX + t[1].clientX)/2 - r.left, y:(t[0].clientY + t[1].clientY)/2 - r.top }; }
