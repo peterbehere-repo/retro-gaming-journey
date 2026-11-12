@@ -6,6 +6,7 @@
   <title>Retro Gaming Journey</title>
   <meta name="description" content="Offline-first retro emulation progress dashboard. Sync your handheld achievements on demand." />
   <link rel="stylesheet" href="css/styles.css?v=iter36" />
+  <link rel="stylesheet" href="css/dioramas.css?v=iter15" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎮</text></svg>" />
 </head>
 <body>
@@ -117,20 +118,31 @@
 
     <!-- ACHIEVEMENTS -->
     <section id="panel-achievements" class="panel">
-      <h2>Three achievements per game</h2>
+      <h2>Achievements</h2>
       <p class="sync-note">
-        Every NES title in the library carries three RetroAchievements picks — <strong>easy</strong>,
-        <strong>intermediate</strong> and <strong>advanced</strong> — chosen by RA's own retro ratio
-        (<em>TrueRatio</em>: points weighted by how rare the achievement is). They are also the three
-        stars on each Journey map path point, so lighting a star here lights it there.
+        Three RetroAchievements picks per title — <strong>easy</strong>, <strong>intermediate</strong>
+        and <strong>advanced</strong> — chosen by RA's own retro ratio (<em>TrueRatio</em>: points
+        weighted by how rare the achievement is). The same three are the stars on each Journey map
+        path point, so lighting a star here lights it there.
       </p>
+
       <div class="ach-bar">
         <button id="ach-load" class="btn btn-small">Load from RetroAchievements</button>
         <button id="ach-export" class="btn btn-small btn-ghost">Export cache</button>
         <span id="ach-status" class="ach-status">No achievements loaded yet.</span>
       </div>
-      <div class="ach-summary" id="ach-summary"></div>
-      <div id="ach-groups"></div>
+
+      <!-- The Diorama Wing is built by js/dioramas.js: twenty cases, one per Action title. -->
+      <div id="diorama-wing"></div>
+
+      <details class="ach-more" id="ach-more">
+        <summary class="ach-more-head">
+          <span>Every game's three picks</span>
+          <span class="ach-more-hint">the full written list — all 20 Action titles</span>
+        </summary>
+        <div class="ach-summary" id="ach-summary"></div>
+        <div id="ach-groups"></div>
+      </details>
     </section>
 
     <!-- SYNC -->
@@ -423,8 +435,9 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/retroachievements.js?v=4"></script>
   <script src="js/achievements.js?v=4"></script>
+  <script src="js/dioramas.js?v=iter9"></script>
   <script src="js/identity.js?v=4"></script>
-  <script src="js/app.js?v=iter50"></script>
+  <script src="js/app.js?v=iter51"></script>
   <script src="js/sdcard.js?v=4"></script>
   <script src="js/httpsync.js?v=6"></script>
   <script src="js/savesync.js?v=9"></script>

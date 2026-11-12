@@ -247,6 +247,11 @@ function renderAchievements() {
   const all = achGroups().flatMap(([, t]) => t);
   const s = ACH.summary("nes", all);
 
+  // Any Action title with a diorama gets a way in from its card as well as the wing.
+  const diBtn = t => (window.DIORAMA && DIORAMA.has(t))
+    ? `<button type="button" class="ach-di" data-di="${esc(t)}" title="Open the ${esc(t)} diorama">&#9672; diorama</button>`
+    : "";
+
   host.innerHTML = achGroups().map(([genre, titles]) => `
     <section class="ach-genre">
       <h3>${esc(genre)} · ${titles.length} NES titles</h3>
@@ -255,18 +260,18 @@ function renderAchievements() {
           const g = ACH.get("nes", title);
           if (!g) return `
             <div class="ach-game">
-              <div class="gname">${esc(title)}</div>
+              <div class="gname"><span>${esc(title)}</span>${diBtn(title)}</div>
               <div class="ach-missing">Not loaded. Press “Load from RetroAchievements”.</div>
             </div>`;
           if (!g.raId) return `
             <div class="ach-game">
-              <div class="gname">${esc(title)}</div>
+              <div class="gname"><span>${esc(title)}</span>${diBtn(title)}</div>
               <div class="ach-missing">No match on RetroAchievements for this title.</div>
             </div>`;
           const have = g.picks.length ? ACH.earnedOf("nes", title) : {};
           return `
             <div class="ach-game">
-              <div class="gname">${esc(title)}</div>
+              <div class="gname"><span>${esc(title)}</span>${diBtn(title)}</div>
               <div class="gra">RA #${g.raId}${g.raTitle && RA.normTitle(g.raTitle) !== RA.normTitle(title) ? ` · ${esc(g.raTitle)}` : ""}</div>
               <div class="ach-tiers">
                 ${g.picks.length ? g.picks.map(p => `
@@ -283,6 +288,17 @@ function renderAchievements() {
         }).join("")}
       </div>
     </section>`).join("") || '<p class="ach-missing">No NES titles in scope.</p>';
+
+  host.querySelectorAll(".ach-di").forEach(b => b.addEventListener("click", e => {
+    e.stopPropagation();
+    if (window.DIORAMA) DIORAMA.open(DIORAMA.GAMES.indexOf(b.dataset.di));
+  }));
+
+  // The wing reads the same three picks; remount once, then tell it the stars may have moved.
+  if (window.DIORAMA) {
+    DIORAMA.mount($("#diorama-wing"));
+    DIORAMA.refresh();
+  }
 
   if (status) {
     const parts = [`${s.filled} of ${s.total} games carry three picks`];
