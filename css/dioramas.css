@@ -241,13 +241,24 @@
   backdrop-filter: blur(8px); animation: dw-fade .25s ease both;
 }
 .dw-stage-body {
-  position: relative; width: min(1140px, 100%); max-height: 100%; overflow-y: auto;
+  position: relative; width: min(1140px, 100%); max-height: 100%;
+  /* nothing here scrolls on a desktop — the art is height-capped below — but the
+     mastered rays flare outside the panel, so clip them with room to breathe
+     rather than letting them fake an overflow scrollbar */
+  overflow: clip; overflow-clip-margin: 120px;
   display: grid; grid-template-columns: minmax(0, 1fr) 352px;
-  grid-template-rows: auto auto;
-  gap: clamp(12px, 2vw, 26px) clamp(14px, 3vw, 38px); align-items: center;
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: clamp(10px, 1.6vw, 22px) clamp(14px, 3vw, 38px); align-items: center;
   animation: dw-rise .34s cubic-bezier(.2,.85,.25,1) both;
 }
-.dw-stage-art { position: relative; min-width: 0; }
+/* The whole diorama has to be on screen — it is square, so the width is capped by
+   whatever height is left once the thumb strip and padding have taken their share. */
+.dw-stage-art {
+  position: relative; min-width: 0; justify-self: center; align-self: center;
+  width: min(100%, calc(100vh - 200px));
+  width: min(100%, calc(100dvh - 200px));
+  aspect-ratio: 1 / 1;
+}
 .dw-stage-art .rays {
   position: absolute; inset: -14% -8%; opacity: 0; pointer-events: none;
   background: conic-gradient(from 0deg, transparent 0 6deg, rgba(240,196,106,.14) 6deg 8deg,
@@ -264,7 +275,8 @@
   transform: translate3d(calc(var(--px, 0) * 1px), calc(var(--py, 0) * 1px), 0) rotateX(var(--prx, 0deg)) rotateY(var(--pry, 0deg));
   transition: transform .18s ease-out;
 }
-.dw-bigart img { width: 100%; display: block; }
+.dw-bigart { height: 100%; background: #0a0d16; }
+.dw-bigart img { width: 100%; height: 100%; display: block; object-fit: contain; }
 .dw-bigart .sweep {
   position: absolute; inset: -40% -60%; pointer-events: none;
   background: linear-gradient(100deg, transparent 42%, rgba(255,255,255,.13) 50%, transparent 58%);
@@ -278,7 +290,12 @@
   animation: dw-mote var(--d) linear infinite; animation-delay: var(--delay);
 }
 
-.dw-stage-info { min-width: 0; }
+.dw-stage-info {
+  min-width: 0; max-height: 100%; overflow-y: auto;
+  scrollbar-width: thin; scrollbar-color: rgba(150,170,230,.3) transparent;
+}
+.dw-stage-info::-webkit-scrollbar { width: 6px; }
+.dw-stage-info::-webkit-scrollbar-thumb { background: rgba(150,170,230,.28); border-radius: 3px; }
 .dw-stage-info h3 {
   font-size: clamp(1.15rem, 2.4vw, 1.6rem); letter-spacing: .01em; color: var(--fg);
   text-transform: none; margin: 0 0 .5rem;
@@ -322,15 +339,18 @@
 .dw-x:hover { border-color: var(--gold-dim); color: var(--gold); }
 .dw-navb {
   position: absolute; top: 50%; transform: translateY(-50%); z-index: 3;
-  width: 40px; height: 40px; border-radius: 50%; cursor: pointer;
+  width: 38px; height: 38px; border-radius: 50%; cursor: pointer;
   display: grid; place-items: center;
-  border: 1px solid var(--border); background: rgba(10,13,22,.85); color: var(--fg);
-  font-size: 1.2rem; line-height: 1;
-  transition: border-color .2s, color .2s, background .2s;
+  border: 1px solid rgba(255,255,255,.16);
+  background: rgba(8,11,20,.55); backdrop-filter: blur(6px); color: #eef2ff;
+  font-size: 1.2rem; line-height: 1; opacity: .55;
+  transition: border-color .2s, color .2s, background .2s, opacity .2s;
 }
-.dw-navb:hover { border-color: var(--gold-dim); color: var(--gold); background: #161c2e; }
-.dw-navb.prev { left: -52px; }
-.dw-navb.next { right: -52px; }
+.dw-navb:hover { border-color: var(--gold-dim); color: var(--gold); background: rgba(22,28,46,.92); opacity: 1; }
+/* kept inside the panel: sitting outside it put them behind the scrim, where clicks
+   went to the scrim instead of the button */
+.dw-navb.prev { left: 12px; }
+.dw-navb.next { right: calc(352px + clamp(14px, 3vw, 38px) + 12px); }
 
 @keyframes dw-casein {
   from { opacity: 0; transform: translateY(10px); }
@@ -352,21 +372,99 @@
   100% { opacity: 0; transform: translateY(-120px) scale(1); }
 }
 
+/* ── the thumb strip on the stage — all twenty always visible ─────────── */
+.dw-thumbs {
+  grid-column: 1 / -1; display: grid; justify-content: center; align-items: center;
+  grid-template-columns: repeat(20, minmax(0, 1fr)); gap: 6px;
+  width: 100%; padding: .1rem 0 .2rem;
+}
+.dw-thumb {
+  position: relative; width: 100%; max-width: 64px; padding: 0; aspect-ratio: 1 / 1;
+  border-radius: 6px; overflow: hidden; cursor: pointer; justify-self: center;
+  border: 1px solid rgba(150,170,230,.18); background: #0a0d16;
+  opacity: .5; transition: opacity .25s, border-color .25s, transform .25s, box-shadow .25s;
+}
+.dw-thumb img { width: 100%; height: 100%; display: block; object-fit: cover; filter: saturate(.85); }
+.dw-thumb:hover { opacity: .95; transform: translateY(-2px); border-color: rgba(240,196,106,.45); }
+.dw-thumb.lit { border-color: rgba(240,196,106,.5); }
+.dw-thumb.lit i {
+  position: absolute; inset: auto 2px 2px auto; width: 5px; height: 5px; border-radius: 50%;
+  background: var(--gold); box-shadow: 0 0 6px rgba(240,196,106,.9);
+}
+.dw-thumb.on {
+  opacity: 1; border-color: var(--gold); transform: translateY(-3px);
+  box-shadow: 0 0 0 1px rgba(240,196,106,.55), 0 8px 16px -8px rgba(240,196,106,.8);
+}
+.dw-thumb.on img { filter: none; }
+
 /* ── narrow screens ───────────────────────────────────────────────────── */
-@media (max-width: 900px) {
-  .dw-stage-body { grid-template-columns: 1fr; align-items: start; overflow-y: auto; gap: 14px; }
-  .dw-navb { top: auto; bottom: -6px; transform: none; }
-  .dw-navb.prev { left: 0; }
-  .dw-navb.next { right: 0; }
-  .dw-stage-info { padding-bottom: 3.2rem; }
+@media (max-width: 760px), (max-width: 1000px) and (min-height: 820px) {
+  /* A tall-but-narrow screen (an iPad held upright) gets the stacked layout too:
+     the art is height-fed there, so it comes out larger than in a 352px column. */
+  /* The stage track has to be definite or the panel's height:100% falls back to
+     auto, and the art re-sizes itself off its width and overflows the screen. */
+  .dw-stage { grid-template-rows: minmax(0, 1fr); align-items: stretch; }
+  /* One column, three fixed bands: the art takes every pixel the other two leave,
+     the picks scroll inside their own band, the strip never leaves the bottom.
+     (A sticky grid item cannot do this job — it is clamped to its grid area.) */
+  .dw-stage-body {
+    /* one budget, shared: the art is whatever is left once these two bands are paid
+       for, so it can be a true square instead of a letterboxed box */
+    --info-h: min(38dvh, 300px);
+    --thumb-h: 54px;
+    height: 100%; max-height: 100%;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) auto auto;
+    align-items: stretch; gap: 10px;
+    overflow: clip; overflow-clip-margin: 0;
+  }
+  /* square, and never wider than the room left above the picks */
+  .dw-stage-art {
+    width: min(100%, calc(100dvh - 2 * clamp(8px, 2.5vw, 30px) - var(--info-h) - var(--thumb-h) - 20px));
+    height: auto; max-width: 100%; min-height: 0;
+    aspect-ratio: 1 / 1; justify-self: center; align-self: center;
+  }
+  .dw-stage-info {
+    max-height: var(--info-h); min-height: 0; padding-bottom: .2rem;
+    overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
+    /* the last line fades rather than being sliced, so it reads as "there's more" */
+    -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 22px), rgba(0,0,0,.15));
+    mask-image: linear-gradient(to bottom, #000 calc(100% - 22px), rgba(0,0,0,.15));
+  }
+  /* swipe, the keys and the strip already move between worlds — the corner
+     buttons only crowded the picks */
+  .dw-navb { display: none; }
+  /* twenty cases in one row you can flick, rather than two rows that get clipped */
+  .dw-thumbs {
+    display: flex; justify-content: flex-start; gap: 6px;
+    overflow-x: auto; overflow-y: hidden; scroll-snap-type: x proximity;
+    padding: .1rem 0 .2rem; margin: 0; background: none;
+    scrollbar-width: none; -webkit-overflow-scrolling: touch;
+  }
+  .dw-thumbs::-webkit-scrollbar { display: none; }
+  .dw-thumb { flex: 0 0 44px; max-width: none; scroll-snap-align: center; }
+}
+/* landscape phones: no room for three stacked bands, so art and picks share the
+   width again and the strip gives way to swipe and the arrow keys */
+@media (max-height: 470px) and (min-width: 560px) {
+  .dw-stage { grid-template-rows: minmax(0, 1fr); align-items: stretch; }
+  .dw-stage-body {
+    height: 100%; max-height: 100%; align-items: center; gap: 16px;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 40%);
+    grid-template-rows: minmax(0, 1fr);
+    overflow: clip; overflow-clip-margin: 0;
+  }
+  .dw-stage-art { width: auto; height: 100%; max-width: 100%; min-height: 0; aspect-ratio: 1 / 1; }
+  .dw-stage-info { max-height: 100%; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+  .dw-thumbs, .dw-navb { display: none; }
 }
 @media (max-width: 640px) {
   .dw-chip { font-size: .55rem; padding: .28rem .5rem; letter-spacing: .08em; }
   .dw-tools { grid-template-columns: 1fr; gap: .4rem; padding-top: .45rem; }
   .dw-shuffle { justify-self: start; }
   .dw-shuffle { font-size: .55rem; padding: .28rem .5rem; }
-  .dw-thumbs { justify-content: flex-start; gap: 5px; }
-  .dw-thumb { width: 38px; height: 38px; }
+  .dw-thumbs { grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 5px; }
+  .dw-thumb { max-width: none; }
   .dw-stoptour { right: 48px; top: -6px; font-size: .55rem; padding: .28rem .55rem; }
   .dw-head { padding: .85rem .85rem .1rem; flex-direction: column; align-items: stretch; gap: .55rem; }
   .dw-meter { justify-content: flex-start; }
@@ -383,6 +481,8 @@
   /* all four chips on one line beats a lonely "mastered 0" */
   .dw-chip { font-size: .52rem; padding: .26rem .42rem; letter-spacing: .06em; }
   .dw-blurb { font-size: .7rem; }
+  .dw-row { grid-template-columns: 3.3rem 1fr; }
+  .dw-row .tag { font-size: .5rem; letter-spacing: .06em; }
 }
 @media (prefers-reduced-motion: reduce) {
   .dw-bigart .sweep, .dw-stage.done .rays { animation: none !important; }
@@ -406,31 +506,6 @@
   transition: background .2s, border-color .2s, color .2s;
 }
 .ach-di:hover { background: rgba(240,196,106,.2); border-color: var(--gold); color: #ffe9b8; }
-
-/* ── the thumb strip on the stage ─────────────────────────────────────── */
-.dw-thumbs {
-  grid-column: 1 / -1; display: flex; gap: 6px; justify-content: center;
-  padding: .1rem 0 .2rem; overflow-x: auto; scrollbar-width: none;
-}
-.dw-thumbs::-webkit-scrollbar { display: none; }
-.dw-thumb {
-  position: relative; flex: 0 0 auto; width: 50px; height: 50px; padding: 0;
-  border-radius: 6px; overflow: hidden; cursor: pointer;
-  border: 1px solid rgba(150,170,230,.18); background: #0a0d16;
-  opacity: .5; transition: opacity .25s, border-color .25s, transform .25s, box-shadow .25s;
-}
-.dw-thumb img { width: 100%; height: 100%; display: block; object-fit: cover; filter: saturate(.85); }
-.dw-thumb:hover { opacity: .95; transform: translateY(-2px); border-color: rgba(240,196,106,.45); }
-.dw-thumb.lit { border-color: rgba(240,196,106,.5); }
-.dw-thumb.lit i {
-  position: absolute; inset: auto 2px 2px auto; width: 5px; height: 5px; border-radius: 50%;
-  background: var(--gold); box-shadow: 0 0 6px rgba(240,196,106,.9);
-}
-.dw-thumb.on {
-  opacity: 1; border-color: var(--gold); transform: translateY(-3px);
-  box-shadow: 0 0 0 1px rgba(240,196,106,.55), 0 8px 16px -8px rgba(240,196,106,.8);
-}
-.dw-thumb.on img { filter: none; }
 
 /* the world arriving on stage */
 .dw-bigart.swap img { animation: dw-swap .42s cubic-bezier(.2,.8,.2,1) both; }

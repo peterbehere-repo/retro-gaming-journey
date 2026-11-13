@@ -471,6 +471,17 @@ const DIORAMA = (() => {
       b.classList.toggle("lit", ts.loaded && ts.earned === 3);
     });
 
+    // On a phone the strip is a single scrolling row, so the case you opened can
+    // sit off the end of it. Scroll the strip itself — never the page — to centre it.
+    const onThumb = stage.querySelector(".dw-thumb.on");
+    const strip = stage.querySelector("#dw-thumbs");
+    if (onThumb && strip && strip.scrollWidth > strip.clientWidth + 2) {
+      strip.scrollTo({
+        left: onThumb.offsetLeft - (strip.clientWidth - onThumb.offsetWidth) / 2,
+        behavior: "smooth",
+      });
+    }
+
     // The stage covers the grid, so marking the case is enough: on close you are
     // standing in front of the case you last opened, no scroll jump.
     grid.querySelectorAll(".dw-case").forEach(c =>
