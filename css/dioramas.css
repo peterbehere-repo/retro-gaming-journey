@@ -114,47 +114,32 @@
   animation: dw-spark 1.5s cubic-bezier(.15,.7,.3,1) forwards;
 }
 
-/* ── the shelf ────────────────────────────────────────────────────────── */
-.dw-railwrap { position: relative; z-index: 1; }
-.dw-rail {
-  display: flex; align-items: flex-start; gap: clamp(10px, 1.3vw, 18px);
-  overflow-x: auto; overflow-y: hidden;
-  padding: 1rem clamp(14px, 2vw, 26px) 2.3rem;
-  scroll-snap-type: x proximity; scroll-padding-inline: 26px;
-  scrollbar-width: thin; scrollbar-color: #2a3358 transparent;
-  -webkit-overflow-scrolling: touch;
+/* ── the floor of cases ──────────────────────────────────────────────── */
+/* A grid, not a shelf: twenty cases have to be reachable without pushing the page
+   sideways. The columns are fluid (auto-fill), so a phone gets two or three across
+   and a desktop gets seven, with nothing hidden off to the right. */
+.dw-gridwrap { position: relative; z-index: 1; padding: 1rem clamp(14px, 2vw, 26px) 1.5rem; }
+.dw-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(clamp(96px, 10.5vw, 136px), 1fr));
+  gap: clamp(14px, 1.9vw, 26px) clamp(10px, 1.3vw, 18px);
+  align-items: start;
   outline: none;
-  /* the shelf dissolves into the dark at both ends, so it reads as longer than the room */
-  -webkit-mask-image: linear-gradient(90deg, transparent, #000 3.5%, #000 96.5%, transparent);
-  mask-image: linear-gradient(90deg, transparent, #000 3.5%, #000 96.5%, transparent);
 }
-.dw-rail:focus-visible { box-shadow: inset 0 0 0 1px rgba(240,196,106,.35); border-radius: 10px; }
-.dw-rail::-webkit-scrollbar { height: 6px; }
-.dw-rail::-webkit-scrollbar-thumb { background: #2a3358; border-radius: 99px; }
-.dw-arrow {
-  position: absolute; top: 40%; z-index: 4; width: 34px; height: 34px;
-  display: grid; place-items: center; cursor: pointer;
-  border-radius: 50%; border: 1px solid var(--border);
-  background: rgba(10,13,22,.85); color: var(--fg); font-size: 1.1rem; line-height: 1;
-  opacity: 0; transition: opacity .2s, background .2s, border-color .2s;
-}
-.dw-railwrap:hover .dw-arrow, .dw-arrow:focus-visible { opacity: 1; }
-.dw-arrow:hover { background: #1a2138; border-color: var(--gold-dim); color: var(--gold); }
-.dw-arrow.left { left: 6px; }
-.dw-arrow.right { right: 6px; }
-/* the shelf the cases stand on */
-.dw-railwrap::after {
-  content: ""; position: absolute; left: 0; right: 0; bottom: 1.55rem; height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(240,196,106,.28) 18%, rgba(150,170,230,.3) 50%, rgba(240,196,106,.28) 82%, transparent);
+.dw-grid:focus-visible { box-shadow: inset 0 0 0 1px rgba(240,196,106,.35); border-radius: 10px; }
+/* the shelf each row stands on: one lit line behind every row of cases */
+.dw-gridwrap::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: .9rem; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(240,196,106,.22) 15%, rgba(150,170,230,.24) 50%, rgba(240,196,106,.22) 85%, transparent);
   pointer-events: none;
 }
 
 /* ── one case ─────────────────────────────────────────────────────────── */
 .dw-case {
-  flex: 0 0 auto; width: clamp(124px, 13.5vw, 168px);
-  scroll-snap-align: center;
-  padding: 0; border: 0; background: none; color: inherit; font: inherit;
+  min-width: 0; padding: 0; border: 0; background: none; color: inherit; font: inherit;
   text-align: left; cursor: pointer; perspective: 800px;
+  animation: dw-casein .5s cubic-bezier(.2,.8,.2,1) both;
+  animation-delay: calc(var(--i, 0) * 26ms);
 }
 .dw-case[hidden] { display: none; }
 .dw-case:focus-visible { outline: 2px solid var(--accent); outline-offset: 5px; border-radius: 12px; }
@@ -194,24 +179,30 @@
 }
 /* the brass plaque under the glass */
 .dw-plaque {
-  display: flex; align-items: flex-start; justify-content: space-between; gap: .35rem;
-  min-height: 2.75rem;
-  margin: 0 .18rem; padding: .34rem .5rem .34rem;
+  display: block; min-height: 2.4rem;
+  margin: 0 .18rem; padding: .34rem .5rem;
   border-radius: 0 0 7px 7px;
   background: linear-gradient(#141a2c, #0d111d);
   border: 1px solid rgba(150,170,230,.16); border-top: 0;
 }
 .dw-name {
-  font-size: .62rem; font-weight: 700; letter-spacing: .04em; color: #d7dcf5;
-  line-height: 1.25; min-width: 0; min-height: 2.5em;
+  font-size: .62rem; font-weight: 700; letter-spacing: .03em; color: #d7dcf5;
+  line-height: 1.25; min-height: 2.5em; text-wrap: balance;
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
   transition: color .25s;
 }
 .dw-case:hover .dw-name { color: #fff; }
-.dw-pips { display: flex; flex: 0 0 auto; gap: 3px; margin-top: .18rem; }
+/* the three pips ride on the glass, bottom right, so the plaque keeps the whole
+   width for the title — on a phone that is the difference between "Castlevania III"
+   and "Castlevan…" */
+.dw-pips {
+  position: absolute; right: 5px; bottom: 5px; z-index: 2;
+  display: flex; gap: 3px; padding: 3px 5px; border-radius: 999px;
+  background: rgba(8,11,19,.72); border: 1px solid rgba(150,170,230,.24);
+}
 .dw-pip {
-  width: 6px; height: 6px; border-radius: 50%;
-  border: 1px solid rgba(150,170,230,.45); background: rgba(255,255,255,.05);
+  width: 5px; height: 5px; border-radius: 50%;
+  border: 1px solid rgba(150,170,230,.5); background: rgba(255,255,255,.06);
 }
 .dw-pip.on { background: var(--gold); border-color: var(--gold); box-shadow: 0 0 8px rgba(240,196,106,.9); }
 /* mastered: the case is lit from inside */
@@ -229,15 +220,6 @@
   box-shadow: 0 0 14px rgba(240,196,106,.8);
   opacity: 0; transform: translateY(-4px) scale(.7); transition: .35s;
 }
-/* the world reflected in the polished stone */
-.dw-refl {
-  display: block; height: 20px; overflow: hidden; opacity: .16; pointer-events: none;
-  margin-top: 1px;
-  -webkit-mask-image: linear-gradient(#000, transparent 70%);
-  mask-image: linear-gradient(#000, transparent 70%);
-}
-.dw-refl img { width: 100%; display: block; transform: scaleY(-1); filter: blur(.7px) saturate(.7); }
-
 .dw-case::after {
   content: ""; display: block; height: 3px; margin: 0 .5rem; border-radius: 0 0 4px 4px;
   background: linear-gradient(90deg, transparent, rgba(240,196,106,.35), transparent);
@@ -350,6 +332,10 @@
 .dw-navb.prev { left: -52px; }
 .dw-navb.next { right: -52px; }
 
+@keyframes dw-casein {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: none; }
+}
 @keyframes dw-fade { from { opacity: 0; } to { opacity: 1; } }
 @keyframes dw-rise { from { opacity: 0; transform: translateY(14px) scale(.98); } to { opacity: 1; transform: none; } }
 @keyframes dw-rowin { to { opacity: 1; transform: none; } }
@@ -375,7 +361,6 @@
   .dw-stage-info { padding-bottom: 3.2rem; }
 }
 @media (max-width: 640px) {
-  .dw-arrow { display: none; }
   .dw-chip { font-size: .55rem; padding: .28rem .5rem; letter-spacing: .08em; }
   .dw-tools { grid-template-columns: 1fr; gap: .4rem; padding-top: .45rem; }
   .dw-shuffle { justify-self: start; }
@@ -387,16 +372,23 @@
   .dw-meter { justify-content: flex-start; }
   .dw-meter-track { flex: 1; max-width: 160px; }
   .dw-tools-right { justify-self: stretch; justify-content: flex-end; }
-  .dw-rail { padding: .9rem .85rem 1.2rem; gap: 12px; scroll-padding-inline: 12px; }
-  .dw-case { width: 132px; }
-  .dw-name { font-size: .6rem; }
+  .dw-gridwrap { padding: .9rem .85rem 1.2rem; }
+  .dw-grid { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 12px 10px; }
+  .dw-name { font-size: .58rem; letter-spacing: .01em; }
+  .dw-plaque { min-height: 2.3rem; padding: .3rem .4rem; }
   .dw-hint { padding-bottom: .8rem; }
   .dw-row { grid-template-columns: 3.1rem 1fr; }
+}
+@media (max-width: 430px) {
+  /* all four chips on one line beats a lonely "mastered 0" */
+  .dw-chip { font-size: .52rem; padding: .26rem .42rem; letter-spacing: .06em; }
+  .dw-blurb { font-size: .7rem; }
 }
 @media (prefers-reduced-motion: reduce) {
   .dw-bigart .sweep, .dw-stage.done .rays { animation: none !important; }
   .dw-spark { display: none; }
   .dw-mote { display: none; }
+  .dw-case { animation: none; }
   .dw-row { animation: none; opacity: 1; transform: none; }
 }
 

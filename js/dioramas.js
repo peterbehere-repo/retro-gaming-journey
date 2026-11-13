@@ -1,7 +1,7 @@
 // Retro Gaming Journey — the Diorama Wing.
 //
 // The Achievements tab used to be a wall of text. This puts the twenty NES Action
-// dioramas in front of it as objects under glass on a lit floor, and each one opens
+// dioramas in front of it as a grid of objects under glass, and each one opens
 // onto its own stage: the world large, its three achievement picks beside it, the
 // ones this account has earned lit gold.
 //
@@ -10,7 +10,7 @@
 //   ACH.earnedOf("nes", title) → { <achievementId>: "<date>" }
 // so a star lit here is lit on the Journey map, and vice versa.
 //
-// No framework, no requests: the art is img/dioramas/<slug>-420.webp (rail) and
+// No framework, no requests: the art is img/dioramas/<slug>-420.webp (grid) and
 // -900.webp (stage), baked from /rool-drive/Dioramas by tools/build-diorama-cards.py.
 "use strict";
 
@@ -72,7 +72,7 @@ const DIORAMA = (() => {
   }
 
   /* ---------------- the wing ---------------- */
-  let rail, stage, bigImg, info, current = -1, mounted = false, lastFocus = null;
+  let grid, stage, bigImg, info, current = -1, mounted = false, lastFocus = null;
 
   function caseHTML(title, i) {
     const s = stars(title);
@@ -86,12 +86,9 @@ const DIORAMA = (() => {
           <img src="${ART}/${slug(title)}-420.webp" alt="${esc(title)} diorama" loading="lazy" decoding="async">
           <span class="dw-sheen" aria-hidden="true"></span>
           <span class="dw-badge" aria-hidden="true">★</span>
-        </span>
-        <span class="dw-plaque">
-          <span class="dw-name">${esc(title)}</span>
           <span class="dw-pips" aria-hidden="true">${pips}</span>
         </span>
-        <span class="dw-refl" aria-hidden="true"><img src="${ART}/${slug(title)}-420.webp" alt="" loading="lazy" decoding="async"></span>
+        <span class="dw-plaque"><span class="dw-name">${esc(title)}</span></span>
       </span>
     </button>`;
   }
@@ -106,8 +103,8 @@ const DIORAMA = (() => {
           <div>
             <span class="dw-kicker">The diorama wing</span>
             <h3 class="dw-title">Twenty NES worlds, lifted off their maps</h3>
-            <p class="dw-blurb">One glass case per Action title. Open a case and its three picks wait
-            beside the world they belong to.</p>
+            <p class="dw-blurb">All twenty Action worlds on one wall, no sideways hunting. Open a case
+            and its three picks wait beside the world they belong to.</p>
           </div>
           <div class="dw-meter">
             <div class="dw-stars"><b id="dw-lit">0</b> / <span id="dw-total">60</span> stars lit</div>
@@ -127,30 +124,12 @@ const DIORAMA = (() => {
             <button class="dw-shuffle" id="dw-shuffle" title="Open a case at random">&#8646; surprise me</button>
           </div>
         </div>
-        <div class="dw-railwrap">
-          <button class="dw-arrow left" data-dir="-1" aria-label="Earlier cases">‹</button>
-          <div class="dw-rail" id="dw-rail" role="list" aria-label="Dioramas">${GAMES.map(caseHTML).join("")}</div>
-          <button class="dw-arrow right" data-dir="1" aria-label="Later cases">›</button>
+        <div class="dw-gridwrap">
+          <div class="dw-grid" id="dw-grid" role="list" aria-label="Dioramas">${GAMES.map(caseHTML).join("")}</div>
         </div>
-        <p class="dw-hint" id="dw-hint">drag, scroll or use the arrow keys · click a case to step onto its stage</p>
+        <p class="dw-hint" id="dw-hint">click a case to step onto its stage · every one of the twenty is on this grid</p>
       </section>`;
-    rail = host.querySelector("#dw-rail");
-
-    const arrows = host.querySelectorAll(".dw-arrow");
-    arrows.forEach(b => b.addEventListener("click", () => {
-      const step = rail.querySelector(".dw-case").offsetWidth + 20;
-      rail.scrollBy({ left: step * 3 * Number(b.dataset.dir), behavior: "smooth" });
-      play("nav");
-    }));
-    // An arrow that cannot go anywhere is worse than no arrow: grey it out at the ends.
-    const edge = () => {
-      const max = rail.scrollWidth - rail.clientWidth - 4;
-      host.querySelector(".dw-arrow.left").disabled = rail.scrollLeft <= 2;
-      host.querySelector(".dw-arrow.right").disabled = rail.scrollLeft >= max;
-    };
-    rail.addEventListener("scroll", edge, { passive: true });
-    addEventListener("resize", edge);
-    edge();
+    grid = host.querySelector("#dw-grid");
 
     const snd = host.querySelector("#dw-snd");
     snd.addEventListener("click", () => {
@@ -161,13 +140,13 @@ const DIORAMA = (() => {
       if (soundOn) play("nav");
     });
 
-    rail.addEventListener("click", e => {
+    grid.addEventListener("click", e => {
       const c = e.target.closest(".dw-case");
-      if (!c || rail.dataset.dragged === "1") return;
+      if (!c) return;
       open(GAMES.indexOf(c.dataset.title));
     });
 
-    // Filters: a shelf that can show only the cases you could still light is far more
+    // Filters: a grid that can show only the cases you could still light is far more
     // use than twenty identical rectangles. The chips hold their choice for the session.
     host.querySelectorAll(".dw-chip").forEach(b => b.addEventListener("click", () => {
       host.querySelectorAll(".dw-chip").forEach(o => o.classList.toggle("on", o === b));
@@ -175,16 +154,6 @@ const DIORAMA = (() => {
       applyFilter(host);
       play("nav");
     }));
-
-    // Wrong-keyboard-friendly: walk the shelf without reaching for the mouse.
-    rail.tabIndex = 0;
-    rail.addEventListener("keydown", e => {
-      if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
-      e.preventDefault();
-      const step = (rail.querySelector(".dw-case").offsetWidth + 20) * (e.key === "ArrowRight" ? 2 : -2);
-      rail.scrollBy({ left: step, behavior: "smooth" });
-      play("nav");
-    });
 
     const sh = host.querySelector("#dw-shuffle");
     if (sh) sh.addEventListener("click", () => {
@@ -197,8 +166,7 @@ const DIORAMA = (() => {
     const tourBtn = host.querySelector("#dw-tour");
     if (tourBtn) tourBtn.addEventListener("click", () => tour.on ? stopTour() : startTour());
 
-    tilt(rail);
-    dragScroll(rail);
+    tilt(grid);
     buildStage();
     refresh();
   }
@@ -229,57 +197,28 @@ const DIORAMA = (() => {
     });
   }
 
-  // Mouse drag on the shelf (wheel and touch are native). A drag that moved more than
-  // a few pixels suppresses the click that follows it, or every flick would open a case.
-  function dragScroll(el) {
-    let down = false, startX = 0, startLeft = 0, moved = 0;
-    el.addEventListener("pointerdown", e => {
-      if (e.pointerType === "touch") return;
-      down = true; moved = 0; startX = e.clientX; startLeft = el.scrollLeft;
-      el.dataset.dragged = "0";
-    });
-    el.addEventListener("pointermove", e => {
-      if (!down) return;
-      const dx = e.clientX - startX;
-      if (Math.abs(dx) > 4) { el.dataset.dragged = "1"; el.setPointerCapture?.(e.pointerId); }
-      moved = Math.max(moved, Math.abs(dx));
-      el.scrollLeft = startLeft - dx;
-    });
-    const up = () => { down = false; setTimeout(() => { el.dataset.dragged = "0"; }, 0); };
-    el.addEventListener("pointerup", up);
-    el.addEventListener("pointercancel", up);
-    el.addEventListener("pointerleave", () => { if (down) up(); });
-  }
-
   // A case is "new" until a star is lit, "part" with one or two, "done" with all three.
   function applyFilter(host) {
-    if (!rail) return;
-    const want = (host || rail.closest(".dw")).dataset.filter || "all";
+    if (!grid) return;
+    const want = (host || grid.closest(".dw")).dataset.filter || "all";
     let shown = 0;
-    rail.querySelectorAll(".dw-case").forEach(c => {
+    grid.querySelectorAll(".dw-case").forEach(c => {
       const keep = want === "all" || c.dataset.state === want;
       c.hidden = !keep;
       if (keep) shown++;
     });
-    rail.scrollTo({ left: 0, behavior: "auto" });
-    setTimeout(() => {
-      const wrap = rail.closest(".dw");
-      if (!wrap) return;
-      const max = rail.scrollWidth - rail.clientWidth - 4;
-      const l = wrap.querySelector(".dw-arrow.left"), r = wrap.querySelector(".dw-arrow.right");
-      if (l) l.disabled = true;
-      if (r) r.disabled = max <= 2;
-    }, 0);
     const hint = document.getElementById("dw-hint");
-    if (hint) hint.textContent = shown
-      ? "drag, scroll or use the arrow keys · click a case to step onto its stage"
-      : "Nothing in this state yet — every case is somewhere else on this shelf.";
+    if (hint) hint.textContent = shown === GAMES.length
+      ? "click a case to step onto its stage · every one of the twenty is on this grid"
+      : shown
+        ? `${shown} of 20 cases showing · click one to step onto its stage`
+        : "Nothing in this state yet — clear the filter to see the whole wing.";
   }
 
   function refresh() {
-    if (!rail) return;
+    if (!grid) return;
     let lit = 0;
-    rail.querySelectorAll(".dw-case").forEach(c => {
+    grid.querySelectorAll(".dw-case").forEach(c => {
       const s = stars(c.dataset.title);
       lit += s.earned;
       c.classList.toggle("done", s.loaded && s.earned === 3);
@@ -289,7 +228,7 @@ const DIORAMA = (() => {
     });
     // Counts on the chips: "Mastered 3" says more than "Mastered" ever will.
     const tally = { all: GAMES.length, new: 0, part: 0, done: 0 };
-    rail.querySelectorAll(".dw-case").forEach(c => { tally[c.dataset.state]++; });
+    grid.querySelectorAll(".dw-case").forEach(c => { tally[c.dataset.state]++; });
     document.querySelectorAll(".dw-chip").forEach(b => {
       const k = b.dataset.filter;
       const label = { all: "All", new: "Unstarted", part: "In progress", done: "Mastered" }[k];
@@ -310,7 +249,7 @@ const DIORAMA = (() => {
   const tour = { on: false, queue: [], at: 0, timer: null, bar: null, btn: null };
 
   function startTour() {
-    if (!rail) return;
+    if (!grid) return;
     const all = GAMES.map((t, i) => ({ i, s: stars(t) }));
     const dark = all.filter(x => !(x.s.loaded && x.s.earned === 3));
     tour.queue = (dark.length ? dark : all).map(x => x.i);
@@ -532,14 +471,14 @@ const DIORAMA = (() => {
       b.classList.toggle("lit", ts.loaded && ts.earned === 3);
     });
 
-    rail.querySelectorAll(".dw-case").forEach(c =>
+    // The stage covers the grid, so marking the case is enough: on close you are
+    // standing in front of the case you last opened, no scroll jump.
+    grid.querySelectorAll(".dw-case").forEach(c =>
       c.classList.toggle("current", c.dataset.title === title));
-    const activeCase = rail.querySelector(".dw-case.current");
-    if (activeCase) rail.scrollTo({ left: activeCase.offsetLeft - rail.clientWidth / 2 + activeCase.offsetWidth / 2, behavior: "smooth" });
   }
 
   function open(i) {
-    if (!rail) return;
+    if (!grid) return;
     if (i == null) return;
     if (stage.hidden) {
       lastFocus = document.activeElement;
