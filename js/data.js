@@ -132,7 +132,7 @@ const GAME_LIBRARY = {
   "Puzzle": {
     "nes": [
       "Tetris", "Dr. Mario", "Yoshi's Cookie", "Wario's Woods", "Kickle Cubicle",
-      "Adventures of Lolo", "Adventures of Lolo 2", "Adventures of Lolo 3", "Klax", "Pipe Dream",
+      "Adventures of Lolo 3", "Wrecking Crew", "Lode Runner", "Klax", "Pipe Dream",
       "Puzznic", "Solomon's Key", "Fire 'n Ice", "Bomberman", "Bomberman II",
       "Q*bert", "Yoshi", "Mendel Palace", "Boulder Dash", "Columns"
     ],
