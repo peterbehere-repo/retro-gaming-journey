@@ -487,13 +487,21 @@ function hashGame(g) {
 
 document.querySelectorAll(".tab").forEach(t =>
   t.addEventListener("click", () => {
+    const wasActive = t.classList.contains("active");
     document.querySelectorAll(".tab").forEach(x => x.classList.toggle("active", x === t));
     document.querySelectorAll(".panel").forEach(p =>
       p.classList.toggle("active", p.id === `panel-${t.dataset.tab}`));
     // The journey map is the one panel that wants the full width of the window.
     document.querySelector("main").classList.toggle("wide", t.dataset.tab === "journey");
     document.body.classList.toggle("journey-view", t.dataset.tab === "journey");
-    if (t.dataset.tab === "journey") { loadJourney(); requestAnimationFrame(sizeJourneyFrame); requestAnimationFrame(settleJourneyMap); }
+    if (t.dataset.tab === "journey") {
+      loadJourney(); requestAnimationFrame(sizeJourneyFrame); requestAnimationFrame(settleJourneyMap);
+      // Tapping Journey is how you choose a world: arriving on the tab opens the picker, and
+      // tapping the tab you are already on puts it away again.
+      if (wasActive) toggleMapMenu(); else setMapMenu(true);
+    } else {
+      closeMapMenu();
+    }
   }));
 
 // Journey maps: one per genre per platform. Each is a self-contained document with the
@@ -564,63 +572,136 @@ function currentJourneyMap() {
   return JOURNEY_MAPS.find(m => m.id === saved) || JOURNEY_MAPS[0];
 }
 
-function renderMapPicker() {
-  const box = document.getElementById("map-menu");
-  if (!box) return;
-  const active = currentJourneyMap();
-  const label = document.getElementById("map-current-label");
-  if (label) label.textContent = active.label;
-  const btn = document.getElementById("map-current");
-  if (btn) btn.setAttribute("aria-label", `Journey map: ${active.label}. Tap to change world.`);
+// Which platform group sits open in the picker. Kept per browser so a returning player sees the
+// console they were last in rather than always NES.
+const WORLD_OPEN_KEY = "rgj.worldOpen";
 
-  // Grouped by console, in the order the maps are declared, so a second console lands as
-  // its own heading instead of a longer flat list. The item text is the genre alone: the
-  // console is already the heading, and "NES · " five times over was the old wall of pills.
+function mapGroups() {
   const groups = [];
   for (const m of JOURNEY_MAPS) {
     let g = groups.find(x => x.platform === m.platform);
     if (!g) groups.push(g = { platform: m.platform, maps: [] });
     g.maps.push(m);
   }
-  box.innerHTML = groups.map(g =>
-    `<p class="map-menu-group" role="presentation">${esc(g.platform)}</p>` +
-    g.maps.map(m => {
-      const short = m.label.split("·").pop().trim();
-      const on = m.id === active.id;
-      return `<button type="button" class="map-item${on ? " active" : ""}" role="option"
-                aria-selected="${on}" data-map="${esc(m.id)}">
-                <span class="map-item-name">${esc(short)}</span>
-                <span class="map-item-tick" aria-hidden="true">${on ? "✓" : ""}</span>
-              </button>`;
-    }).join("")).join("");
-  box.querySelectorAll(".map-item").forEach(item =>
-    item.addEventListener("click", () => { closeMapMenu(); selectJourneyMap(item.dataset.map); }));
+  return groups;
+}
+
+function renderMapPicker() {
+  const bodyEl = document.getElementById("wm-body");
+  if (!bodyEl) return;
+  const active = currentJourneyMap();
+  const cur = document.getElementById("wm-current");
+  if (cur) cur.textContent = active.label;
+  setBlurb(active);
+
+  const groups = mapGroups();
+  const savedOpen = localStorage.getItem(WORLD_OPEN_KEY);
+  const open = groups.some(g => g.platform === savedOpen) ? savedOpen : active.platform;
+
+  // Two levels: the console is the row you open, the worlds inside it are the genres. One genre
+  // list per console keeps a second console from turning the menu into a long flat wall.
+  bodyEl.innerHTML = groups.map(g => {
+    const isOpen = g.platform === open;
+    const id = `wm-genres-${g.platform.replace(/\W+/g, "-")}`;
+    return `<div class="wm-group" data-platform="${esc(g.platform)}">
+      <button type="button" class="wm-platform" aria-expanded="${isOpen}" aria-controls="${id}">
+        <span class="wm-platform-name">${esc(g.platform)}</span>
+        <span class="wm-platform-meta">${g.maps.length} world${g.maps.length === 1 ? "" : "s"}</span>
+        <span class="wm-platform-caret" aria-hidden="true"></span>
+      </button>
+      <div class="wm-genres" id="${id}"${isOpen ? "" : " hidden"}>
+        ${g.maps.map(m => {
+          const short = m.label.split("·").pop().trim();
+          const on = m.id === active.id;
+          return `<button type="button" class="wm-genre${on ? " active" : ""}" data-map="${esc(m.id)}"
+                    ${on ? 'aria-current="true"' : ""}>
+                    <span class="wm-genre-name">${esc(short)}</span>
+                    <span class="wm-tick" aria-hidden="true">${on ? "✓" : ""}</span>
+                  </button>`;
+        }).join("")}
+      </div>
+    </div>`;
+  }).join("");
+
+  bodyEl.querySelectorAll(".wm-platform").forEach(btn =>
+    btn.addEventListener("click", () => toggleWorldGroup(btn.closest(".wm-group"))));
+  bodyEl.querySelectorAll(".wm-genre").forEach(item => {
+    item.addEventListener("click", () => { closeMapMenu(); selectJourneyMap(item.dataset.map); });
+    // Pointing at a world tells you what is in it, without opening it.
+    const m = JOURNEY_MAPS.find(x => x.id === item.dataset.map);
+    if (m) ["mouseenter", "focus"].forEach(ev =>
+      item.addEventListener(ev, () => setBlurb(m)));
+  });
+}
+
+function setBlurb(map) {
   const blurb = document.getElementById("map-blurb");
-  if (blurb) blurb.textContent = active.blurb;
+  if (blurb) blurb.textContent = map.blurb || "";
+}
+
+function toggleWorldGroup(group) {
+  if (!group) return;
+  const btn = group.querySelector(".wm-platform");
+  const genres = group.querySelector(".wm-genres");
+  if (!btn || !genres) return;
+  const open = genres.hidden;
+  genres.hidden = !open;
+  btn.setAttribute("aria-expanded", String(open));
+  if (open) localStorage.setItem(WORLD_OPEN_KEY, group.dataset.platform);
+}
+
+// The menu is fixed-position under the Journey tab, measured on open. Fixed rather than absolute
+// because the tab row scrolls sideways on a phone, and an absolutely positioned child of a
+// scrolling row gets clipped.
+function positionMapMenu() {
+  const menu = document.getElementById("map-menu");
+  const tab = document.querySelector('.tab[data-tab="journey"]');
+  if (!menu || !tab) return;
+  const r = tab.getBoundingClientRect();
+  const vw = window.innerWidth;
+  const margin = 8;
+  const full = vw <= 640;
+  const width = full ? vw - margin * 2 : Math.min(280, vw - margin * 2);
+  menu.style.width = width + "px";
+  const left = full
+    ? margin
+    : Math.max(margin, Math.min(Math.round(r.left), vw - width - margin));
+  menu.style.left = left + "px";
+  menu.style.top = Math.round(r.bottom + 6) + "px";
+  menu.style.maxHeight = Math.max(220, window.innerHeight - r.bottom - 18) + "px";
 }
 
 function setMapMenu(open) {
   const menu = document.getElementById("map-menu");
-  const btn = document.getElementById("map-current");
-  if (!menu || !btn) return;
+  const scrim = document.getElementById("map-scrim");
+  const tab = document.querySelector('.tab[data-tab="journey"]');
+  if (!menu || !tab) return;
   const wasOpen = !menu.hidden;
   menu.hidden = !open;
-  btn.setAttribute("aria-expanded", String(!!open));
+  if (scrim) scrim.hidden = !open;
+  tab.setAttribute("aria-expanded", String(!!open));
   if (open) {
-    const on = menu.querySelector(".map-item.active") || menu.querySelector(".map-item");
+    renderMapPicker();
+    positionMapMenu();
+    const on = menu.querySelector(".wm-genre.active") || menu.querySelector(".wm-genre");
     if (on) on.focus({ preventScroll: true });
   } else if (wasOpen && menu.contains(document.activeElement)) {
-    btn.focus({ preventScroll: true });
+    tab.focus({ preventScroll: true });
   }
 }
 function closeMapMenu() { setMapMenu(false); }
+function toggleMapMenu() { setMapMenu(document.getElementById("map-menu").hidden); }
 
-document.getElementById("map-current")?.addEventListener("click", (e) => {
-  e.stopPropagation();
-  setMapMenu(document.getElementById("map-menu").hidden);
-});
+document.getElementById("map-scrim")?.addEventListener("click", closeMapMenu);
+
+// A resize or a turn of the phone moves the tab the menu hangs from, and the measurement would
+// be stale — so put it away rather than leave it floating in the wrong place.
+window.addEventListener("resize", () => { if (!document.getElementById("map-menu")?.hidden) closeMapMenu(); });
+
 document.addEventListener("click", (e) => {
-  if (!e.target.closest || !e.target.closest("#map-select")) closeMapMenu();
+  if (!e.target.closest) return;
+  if (e.target.closest(".tab-world") || e.target.closest("#map-menu")) return;
+  closeMapMenu();
 });
 
 
@@ -721,11 +802,12 @@ function sizeJourneyFrame() {
   const top = wrap.getBoundingClientRect().top + window.scrollY;
   const avail = Math.max(320, window.innerHeight - top - 10);
   const narrow = window.innerWidth <= 820;
-  const h = narrow ? avail : Math.min(avail, window.innerWidth * 9 / 16);
+  // Measure the panel, not the window: the window includes the padding `main` already spent, and
+  // sizing to it pushed the frame 22px past the content edge at 1280, which scrolled the page.
+  const maxW = Math.max(240, Math.floor(wrap.parentElement.clientWidth));
+  const h = narrow ? avail : Math.min(avail, maxW * 9 / 16);
   wrap.style.height = Math.round(h) + "px";
-  wrap.style.width = Math.round(narrow
-    ? window.innerWidth - 16
-    : Math.min(h * 16 / 9, window.innerWidth)) + "px";
+  wrap.style.width = Math.round(narrow ? maxW : Math.min(h * 16 / 9, maxW)) + "px";
 }
 
 window.addEventListener("resize", sizeJourneyFrame);

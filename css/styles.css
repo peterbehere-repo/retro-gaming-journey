@@ -291,59 +291,71 @@ body.journey-view .tab { padding: .3rem .7rem; }
 body.journey-view footer { display: none; }
 body.journey-view main.wide { padding: .5rem .7rem .6rem; }
 
-.journey-head { position: relative; z-index: 3; display: flex; align-items: center; gap: .35rem 1.1rem; flex-wrap: wrap; margin: 0 0 .5rem; }
 #panel-journey h2 { margin: 0; white-space: nowrap; }
 
-.journey-head .map-blurb {
-  margin: 0; font-size: .66rem; line-height: 1.3; color: var(--fg);
-  /* Shrink rather than overrun: a fixed max-width pushed the pill off the right edge and got
-     clipped by the frame's overflow:hidden. */
-  flex: 0 1 auto; min-width: 0; max-width: 32rem;
-  background: rgba(13,15,26,.78); border: 1px solid var(--border); border-radius: 999px;
-  padding: .3rem .7rem; backdrop-filter: blur(6px);
-}
-/* Let the blurb run to the width on offer: every line it wastes costs map height, and with a
-   16:9 frame height is what sets the map's size. */
-
-/* One button naming the world you are in, and a menu for the rest. The old row of five
-   pills wrapped to two lines on a phone, eating the height the map lives on. */
-.map-select { position: relative; flex: 0 0 auto; }
-.map-current {
-  display: inline-flex; align-items: center; gap: .45rem; cursor: pointer;
-  font: inherit; font-size: .72rem; letter-spacing: .06em; padding: .42rem .8rem;
-  border-radius: 999px; color: var(--fg); font-weight: 700;
-  border: 1px solid var(--accent); background: rgba(84,242,184,.12);
-}
-.map-current:hover { background: rgba(84,242,184,.2); }
-.map-current[aria-expanded="true"] { background: rgba(84,242,184,.26); }
-.map-current-icon { font-size: .82rem; line-height: 1; filter: saturate(.85); }
-.map-caret {
-  width: 0; height: 0; margin-left: .1rem;
+/* Journey world picker. It hangs off the Journey tab: platform first, then the genres inside
+   that platform. Nothing sits on top of the map any more, so the frame keeps every pixel. */
+.tab-world { display: inline-flex; align-items: center; gap: .34rem; }
+.tab-caret {
+  width: 0; height: 0;
   border-left: 4px solid transparent; border-right: 4px solid transparent;
-  border-top: 5px solid var(--accent); transition: transform .15s ease;
+  border-top: 5px solid currentColor; opacity: .7; transition: transform .15s ease;
 }
-.map-current[aria-expanded="true"] .map-caret { transform: rotate(180deg); }
-.map-menu {
-  position: absolute; left: 0; top: calc(100% + .4rem); z-index: 60;
-  display: grid; gap: .1rem; padding: .35rem;
-  min-width: 13rem; max-width: min(18rem, calc(100vw - 2rem)); max-height: min(60vh, 22rem); overflow: auto;
-  background: rgba(16,20,36,.98); border: 1px solid var(--border); border-radius: 12px;
-  box-shadow: 0 18px 44px rgba(0,0,0,.55); backdrop-filter: blur(6px);
+.tab-world[aria-expanded="true"] .tab-caret { transform: rotate(180deg); }
+
+.world-scrim {
+  position: fixed; inset: 0; z-index: 119;
+  background: rgba(4,6,12,.3); backdrop-filter: blur(1px);
 }
-.map-menu[hidden] { display: none; }
-.map-menu-group {
-  font-size: .6rem; letter-spacing: .14em; text-transform: uppercase; color: var(--muted);
-  padding: .35rem .55rem .2rem;
+.world-scrim[hidden] { display: none; }
+.world-menu {
+  position: fixed; z-index: 120; display: flex; flex-direction: column;
+  padding: .28rem; overflow: auto; overscroll-behavior: contain;
+  background: rgba(16,20,36,.985); border: 1px solid var(--border); border-radius: 14px;
+  box-shadow: 0 22px 50px rgba(0,0,0,.6); backdrop-filter: blur(8px);
 }
-.map-item {
+.world-menu[hidden] { display: none; }
+.wm-head { display: flex; align-items: baseline; gap: .45rem; padding: .3rem .55rem .35rem; }
+.wm-hint { font-size: .58rem; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.wm-current { font-size: .78rem; font-weight: 700; color: var(--accent); }
+.wm-body { display: grid; gap: .1rem; }
+.wm-platform {
   display: flex; align-items: center; gap: .5rem; width: 100%; cursor: pointer;
-  font: inherit; font-size: .8rem; text-align: left; padding: .5rem .6rem;
-  border: 1px solid transparent; border-radius: 8px; background: none; color: var(--muted);
+  font: inherit; font-size: .76rem; font-weight: 700; letter-spacing: .08em; text-align: left;
+  padding: .48rem .55rem; border: 1px solid transparent; border-radius: 9px;
+  background: none; color: var(--fg);
 }
-.map-item:hover, .map-item:focus-visible { background: var(--surface-2); color: var(--fg); outline: none; }
-.map-item.active { color: var(--accent); border-color: rgba(84,242,184,.35); background: rgba(84,242,184,.08); }
-.map-item-name { flex: 1 1 auto; }
-.map-item-tick { flex: 0 0 auto; font-size: .8rem; color: var(--accent); }
+.wm-platform:hover, .wm-platform:focus-visible { background: var(--surface-2); outline: none; }
+.wm-platform-meta { margin-left: auto; font-size: .62rem; font-weight: 400; letter-spacing: .06em; color: var(--muted); }
+.wm-platform-caret {
+  flex: 0 0 auto; width: 0; height: 0; margin-left: .2rem;
+  border-left: 4px solid transparent; border-right: 4px solid transparent;
+  border-top: 5px solid var(--muted); transition: transform .15s ease;
+}
+.wm-platform[aria-expanded="true"] .wm-platform-caret { transform: rotate(180deg); }
+.wm-genres {
+  display: grid; gap: .1rem; overflow: hidden;
+  margin: .05rem 0 .3rem .75rem; padding-left: .45rem; border-left: 1px solid var(--border);
+}
+.wm-genres[hidden] { display: none; }
+.wm-genre {
+  display: flex; align-items: center; gap: .5rem; width: 100%; cursor: pointer;
+  font: inherit; font-size: .78rem; text-align: left; padding: .48rem .55rem;
+  border: 1px solid transparent; border-radius: 8px;
+  background: none; color: var(--muted);
+}
+.wm-genre:hover, .wm-genre:focus-visible { background: var(--surface-2); color: var(--fg); outline: none; }
+.wm-genre.active {
+  color: var(--accent); border-color: rgba(84,242,184,.35); background: rgba(84,242,184,.08);
+}
+.wm-genre-name { flex: 1 1 auto; }
+.wm-tick { flex: 0 0 auto; font-size: .8rem; color: var(--accent); }
+.wm-note {
+  margin: .2rem .1rem .12rem; padding: .5rem .55rem .1rem;
+  border-top: 1px solid var(--border);
+  font-size: .66rem; line-height: 1.45; color: var(--muted);
+}
+.wm-note:empty { display: none; }
 .journey-frame-wrap {
   position: relative;
   width: 100%; margin-inline: auto;
@@ -373,7 +385,6 @@ body.journey-view main.wide { padding: .5rem .7rem .6rem; }
 @keyframes rj-spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { #frame-loading .spinner { animation-duration: 2.4s; } }
 @media (max-width: 720px) { .journey-frame-wrap { aspect-ratio: 4 / 3; } }
-
 /* USB device link */
 .usb-card { grid-column: 1 / -1; }
 .chan .usb-pill { flex: none; }
@@ -489,11 +500,6 @@ body.journey-view main.wide { padding: .5rem .7rem .6rem; }
 .who-line a { color: var(--accent); text-decoration: none; }
 .who-line a:hover { text-decoration: underline; }
 
-/* Narrow windows: the pill row alone, so the floating header stays a slim chip. */
-@media (max-width: 1500px) {
-  .journey-head .map-blurb { display: none; }
-}
-
 /* ---------------------------------------------------------------- */
 /* Signed out: no progress is on screen, only the sign-in card       */
 /* ---------------------------------------------------------------- */
@@ -573,11 +579,10 @@ pre { overflow-x: auto; }
   .auth-gate { margin: 1.2rem auto; padding: 1.2rem 1.1rem; }
 
   /* The map keeps every pixel of height; the map itself zooms and pans. */
-  .journey-head { gap: .3rem .6rem; margin-bottom: .35rem; }
   #panel-journey h2 { font-size: .8rem; }
-  .map-current { font-size: .68rem; padding: .35rem .65rem; }
-  .map-menu { min-width: 12rem; }
   .journey-frame-wrap { border-radius: 8px; }
+  /* Phones: the picker spans the width, so a long genre name never gets clipped. */
+  .world-menu { max-height: min(72vh, 30rem); }
 
   /* Phones: the strapline is the next thing to go, and the avatar sits tight to the title. */
   .tagline { display: none; }
@@ -586,7 +591,7 @@ pre { overflow-x: auto; }
 
 /* Touch screens: never ask a thumb to hit a 20px control. */
 @media (pointer: coarse) {
-  .tab, .btn, .chip, .map-current, .map-item { min-height: 40px; }
+  .tab, .btn, .chip, .wm-platform, .wm-genre { min-height: 40px; }
   .auth-toggle { width: 40px; height: 40px; }
   .auth-menu-item { min-height: 44px; }
   input, select, textarea { font-size: 16px; } /* below 16px iOS zooms the page on focus */

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Retro Gaming Journey</title>
   <meta name="description" content="Offline-first retro emulation progress dashboard. Sync your handheld achievements on demand." />
-  <link rel="stylesheet" href="css/styles.css?v=iter37" />
+  <link rel="stylesheet" href="css/styles.css?v=iter40" />
   <link rel="stylesheet" href="css/dioramas.css?v=iter32" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎮</text></svg>" />
 </head>
@@ -23,7 +23,10 @@
     </div>
     <nav class="tabs" role="tablist" id="tabs">
       <button class="tab active" data-tab="dashboard" role="tab">Dashboard</button>
-      <button class="tab" data-tab="journey" role="tab">Journey</button>
+      <!-- Journey is the one tab that also carries a choice: platform, then genre. Tapping it
+           opens the world picker, so the map frame no longer needs a bar of its own. -->
+      <button class="tab tab-world" data-tab="journey" role="tab"
+              aria-haspopup="true" aria-expanded="false" aria-controls="map-menu">Journey<span class="tab-caret" aria-hidden="true"></span></button>
       <button class="tab" data-tab="library" role="tab">Library</button>
       <button class="tab" data-tab="achievements" role="tab">Achievements</button>
       <button class="tab" data-tab="sync" role="tab">Sync</button>
@@ -60,6 +63,21 @@
       </div>
     </div>
   </header>
+
+  <!-- The journey world picker. It used to sit on a teal strip inside the map frame, which cost
+       the map 46px of height on a phone and pushed the bottom row of path points out of view.
+       It drops down from the Journey tab instead: platform first, the genres inside it. -->
+  <!-- Taps on the map belong to the map's own document, so a scrim underneath the picker is the
+       only reliable way to catch a "put it away" tap. -->
+  <div class="world-scrim" id="map-scrim" hidden></div>
+  <div class="world-menu" id="map-menu" role="dialog" aria-label="Journey world" hidden>
+    <div class="wm-head">
+      <span class="wm-hint">Journey world</span>
+      <span class="wm-current" id="wm-current">NES &middot; Action</span>
+    </div>
+    <div class="wm-body" id="wm-body"></div>
+    <p class="wm-note" id="map-blurb"></p>
+  </div>
 
   <main>
     <!-- THE GATE: nothing is yours until we know who you are -->
@@ -118,21 +136,6 @@
     <!-- JOURNEY -->
     <section id="panel-journey" class="panel">
       <div class="journey-frame-wrap">
-        <div class="journey-head">
-          <!-- One button naming the world you are in; the five worlds live in a menu.
-               On a phone the old pill row cost two lines of height the map needed. -->
-          <div class="map-select" id="map-select">
-            <button type="button" class="map-current" id="map-current" aria-haspopup="true"
-                    aria-expanded="false" aria-controls="map-menu" aria-label="Journey map">
-              <span class="map-current-icon" aria-hidden="true">🗺</span>
-              <span class="map-current-label" id="map-current-label">NES · Action</span>
-              <span class="map-caret" aria-hidden="true"></span>
-            </button>
-            <div class="map-menu" id="map-menu" role="listbox" aria-label="Choose a journey map" hidden></div>
-          </div>
-          <p class="scope-note map-blurb" id="map-blurb">One continuous trail per genre &mdash; twenty path
-          points, each on its own themed corner of the map, with its own artwork and three achievement tiers.</p>
-        </div>
         <iframe id="journey-frame" title="Journey map" data-src=""></iframe>
         <div id="frame-loading" role="status" aria-live="polite">
           <span class="spinner"></span><span>Loading world&hellip;</span>
@@ -473,7 +476,7 @@
   <script src="js/achievements.js?v=4"></script>
   <script src="js/dioramas.js?v=iter31"></script>
   <script src="js/identity.js?v=4"></script>
-  <script src="js/app.js?v=iter53"></script>
+  <script src="js/app.js?v=iter56"></script>
   <script src="js/sdcard.js?v=4"></script>
   <script src="js/httpsync.js?v=6"></script>
   <script src="js/savesync.js?v=9"></script>
