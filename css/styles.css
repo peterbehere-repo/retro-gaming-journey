@@ -52,10 +52,60 @@ h3 { font-size: .85rem; text-transform: uppercase; letter-spacing: .1em; color: 
 .brand-line { display: flex; align-items: center; gap: .5rem; }
 .brand h1 { font-size: 1.15rem; letter-spacing: .04em; white-space: nowrap; }
 .tagline { font-size: .68rem; color: var(--muted); letter-spacing: .06em; white-space: nowrap; }
-.auth-box { display: flex; gap: .6rem; align-items: center; }
-.auth-status { font-size: .72rem; padding: .3rem .6rem; border-radius: 999px; border: 1px solid var(--border); color: var(--muted); }
-.auth-status.online { color: var(--accent); border-color: var(--accent); }
-.auth-status.offline { color: #ffb86b; border-color: #ffb86b; }
+/* Identity is a single circle. Name, profile, switch account and sign out live in the
+   menu behind it, so the header never pays for a name pill plus a button again. */
+.auth-box { position: relative; display: flex; align-items: center; }
+.auth-toggle {
+  position: relative; display: grid; place-items: center; width: 36px; height: 36px;
+  padding: 0; border-radius: 50%; cursor: pointer; overflow: hidden;
+  border: 1px solid var(--border); background: var(--surface-2); color: var(--muted);
+  font: inherit; font-size: .82rem; font-weight: 700; letter-spacing: .02em;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+.auth-toggle:hover { border-color: var(--accent); color: var(--fg); }
+.auth-toggle[aria-expanded="true"],
+.auth-toggle.signed-in { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(84,242,184,.18); }
+.auth-toggle .auth-pic { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: block; }
+/* `display: block` above would otherwise beat the [hidden] attribute and leave a signed-out
+   header wearing the last player's face. */
+.auth-toggle .auth-pic[hidden] { display: none; }
+.auth-toggle .auth-glyph {
+  width: 20px; height: 20px; fill: none; stroke: currentColor;
+  stroke-width: 1.8; stroke-linecap: round;
+}
+.auth-toggle .auth-initial { display: none; color: var(--accent); }
+.auth-toggle.signed-in.has-pic .auth-glyph,
+.auth-toggle.signed-in.has-pic .auth-initial,
+.auth-toggle.signed-in .auth-glyph { display: none; }
+.auth-toggle.signed-in:not(.has-pic) .auth-initial { display: block; }
+
+.auth-menu {
+  position: absolute; right: 0; top: calc(100% + .5rem); z-index: 60;
+  display: grid; gap: .1rem; padding: .4rem;
+  min-width: 15.5rem; max-width: min(20rem, calc(100vw - 1.4rem));
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+  box-shadow: 0 18px 44px rgba(0,0,0,.55);
+}
+.auth-menu[hidden] { display: none; }
+.auth-menu-head {
+  display: grid; gap: .1rem; padding: .45rem .55rem .6rem; margin-bottom: .2rem;
+  border-bottom: 1px solid var(--border);
+}
+.auth-menu-name {
+  font-size: .84rem; font-weight: 700; color: var(--fg);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.auth-menu-sub { font-size: .66rem; color: var(--muted); letter-spacing: .04em; }
+.auth-menu-item {
+  display: flex; align-items: center; gap: .4rem; width: 100%; text-align: left;
+  padding: .55rem .55rem; border: 0; border-radius: 8px; background: none;
+  color: var(--fg); font: inherit; font-size: .8rem; cursor: pointer; text-decoration: none;
+}
+.auth-menu-item:hover, .auth-menu-item:focus-visible { background: var(--surface-2); outline: none; }
+.auth-menu-item[hidden] { display: none; }
+.auth-menu-primary { color: var(--accent); font-weight: 700; }
+.auth-menu-item#btn-signin { margin-top: .2rem; }
+.auth-menu-ext { color: var(--muted); font-size: .8rem; }
 
 /* In the header a tab is a pill in a rounded trough, not a tab glued to a page edge. */
 .tabs {
@@ -255,17 +305,45 @@ body.journey-view main.wide { padding: .5rem .7rem .6rem; }
 /* Let the blurb run to the width on offer: every line it wastes costs map height, and with a
    16:9 frame height is what sets the map's size. */
 
-.map-picker { display: flex; flex-wrap: wrap; gap: .45rem; margin: 0; }
-.map-pill {
-  font: inherit; font-size: .72rem; letter-spacing: .06em; cursor: pointer;
-  padding: .42rem .85rem; border-radius: 999px; color: var(--muted);
-  border: 1px solid var(--border); background: var(--surface); transition: all .15s ease;
+/* One button naming the world you are in, and a menu for the rest. The old row of five
+   pills wrapped to two lines on a phone, eating the height the map lives on. */
+.map-select { position: relative; flex: 0 0 auto; }
+.map-current {
+  display: inline-flex; align-items: center; gap: .45rem; cursor: pointer;
+  font: inherit; font-size: .72rem; letter-spacing: .06em; padding: .42rem .8rem;
+  border-radius: 999px; color: var(--fg); font-weight: 700;
+  border: 1px solid var(--accent); background: rgba(84,242,184,.12);
 }
-.map-pill:hover { color: var(--fg); border-color: var(--accent-2); }
-.map-pill.active {
-  color: var(--bg); background: var(--accent); border-color: var(--accent);
-  font-weight: 700; box-shadow: 0 0 14px rgba(84,242,184,.35);
+.map-current:hover { background: rgba(84,242,184,.2); }
+.map-current[aria-expanded="true"] { background: rgba(84,242,184,.26); }
+.map-current-icon { font-size: .82rem; line-height: 1; filter: saturate(.85); }
+.map-caret {
+  width: 0; height: 0; margin-left: .1rem;
+  border-left: 4px solid transparent; border-right: 4px solid transparent;
+  border-top: 5px solid var(--accent); transition: transform .15s ease;
 }
+.map-current[aria-expanded="true"] .map-caret { transform: rotate(180deg); }
+.map-menu {
+  position: absolute; left: 0; top: calc(100% + .4rem); z-index: 60;
+  display: grid; gap: .1rem; padding: .35rem;
+  min-width: 13rem; max-width: min(18rem, calc(100vw - 2rem)); max-height: min(60vh, 22rem); overflow: auto;
+  background: rgba(16,20,36,.98); border: 1px solid var(--border); border-radius: 12px;
+  box-shadow: 0 18px 44px rgba(0,0,0,.55); backdrop-filter: blur(6px);
+}
+.map-menu[hidden] { display: none; }
+.map-menu-group {
+  font-size: .6rem; letter-spacing: .14em; text-transform: uppercase; color: var(--muted);
+  padding: .35rem .55rem .2rem;
+}
+.map-item {
+  display: flex; align-items: center; gap: .5rem; width: 100%; cursor: pointer;
+  font: inherit; font-size: .8rem; text-align: left; padding: .5rem .6rem;
+  border: 1px solid transparent; border-radius: 8px; background: none; color: var(--muted);
+}
+.map-item:hover, .map-item:focus-visible { background: var(--surface-2); color: var(--fg); outline: none; }
+.map-item.active { color: var(--accent); border-color: rgba(84,242,184,.35); background: rgba(84,242,184,.08); }
+.map-item-name { flex: 1 1 auto; }
+.map-item-tick { flex: 0 0 auto; font-size: .8rem; color: var(--accent); }
 .journey-frame-wrap {
   position: relative;
   width: 100%; margin-inline: auto;
@@ -388,10 +466,6 @@ body.journey-view main.wide { padding: .5rem .7rem .6rem; }
 }
 
 /* --- Identity: the signed-in player ------------------------------------- */
-.auth-pic {
-  width: 28px; height: 28px; border-radius: 50%;
-  border: 1px solid var(--border); object-fit: cover; background: #14182a;
-}
 .auth-pane { border: 1px solid var(--border); border-radius: 10px; padding: .4rem 1rem .9rem; margin: 1rem 0 .6rem; }
 .auth-pane legend { font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); padding: 0 .4rem; }
 .auth-alt { border-top: 1px solid var(--border); padding-top: .7rem; margin-top: .9rem; }
@@ -493,20 +567,28 @@ pre { overflow-x: auto; }
   .bar-row .name { flex: 1 1 auto; }
   .bar-row .pct { flex: 0 0 auto; font-size: .7rem; }
   .bar-row .bar-track { flex: 1 1 100%; order: 3; }
-  .who-line { font-size: .76rem; }
+  /* Whose dashboard this is now lives behind the avatar, so the phone header does not
+     state the name twice — and the row it frees goes to the content. */
+  .who-line { display: none; }
   .auth-gate { margin: 1.2rem auto; padding: 1.2rem 1.1rem; }
 
   /* The map keeps every pixel of height; the map itself zooms and pans. */
-  .journey-head { gap: .35rem .6rem; margin-bottom: .4rem; }
+  .journey-head { gap: .3rem .6rem; margin-bottom: .35rem; }
   #panel-journey h2 { font-size: .8rem; }
-  .map-picker { gap: .3rem; }
-  .map-pill { font-size: .66rem; padding: .35rem .6rem; }
+  .map-current { font-size: .68rem; padding: .35rem .65rem; }
+  .map-menu { min-width: 12rem; }
   .journey-frame-wrap { border-radius: 8px; }
+
+  /* Phones: the strapline is the next thing to go, and the avatar sits tight to the title. */
+  .tagline { display: none; }
+  .auth-toggle { width: 34px; height: 34px; }
 }
 
 /* Touch screens: never ask a thumb to hit a 20px control. */
 @media (pointer: coarse) {
-  .tab, .btn, .map-pill, .chip { min-height: 40px; }
+  .tab, .btn, .chip, .map-current, .map-item { min-height: 40px; }
+  .auth-toggle { width: 40px; height: 40px; }
+  .auth-menu-item { min-height: 44px; }
   input, select, textarea { font-size: 16px; } /* below 16px iOS zooms the page on focus */
   .game-card:hover { transform: none; }
 }

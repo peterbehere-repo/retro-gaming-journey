@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Retro Gaming Journey</title>
   <meta name="description" content="Offline-first retro emulation progress dashboard. Sync your handheld achievements on demand." />
-  <link rel="stylesheet" href="css/styles.css?v=iter36" />
+  <link rel="stylesheet" href="css/styles.css?v=iter37" />
   <link rel="stylesheet" href="css/dioramas.css?v=iter32" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎮</text></svg>" />
 </head>
@@ -29,9 +29,35 @@
       <button class="tab" data-tab="sync" role="tab">Sync</button>
     </nav>
 
+    <!-- Identity is one circle. Tapping it opens the account menu: who you are,
+         your profile link, switching account and signing out all live in there, so the
+         header costs a single 36px control instead of a name pill plus a button. -->
     <div class="auth-box" id="auth-box">
-      <span id="auth-status" class="auth-status" hidden></span>
-      <button id="btn-signin" class="btn btn-small">Sign in</button>
+      <button type="button" id="auth-toggle" class="auth-toggle" aria-haspopup="true"
+              aria-expanded="false" aria-controls="auth-menu" aria-label="Account menu">
+        <img id="auth-pic" class="auth-pic" alt="" hidden />
+        <span id="auth-initial" class="auth-initial" aria-hidden="true"></span>
+        <svg class="auth-glyph" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <circle cx="12" cy="8.6" r="3.6"></circle>
+          <path d="M4.8 20.2c0-3.6 3.2-6.1 7.2-6.1s7.2 2.5 7.2 6.1"></path>
+        </svg>
+      </button>
+      <div class="auth-menu" id="auth-menu" role="menu" aria-label="Account" hidden>
+        <div class="auth-menu-head">
+          <span class="auth-menu-name" id="auth-menu-name">Not signed in</span>
+          <span class="auth-menu-sub" id="auth-menu-sub">Sign in to load your journey</span>
+        </div>
+        <a class="auth-menu-item" id="auth-profile" role="menuitem"
+           href="https://retroachievements.org/" target="_blank" rel="noopener" hidden>
+           My RetroAchievements profile <span class="auth-menu-ext" aria-hidden="true">↗</span>
+        </a>
+        <button type="button" class="auth-menu-item" id="auth-switch" role="menuitem" hidden>
+           Switch account
+        </button>
+        <button type="button" class="auth-menu-item auth-menu-primary" id="btn-signin" role="menuitem">
+           Sign in
+        </button>
+      </div>
     </div>
   </header>
 
@@ -93,7 +119,17 @@
     <section id="panel-journey" class="panel">
       <div class="journey-frame-wrap">
         <div class="journey-head">
-          <div class="map-picker" id="map-picker" role="tablist" aria-label="Choose a journey map"></div>
+          <!-- One button naming the world you are in; the five worlds live in a menu.
+               On a phone the old pill row cost two lines of height the map needed. -->
+          <div class="map-select" id="map-select">
+            <button type="button" class="map-current" id="map-current" aria-haspopup="true"
+                    aria-expanded="false" aria-controls="map-menu" aria-label="Journey map">
+              <span class="map-current-icon" aria-hidden="true">🗺</span>
+              <span class="map-current-label" id="map-current-label">NES · Action</span>
+              <span class="map-caret" aria-hidden="true"></span>
+            </button>
+            <div class="map-menu" id="map-menu" role="listbox" aria-label="Choose a journey map" hidden></div>
+          </div>
           <p class="scope-note map-blurb" id="map-blurb">One continuous trail per genre &mdash; twenty path
           points, each on its own themed corner of the map, with its own artwork and three achievement tiers.</p>
         </div>
@@ -437,7 +473,7 @@
   <script src="js/achievements.js?v=4"></script>
   <script src="js/dioramas.js?v=iter31"></script>
   <script src="js/identity.js?v=4"></script>
-  <script src="js/app.js?v=iter52"></script>
+  <script src="js/app.js?v=iter53"></script>
   <script src="js/sdcard.js?v=4"></script>
   <script src="js/httpsync.js?v=6"></script>
   <script src="js/savesync.js?v=9"></script>

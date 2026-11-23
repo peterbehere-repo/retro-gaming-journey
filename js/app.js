@@ -326,38 +326,89 @@ function renderSync() {
 /* Header identity. There are two kinds of session — a RetroAchievements account
    (the real one, which knows the player) and a Supabase account (optional backend) —
    and the header should say which, and whose progress is on screen.
-   Signed out there is no identity and no "guest": the status chip is hidden and the
-   button offers a plain "Sign in". */
+   The header itself is one avatar circle: everything else (the name, the profile link,
+   switching account, signing out) lives in the menu behind it, so a phone spends one
+   small control on identity instead of a name pill and a full-size button. */
 function renderAuth() {
   const box = $("#auth-box");
   if (!box) return;
   const id = (typeof IDENT !== "undefined") ? IDENT : null;
   const raOn = !!(id && id.signedIn());
+  const who = raOn ? id.name() : "";
+  const picUrl = raOn ? id.pic() : "";
 
-  let img = $("#auth-pic");
-  if (raOn) {
-    if (!img) {
-      img = document.createElement("img");
-      img.id = "auth-pic";
-      img.className = "auth-pic";
-      img.alt = "";
-      box.prepend(img);
-    }
-    img.src = id.pic();
-    img.hidden = !id.pic();          // no avatar on the account: show no broken image
-    $("#auth-status").hidden = false;
-    $("#auth-status").textContent = id.name();
-    $("#auth-status").className = "auth-status online";
-    $("#auth-status").title = "RetroAchievements account — progress on this page is this account's";
-    $("#btn-signin").textContent = "Sign out";
-  } else {
-    if (img) img.hidden = true;
-    const chip = $("#auth-status");
-    chip.textContent = "";
-    chip.hidden = true;                       // no guest chip: signed out shows nothing
-    $("#btn-signin").textContent = "Sign in";
+  const toggle = $("#auth-toggle");
+  const img = $("#auth-pic");
+  const initial = $("#auth-initial");
+  if (toggle) {
+    toggle.classList.toggle("signed-in", raOn);
+    toggle.classList.toggle("has-pic", !!(raOn && picUrl));
+    toggle.title = raOn ? `${who} — RetroAchievements account` : "Not signed in";
+    toggle.setAttribute("aria-label", raOn
+      ? `Account menu — signed in as ${who}`
+      : "Account menu — not signed in, tap to sign in");
+  }
+  if (img) {
+    img.hidden = !(raOn && picUrl);      // no avatar on the account: fall back to the initial
+    if (raOn && picUrl) img.src = picUrl;
+    // A picture that will not load is worse than a letter: fall back to the initial.
+    img.onerror = () => { img.hidden = true; toggle?.classList.remove("has-pic"); };
+  }
+  if (initial) initial.textContent = raOn ? (who.trim().charAt(0) || "?").toUpperCase() : "";
+
+  const name = $("#auth-menu-name");
+  const sub = $("#auth-menu-sub");
+  if (name) name.textContent = raOn ? who : "Not signed in";
+  if (sub) sub.textContent = raOn
+    ? "RetroAchievements account"
+    : "Sign in to load your journey";
+
+  const profile = $("#auth-profile");
+  if (profile) {
+    profile.hidden = !raOn;
+    if (raOn) profile.href = `https://retroachievements.org/user/${encodeURIComponent(who)}`;
+  }
+  const sw = $("#auth-switch");
+  if (sw) sw.hidden = !raOn;
+  const btn = $("#btn-signin");
+  if (btn) {
+    btn.textContent = raOn ? "Sign out" : "Sign in";
+    btn.classList.toggle("auth-menu-primary", !raOn);   // only "Sign in" is the loud one
   }
 }
+
+/* The account menu: open on the avatar, close on Escape, on a click outside, or on
+   choosing something. Kept tiny and local — no dialog, no page height. */
+function setAuthMenu(open) {
+  const menu = $("#auth-menu");
+  const toggle = $("#auth-toggle");
+  if (!menu || !toggle) return;
+  const wasOpen = !menu.hidden;
+  menu.hidden = !open;
+  toggle.setAttribute("aria-expanded", String(!!open));
+  if (open) {
+    const first = menu.querySelector(".auth-menu-item:not([hidden])");
+    if (first) first.focus({ preventScroll: true });
+  } else if (wasOpen && menu.contains(document.activeElement)) {
+    // Closing with Escape must not leave focus on a control nobody can see.
+    toggle.focus({ preventScroll: true });
+  }
+}
+function closeAuthMenu() { setAuthMenu(false); }
+
+$("#auth-toggle")?.addEventListener("click", (e) => {
+  e.stopPropagation();
+  setAuthMenu($("#auth-menu").hidden);
+});
+document.addEventListener("click", (e) => {
+  if (!e.target.closest || !e.target.closest("#auth-box")) closeAuthMenu();
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "Escape") return;
+  if (!$("#auth-menu")?.hidden) closeAuthMenu();
+  if (!$("#map-menu")?.hidden) closeMapMenu();
+});
+
 
 /* ------------------------------------------------------------------ */
 /* The gate: signed out means no progress on screen at all             */
@@ -514,17 +565,64 @@ function currentJourneyMap() {
 }
 
 function renderMapPicker() {
-  const box = document.getElementById("map-picker");
+  const box = document.getElementById("map-menu");
   if (!box) return;
   const active = currentJourneyMap();
-  box.innerHTML = JOURNEY_MAPS.map(m =>
-    `<button class="map-pill${m.id === active.id ? " active" : ""}" data-map="${m.id}"
-             role="tab" aria-selected="${m.id === active.id}">${m.label}</button>`).join("");
-  box.querySelectorAll(".map-pill").forEach(btn =>
-    btn.addEventListener("click", () => selectJourneyMap(btn.dataset.map)));
+  const label = document.getElementById("map-current-label");
+  if (label) label.textContent = active.label;
+  const btn = document.getElementById("map-current");
+  if (btn) btn.setAttribute("aria-label", `Journey map: ${active.label}. Tap to change world.`);
+
+  // Grouped by console, in the order the maps are declared, so a second console lands as
+  // its own heading instead of a longer flat list. The item text is the genre alone: the
+  // console is already the heading, and "NES · " five times over was the old wall of pills.
+  const groups = [];
+  for (const m of JOURNEY_MAPS) {
+    let g = groups.find(x => x.platform === m.platform);
+    if (!g) groups.push(g = { platform: m.platform, maps: [] });
+    g.maps.push(m);
+  }
+  box.innerHTML = groups.map(g =>
+    `<p class="map-menu-group" role="presentation">${esc(g.platform)}</p>` +
+    g.maps.map(m => {
+      const short = m.label.split("·").pop().trim();
+      const on = m.id === active.id;
+      return `<button type="button" class="map-item${on ? " active" : ""}" role="option"
+                aria-selected="${on}" data-map="${esc(m.id)}">
+                <span class="map-item-name">${esc(short)}</span>
+                <span class="map-item-tick" aria-hidden="true">${on ? "✓" : ""}</span>
+              </button>`;
+    }).join("")).join("");
+  box.querySelectorAll(".map-item").forEach(item =>
+    item.addEventListener("click", () => { closeMapMenu(); selectJourneyMap(item.dataset.map); }));
   const blurb = document.getElementById("map-blurb");
   if (blurb) blurb.textContent = active.blurb;
 }
+
+function setMapMenu(open) {
+  const menu = document.getElementById("map-menu");
+  const btn = document.getElementById("map-current");
+  if (!menu || !btn) return;
+  const wasOpen = !menu.hidden;
+  menu.hidden = !open;
+  btn.setAttribute("aria-expanded", String(!!open));
+  if (open) {
+    const on = menu.querySelector(".map-item.active") || menu.querySelector(".map-item");
+    if (on) on.focus({ preventScroll: true });
+  } else if (wasOpen && menu.contains(document.activeElement)) {
+    btn.focus({ preventScroll: true });
+  }
+}
+function closeMapMenu() { setMapMenu(false); }
+
+document.getElementById("map-current")?.addEventListener("click", (e) => {
+  e.stopPropagation();
+  setMapMenu(document.getElementById("map-menu").hidden);
+});
+document.addEventListener("click", (e) => {
+  if (!e.target.closest || !e.target.closest("#map-select")) closeMapMenu();
+});
+
 
 // A map loads the first time the Journey tab is shown, then again whenever a different one is
 // picked. Nothing downloads on page load.
@@ -832,9 +930,13 @@ function openSignIn() {
 }
 
 $("#btn-signin").addEventListener("click", async () => {
+  closeAuthMenu();
   if (IDENT.signedIn()) { doSignOut(); return; }
   openSignIn();
 });
+
+$("#auth-switch")?.addEventListener("click", () => { closeAuthMenu(); openSignIn(); });
+$("#auth-profile")?.addEventListener("click", () => closeAuthMenu());
 
 $("#gate-signin").addEventListener("click", openSignIn);
 
